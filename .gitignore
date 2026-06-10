@@ -1,0 +1,47 @@
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+ 
+# ── Environment & Secrets ─────────────────────────────────────────
+.env
+.env.*
+*.env
+.env.global
+.env.local
+.env.production
+ 
+# ── Virtual Environments ──────────────────────────────────────────
+.venv/
+venv/
+env/
+.uv/
+
+# ── Airflow ───────────────────────────────────────────────────────
+airflow/logs/
+airflow/config/airflow.cfg
+airflow/config/webserver_config.py
+ 
+# ── Docker Data Volumes ───────────────────────────────────────────
+docker/airflow/data/
+docker/hadoop/namenode/
+docker/hadoop/datanode/
+docker/iceberg/data/
+docker/mongo/data/
+docker/spark/docker/
+ 
+# ── IDE & OS ──────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+ 
+# ── Build & Dist ──────────────────────────────────────────────────
+dist/
+build/
+*.egg-info/

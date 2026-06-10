@@ -1,0 +1,35 @@
+FROM bde2020/spark-base:3.2.1-hadoop3.2
+
+RUN apk add --no-cache \
+    bash \
+    curl \
+    nano \
+    python3 \
+    py3-pip \
+    make \
+    gcc \
+    musl-dev \
+    python3-dev \
+    libffi-dev \
+    openssl-dev \
+  && python3 -m pip install --no-cache-dir --upgrade pip
+
+RUN ln -sf python3 /usr/bin/python
+
+ENV JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk/jre
+ENV SPARK_HOME=/spark
+ENV PYTHONPATH="${SPARK_HOME}/python:${SPARK_HOME}/python/lib/py4j-0.10.9.3-src.zip"
+ENV PATH="${JAVA_HOME}/bin:${SPARK_HOME}/bin:${PATH}"
+
+WORKDIR /app
+
+# Pin ke versi yang kompatibel dengan Python 3.7
+RUN python3 -m pip install --no-cache-dir "jupyter==1.0.0" "notebook==6.4.12"
+
+EXPOSE 8888
+
+CMD ["jupyter", "notebook", \
+     "--ip=0.0.0.0", \
+     "--port=8888", \
+     "--no-browser", \
+     "--allow-root"]

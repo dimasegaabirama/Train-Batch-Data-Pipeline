@@ -1,0 +1,585 @@
+version: "1.0.0"
+
+run_date:
+  start_date: "${START_DATE}"
+  end_date: "${END_DATE}"
+
+# =====================================================
+# PIPELINE
+# =====================================================
+pipeline:
+  name: sales_delta_pipeline
+  catalog_type: nessie
+  stages:
+    - bronze
+    - silver
+    - gold
+  tablenames:
+    - passengers
+    - trains
+    - stations
+    - routes
+    - tickets
+  schema_flow:
+    bronze:
+      source: mongo
+      target: bronze
+    silver:
+      source: bronze
+      target: silver
+    gold:
+      source: silver
+      target: gold
+
+# =====================================================
+# SOURCES
+# =====================================================
+sources:
+  mongo:
+    username: "${MONGO_USERNAME}"
+    password: "${MONGO_PASSWORD}"
+    host: "${MONGO_HOSTNAME}"
+    port: "${MONGO_PORT}"
+    uri: "${MONGO_URL}"
+    database: "${MONGO_DATABASE}"
+
+# =====================================================
+# CATALOGS
+# =====================================================
+catalogs:
+  nessie:
+    name: nessie
+    host: "${NESSIE_HOSTNAME}"
+    port: "${NESSIE_PORT}"
+    uri: "${NESSIE_URL}"
+    ref: "${NESSIE_REF}"
+    warehouse: "${WAREHOUSE_LOCATION_DEV}"
+
+# =====================================================
+# STORAGES
+# =====================================================
+storages:
+  hdfs:
+    uri: "${HADOOP_URL}"
+    host: "${HADOOP_HOSTNAME}"
+    port: "${HADOOP_PORT}"
+
+# =====================================================
+# SPARK CONFIGURATION
+# =====================================================
+spark:
+  master: "spark://spark-master:7077"
+
+  common_config: &spark_common
+    spark.sql.shuffle.partitions: 20
+    spark.serializer: org.apache.spark.serializer.KryoSerializer
+    spark.driver.bindAddress: 0.0.0.0
+    spark.driver.host: spark-submit
+    spark.driver.port: 4040
+    spark.jars.packages: org.mongodb:mongodb-driver-sync:4.11.1,org.mongodb.spark:mongo-spark-connector_2.12:10.5.0,org.apache.iceberg:iceberg-spark-runtime-3.2_2.12:1.4.3,org.projectnessie.nessie-integrations:nessie-spark-extensions-3.2_2.12:0.67.0
+    spark.sql.extensions: org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions,org.projectnessie.spark.extensions.NessieSparkSessionExtensions
+    spark.sql.catalog.nessie: org.apache.iceberg.spark.SparkCatalog
+    spark.sql.catalog.nessie.catalog-impl: org.apache.iceberg.nessie.NessieCatalog
+    spark.sql.catalog.nessie.uri: "${NESSIE_URL}"
+    spark.sql.catalog.nessie.ref: "${NESSIE_REF}"
+    spark.sql.catalog.nessie.warehouse: "${WAREHOUSE_LOCATION_PROD}"
+    spark.mongodb.read.connection.uri: "${MONGO_URL}"
+    spark.mongodb.write.connection.uri: "${MONGO_URL}"
+
+  dev:
+    app_name: "Development"
+    config:
+      <<: *spark_common
+      spark.driver.memory: 2g
+      spark.executor.cores: 2
+      spark.executor.instances: 2
+      spark.executor.memory: 512m
+      spark.sql.catalog.nessie.warehouse: "${WAREHOUSE_LOCATION_DEV}"
+      spark.local.dir: "/app/spark_local_dir"
+
+      # Mongo partition
+      spark.mongodb.read.partitioner: com.mongodb.spark.sql.connector.read.partitioner.PaginateIntoPartitionsPartitioner
+      spark.mongodb.read.partitionerOptions.numberOfPartitions: 10
+
+  bronze:
+    app_name: "Bronze_Pipeline"
+    config:
+      <<: *spark_common
+      spark.executor.cores: 1
+      spark.executor.instances: 8
+      spark.executor.memory: "512m"
+      spark.sql.shuffle.partitions: 16
+
+  silver:
+    app_name: "Silver_Pipeline"
+    config:
+      <<: *spark_common
+      spark.executor.cores: 2
+      spark.executor.instances: 4
+      spark.executor.memory: "1024m"
+      spark.sql.shuffle.partitions: 8
+
+  gold:
+    app_name: "Gold_Pipeline"
+    config:
+      <<: *spark_common
+      spark.executor.cores: 2
+      spark.executor.instances: 4
+      spark.executor.memory: "1024m"
+      spark.sql.shuffle.partitions: 8
+
+# =====================================================
+# SCHEMAS / NAMESPACES
+# =====================================================
+schemas:
+  bronze:
+    name: bronze
+    description: Raw ingested data from sources
+    owner: data_engineering_team
+    retention_days: 30
+
+  silver:
+    name: silver
+    description: Cleaned and conformed data
+    owner: data_engineering_team
+    retention_days: 180
+    
+  gold:
+    name: gold
+    description: Analytics-ready data for BI and ML
+    owner: analytics_team
+    retention_days: 365
+
+# =====================================================
+# TABLES
+# =====================================================
+
+
+tables:
+  passengers:
+    type: dim
+    partitioned_by: updated_at
+    write_mode:
+      bronze: overwrite_partitions
+      silver: custom
+      gold: custom
+    schema:
+      source: |
+        _id INT,
+        name STRING,
+        gender STRING,
+        phone STRING,
+        email STRING,
+        created_at STRING,
+        updated_at STRING
+
+      bronze: |
+        id INT,
+        name STRING,
+        gender STRING,
+        phone STRING,
+        email STRING,
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP
+
+      silver: |
+        sk_id BIGINT,
+        id INT,
+        name STRING,
+        gender STRING,
+        phone STRING,
+        email STRING,
+        is_active BOOLEAN,
+        start_date TIMESTAMP,
+        end_date TIMESTAMP
+
+    query: |
+      MERGE INTO {catalog}.{namespace}.{table} t
+      USING {table_view} s
+      ON t.id = s.id AND t.is_active = true
+
+      WHEN MATCHED AND (
+        t.name <> s.name OR 
+        t.gender <> s.gender OR 
+        t.phone <> s.phone OR 
+        t.email <> s.email
+      )
+      THEN UPDATE SET 
+        t.is_active = false,
+        t.end_date = s.updated_at
+
+      WHEN NOT MATCHED THEN 
+      INSERT (sk_id, id, name, gender, phone, email, is_active, start_date, end_date)
+      VALUES(s.sk_id, s.id, s.name, s.gender, s.phone, s.email, true, s.updated_at, null)
+
+  stations:
+    type: dim
+    partitioned_by: updated_at
+    write_mode:
+      bronze: overwrite_partitions
+      silver: custom
+      gold: custom
+    schema: 
+      source: |
+        _id INT,
+        name STRING,
+        city STRING,
+        code STRING,
+        created_at STRING,
+        updated_at STRING
+
+      bronze: |
+        id INT,
+        name STRING,
+        city STRING,
+        code STRING,
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP
+
+      silver: |
+        sk_id BIGINT,
+        id INT,
+        name STRING,
+        city STRING,
+        code STRING,
+        is_active BOOLEAN,
+        start_date TIMESTAMP,
+        end_date TIMESTAMP
+    
+    query: |
+      MERGE INTO {catalog}.{namespace}.{table} t
+      USING {table_view} s
+      ON t.id = s.id AND t.is_active = true
+      WHEN MATCHED AND 
+              (t.name <> s.name) OR 
+              (t.city <> s.city) OR 
+              (t.code <> s.code)
+          THEN 
+              UPDATE SET 
+                  t.is_active = false,
+                  t.end_date = s.updated_at
+      WHEN NOT MATCHED THEN 
+      INSERT (sk_id, id, name, city, code, is_active, start_date, end_date)
+      VALUES(s.sk_id, s.id, s.name, s.city, s.code, true, s.updated_at, null)
+
+  trains:
+    type: dim
+    partitioned_by: updated_at
+    write_mode:
+      bronze: overwrite_partitions
+      silver: custom
+      gold: custom
+    schema: 
+      bronze: |
+        _id INT,
+        name STRING,
+        type STRING,
+        capacity INT,
+        created_at STRING,
+        updated_at STRING
+
+      bronze: |
+        id INT,
+        name STRING,
+        type STRING,
+        capacity INT,
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP
+
+      silver: |
+        id INT,
+        name STRING,
+        type STRING,
+        capacity INT,
+        is_active BOOLEAN,
+        start_date TIMESTAMP,
+        end_date TIMESTAMP
+
+    
+    query: |
+      MERGE INTO {catalog}.{namespace}.{table} t
+      USING {table_view} s
+      ON t.id = s.id AND t.is_active = true
+
+      WHEN MATCHED AND (
+          t.name <> s.name OR 
+          t.type <> s.type OR 
+          t.capacity <> s.capacity
+      )
+      THEN UPDATE SET 
+          t.is_active = false,
+          t.end_date = s.updated_at
+
+      WHEN NOT MATCHED THEN 
+      INSERT (sk_id, id, name, type, capacity, is_active, start_date, end_date)
+      VALUES(s.sk_id, s.id, s.name, s.type, s.capacity, true, s.updated_at, null)
+   
+  routes:
+    type: dim
+    partitioned_by: updated_at
+    write_mode:
+      bronze: overwrite_partitions
+      silver: custom
+      gold: custom
+    schema: 
+      source: |
+        _id INT,
+        origin STRING,
+        destination STRING,
+        train_id INT,
+        distance_km INT,
+        duration_minutes INT,
+        created_at STRING,
+        updated_at STRING
+
+      bronze: |
+        id INT,
+        origin STRING,
+        destination STRING,
+        train_id INT,
+        distance_km INT,
+        duration_minutes INT,
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP
+      
+      silver: |
+        id INT NOT NULL,
+        org_station_id INT,
+        dest_station_id INT,
+        train_id INT,
+        distance_km INT,
+        duration_minutes INT,
+        is_active BOOLEAN,
+        start_date TIMESTAMP,
+        end_date TIMESTAMP
+    
+    query: |
+      WITH source_latest AS (
+          SELECT *
+          FROM (
+              SELECT *,
+                  ROW_NUMBER() OVER (PARTITION BY id ORDER BY updated_at DESC) AS rn
+              FROM {view}
+          ) t
+          WHERE rn = 1
+      )
+
+      MERGE INTO {catalog}.{namespace}.{table} t
+      USING source_latest s
+      ON t.id = s.id AND t.is_active = true
+      WHEN MATCHED AND 
+              (t.org_station_id <> s.org_station_id) OR 
+              (t.dest_station_id <> s.dest_station_id) OR 
+              (t.train_id <> s.train_id) OR
+              (t.distance_km <> s.distance_km) OR 
+              (t.duration_minutes <> s.duration_minutes)
+          THEN 
+              UPDATE SET 
+                  t.is_active = false,
+                  t.end_date = s.updated_at
+      WHEN NOT MATCHED THEN 
+      INSERT (id, org_station_id, dest_station_id, train_id, distance_km, duration_minutes, is_active, start_date, end_date)
+      VALUES (s.id, s.org_station_id, s.dest_station_id, s.train_id, s.distance_km, s.duration_minutes, true, s.updated_at, null)
+    
+    depends_on:
+      stations:
+        catalog: nessie
+        schema: silver
+      trains:
+        catalog: nessie
+        schema: silver
+
+  tickets:
+    type: fact
+    partitioned_by: departure_date
+    write_mode:
+      bronze: overwrite_partitions
+      silver: custom
+      gold: custom
+    schema: 
+      bronze: |
+        id INT,
+        route_id INT,
+        passenger_id INT,
+        train_id INT,
+        discount DECIMAL,
+        price DECIMAL,
+        class STRING,
+        seat_number STRING,
+        status STRING,
+        departure_date STRING,
+        extra_info STRUCT<
+          child_discount: BOOLEAN,
+          family_members: INT,
+          promo_code: STRING,
+          source: STRING
+        >,
+        payment STRUCT<
+          method: STRING,
+          bank: STRING,
+          provider: STRING
+        >,
+        addons ARRAY<STRING>,
+        created_at TIMESTAMP
+      
+      silver: |
+        id INT NOT NULL,
+        route_id INT,
+        passenger_id INT,
+        train_id INT,
+        price DECIMAL(38, 2),
+        discount DECIMAL(10, 2),
+        final_price DECIMAL(38, 2),
+        status STRING,
+        class STRING,
+        seat_number STRING,
+        source STRING,
+        method STRING,
+        departure_date TIMESTAMP,
+        created_at DATE
+
+    
+    query: |
+      INSERT OVERWRITE TABLE {catalog}.{namespace}.{table}
+      PARTITION ({partitioned_by})
+      SELECT *
+      FROM {view}
+
+# =====================================================
+# PUSHDOWN FILTERS
+# =====================================================
+filters:
+  bronze:
+    type: mongo
+    tables:
+      tickets:
+        field: created_at
+      passengers:
+        field: updated_at
+      routes:
+        field: updated_at
+      trains:
+        field: updated_at
+      stations:
+        field: updated_at
+        
+  silver:
+    type: iceberg
+    tables:
+      tickets:
+        field: created_at
+      passengers:
+        field: updated_at
+      routes:
+        field: updated_at
+      trains:
+        field: updated_at
+      stations:
+        field: updated_at
+
+# =====================================================
+# DATA QUALITY
+# =====================================================
+
+data_quality:
+  bronze:
+    default:
+      - method: check_duplicates
+        params:
+          subset: ["id", "created_at", "updated_at", "load_at"]
+
+    tables:
+      tickets:
+        checks:
+          - method: check_duplicates
+            params:
+              subset: ["id", "created_at", "load_at"]
+
+  silver:
+    default:
+      - method: check_schema
+        params:
+          table_name: null
+          recursive: true
+      - method: check_accepted_values
+        params:
+          column: is_active
+          accepted_values: [true, false]
+          recursive: true
+
+    tables:
+      passengers:
+        checks:
+          - method: check_accepted_values
+            params:
+              column: gender
+              accepted_values: ["male", "female"]
+
+          - method: check_regex_contains
+            params:
+              column: email
+              pattern: ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$
+
+          - method: check_regex_contains
+            params:
+              column: phone
+              pattern: "^08[0-9]+{10,13}$"
+
+      trains:
+        checks:
+          - method: check_accepted_values
+            params:
+              column: type
+              accepted_values: ["executive", "bussiness", "economy"]
+
+          - method: check_value_range
+            params:
+              column: capacity
+              min_val: 400
+              max_val: 800
+
+      tickets:
+        checks:
+          - method: check_accepted_values
+            params:
+              column: class
+              accepted_values: ["vip", "promo", "family", "regular"]
+
+          - method: check_accepted_values
+            params:
+              column: status
+              accepted_values: ["paid", "unpaid", "cancelled"]
+
+          - method: check_accepted_values
+            params:
+              column: method
+              accepted_values: ["debit_card", "e_wallet", "credit_card", "cash"]
+
+          - method: check_accepted_values
+            params:
+              column: method
+              accepted_values: ["debit_card", "e_wallet", "credit_card", "cash"]
+
+          - method: check_accepted_values
+            params:
+              column: source
+              accepted_values: ["mobile_app", "website", "email", "direct"]
+
+          - method: check_referential_integrity
+            params:
+              column: route_id
+              ref_catalog_name: nessie
+              ref_schema: silver
+              ref_column: id
+
+
+      
+      
+
+            
+
+
+
+
+
+    

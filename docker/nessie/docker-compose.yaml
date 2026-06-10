@@ -1,0 +1,50 @@
+services:
+  mysql-backend:
+    container_name: mysql-backend
+    image: mysql:8.0.42-debian
+    environment:
+      MYSQL_ROOT_PASSWORD: ${NESSIE_BACKEND_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${NESSIE_BACKEND_DATABASE}
+      MYSQL_USER: ${NESSIE_BACKEND_USERNAME}
+      MYSQL_PASSWORD: ${NESSIE_BACKEND_PASSWORD}
+    volumes:
+      - ./docker/nessie/data:/var/lib/mysql
+    expose:
+      - "3306"
+    networks:
+      - nessie_net
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h localhost -u${NESSIE_BACKEND_USERNAME} -p${NESSIE_BACKEND_PASSWORD} -e 'SELECT 1' ${NESSIE_BACKEND_DATABASE}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+
+  nessie-rest-catalog:
+    container_name: nessie-rest-catalog
+    image: ghcr.io/projectnessie/nessie:0.44.0
+    environment:
+      JAVA_OPTS_APPEND: >
+        -Dnessie.version.store.type=JDBC2
+        -Dquarkus.http.port=19120
+        -Dnessie.version.store.persist.jdbc.datasource=mysql
+        -Dquarkus.datasource.mysql.jdbc.url=${NESSIE_BACKEND_URL}
+        -Dquarkus.datasource.mysql.username=${NESSIE_BACKEND_USERNAME}
+        -Dquarkus.datasource.mysql.password=${NESSIE_BACKEND_PASSWORD}
+        
+        -Dnessie.catalog.default-warehouse=${WAREHOUSE}
+        -Dnessie.catalog.warehouses.dev.location=${WAREHOUSE_LOCATION_DEV}
+        -Dnessie.catalog.warehouses.prod.location=${WAREHOUSE_LOCATION_PROD}
+    ports:
+      - "19120:19120"
+    networks:
+      - data_eng_net
+      - nessie_net
+    depends_on:
+      mysql-backend:
+        condition: service_healthy
+
+networks:
+  data_eng_net:
+    external: True
+  nessie_net:
+    external: True

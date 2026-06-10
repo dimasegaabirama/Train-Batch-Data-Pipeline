@@ -1,0 +1,88 @@
+x-worker-base: &worker-base
+  image: bde2020/spark-worker:3.2.1-hadoop3.2
+  environment:
+    HADOOP_USER_NAME: hadoop
+    SPARK_MASTER: ${SPARK_MASTER}
+  volumes:
+    - ./docker/spark/jars/:/opt/jars/
+    - ./docker/spark/spark-defaults.conf:/spark/conf/spark-defaults.conf
+  networks:
+    - data_eng_net
+    - spark_net
+  depends_on:
+    spark-master:
+      condition: service_healthy
+
+services:
+  spark-master:
+    image: bde2020/spark-master:3.2.1-hadoop3.2
+    container_name: spark-master
+    hostname: spark-master
+    volumes:
+      - ./docker/spark/spark-defaults.conf:/spark/conf/spark-defaults.conf
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - spark_net
+
+  spark-worker-1:
+    <<: *worker-base
+    container_name: spark-worker-1
+    hostname: spark-worker-1
+
+  spark-worker-2:
+    <<: *worker-base
+    container_name: spark-worker-2
+    hostname: spark-worker-2
+
+  spark-submit:
+    build:
+      context: .
+      dockerfile: ./docker/spark/dockerfile.spark.submit
+    image: spark-submit:3.2.1-hadoop3.2
+    container_name: spark-submit
+    hostname: spark-submit
+    ports:
+      - 4041:4041
+    volumes:
+      - .env.global:/app/.env.global
+    environment:
+      CONFIG_PATH: /app/config/pipeline-config.yaml
+      ENV_PATH: /app/.env.global
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    networks:
+      - data_eng_net
+      - spark_net
+
+  spark-jupyter:
+    build:
+      dockerfile: ./docker/spark/dockerfile.jupyter.notebook
+    image: spark-jupyter:3.2.1-hadoop3.2
+    container_name: spark-jupyter
+    hostname: spark-jupyter
+    volumes:
+      - ./src/notebooks:/app
+    ports:
+      - 8888:8888
+      - 4041:4041
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    networks:
+      - data_eng_net
+      - spark_net
+
+networks:
+  data_eng_net:
+    external: true
+  spark_net:
+    external: true

@@ -1,0 +1,42 @@
+# Python virtual environment
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.python-version
+
+# Airflow Orchestrator
+airflow/
+
+# Docker
+docker/
+
+# Environtment Variables
+.env*
+
+# Git / editor
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# uv
+.uvjobs/
+uv.lock
+
+# Logs & temp
+*.log
+tmp/
+
+# Docker / build artifacts
+Dockerfile
+*.tar.gz
+*.whl
+
+#README
+README.md
+
+#Setup
+start-all.sh
+stop-all.sh

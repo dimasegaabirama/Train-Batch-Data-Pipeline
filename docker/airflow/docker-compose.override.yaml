@@ -1,0 +1,40 @@
+x-airflow-pipeline-config:
+  &airflow-pipeline-config
+  networks:
+    - airflow_net
+    - data_eng_net
+
+services:
+  airflow-dag-processor:
+    <<: *airflow-pipeline-config
+    environment:
+      PYTHONPATH: /opt/airflow
+    volumes:
+      - .env.global:/opt/airflow/.env.global
+      - ./src/core:/opt/airflow/src/core
+      - ./config/pipeline-config.yaml:/opt/airflow/config/pipeline-config.yaml
+
+  airflow-scheduler:
+    <<: *airflow-pipeline-config
+
+  airflow-worker:
+    <<: *airflow-pipeline-config
+
+  airflow-triggerer:
+    <<: *airflow-pipeline-config
+
+  docker-proxy:
+    <<: *airflow-pipeline-config
+    container_name: docker-proxy
+    image: alpine/socat
+    command: "TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock"
+    ports:
+      - "2376:2375"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    
+networks:
+  airflow_net:
+    external: true
+  data_eng_net:
+    external: true
