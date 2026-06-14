@@ -10,11 +10,7 @@ __pycache__/
 airflow/
 
 # Docker
-docker/airflow/data/
-docker/hadoop/datanode/
-docker/hadoop/namenode/
-docker/mongo/data/
-docker/nessie/data/
+docker/
 
 # Environtment Variables
 .env*
