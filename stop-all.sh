@@ -28,6 +28,7 @@ echo "=== STOP NESSIE ==="
 docker compose -p nessie -f ./docker/nessie/docker-compose.yaml down -v
 
 rm -rf ./docker/nessie/data/*
+rm -rf ./docker/nessie/rest_data/*
 
 # =========================
 # MONGO

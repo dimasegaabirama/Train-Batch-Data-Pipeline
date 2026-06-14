@@ -15,22 +15,15 @@ echo "✅ Networks ready"
 
 ENV_FILE=".env.global"
 
-echo "🚀 Starting MySQL (nessie backend)..."
+echo "🚀 Starting POSTGRESQL (nessie backend)..."
 docker compose -p nessie \
   --project-directory . \
   -f ./docker/nessie/docker-compose.yaml \
   --env-file $ENV_FILE \
-  up -d mysql-backend
+  up -d postgres-backend
 
-echo "⏳ Waiting MySQL to be healthy..."
-
-# tunggu sampai container healthy
-until [ "$(docker inspect --format='{{.State.Health.Status}}' mysql-backend 2>/dev/null)" == "healthy" ]; do
-  echo "⌛ waiting mysql..."
-  sleep 5
-done
-
-echo "✅ MySQL is healthy"
+echo "⏳ Waiting for Postgres to be ready..."
+sleep 40
 
 echo "🚀 Starting Nessie..."
 docker compose -p nessie \

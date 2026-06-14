@@ -49,61 +49,38 @@ class RoutesTransform(BaseTransform):
         - Duplicate rows are removed before joining to avoid redundant data.
         """
 
-        # trim(lower(origin)) as origin,
-        # trim(lower(destination)) as destination,
-        # coalesce(distance_km, 0) as distance_km,
-        # coalesce(duration_minutes, 0) as duration_minutes,
-
         routes_dataframe = (self.dataframe
+                        .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
                         .withColumn("origin", F.trim(F.lower("origin")))
                         .withColumn("destination", F.trim(F.lower("destination")))
                         .withColumn("distance_km", F.coalesce("distance_km", F.lit(0)))
                         .withColumn("distance_km", F.coalesce("duration_minutes", F.lit(0)))
-        ).alias("r")
+        )
 
-        # STATIONS
-        stations_table = self.lookup_table_name["stations"]
+        stations_dataframe = self.session.read.table(self.lookup_table_name["stations"])
+        trains_dataframe = self.session.read.table(self.lookup_table_name["trains"])
 
-        stations_dataframe = self.session.read.table(stations_table)
-        stations_dataframe.cache()
-        stations_dataframe.count()
-
-        # Broadcast once
         stations_df = F.broadcast(stations_dataframe)
-
-        stations_df1 = stations_df.alias("s1")
-        stations_df2 = stations_df.alias("s2")
+        trains_df = F.broadcast(trains_dataframe)
 
 
-        # TRAINS
-        trains_table = self.lookup_table_name["trains"]
+        r = routes_dataframe.alias("r")
 
-        trains_dataframe = self.session.read.table(trains_table).alias("tr")
-        trains_dataframe.cache()
-        trains_dataframe.count()
+        s1 = stations_df.withColumnRenamed("sk_id", "sk_org_station_id").alias("s1")
+        s2 = stations_df.withColumnRenamed("sk_id", "sk_dest_station_id").alias("s2")
+        tr = trains_df.withColumnRenamed("sk_id", "sk_train_id").alias("tr")
 
         df_joined = (
-            routes_dataframe
-                .join(
-                    other=s1,
-                    on=s1.code == r.origin, 
-                    how="left"
-                )
-                .join(
-                    other=s2,
-                    on=s2.code == r.destination,
-                    how="left"
-                )
-                .join(
-                    other=tr,
-                    on=tr.id == r.id,
-                    how="left"
-                )
+            r
+            .join(s1, (s1.code == r.origin) & (s1.is_active == True), "left")
+            .join(s2, (s2.code == r.destination) & (s2.is_active == True), "left")
+            .join(tr, (tr.id == r.train_id) & (tr.is_active == True), "left")
             .select(
+                r.sk_id,
                 r.id,
-                s1.sk_id.alias("sk_org_station_id"),
-                s2.sk_id.alias("sk_dest_station_id"),
-                tr.sk_id.alias("sk_train_id"),
+                s1.sk_org_station_id,
+                s2.sk_dest_station_id,
+                tr.sk_train_id,
                 r.distance_km,
                 r.duration_minutes
             )

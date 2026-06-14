@@ -1,46 +1,50 @@
 services:
-  mysql-backend:
-    container_name: mysql-backend
-    image: mysql:8.0.42-debian
+  postgres-backend:
+    container_name: postgres-backend
+    image: postgres:12.6
     environment:
-      MYSQL_ROOT_PASSWORD: ${NESSIE_BACKEND_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${NESSIE_BACKEND_DATABASE}
-      MYSQL_USER: ${NESSIE_BACKEND_USERNAME}
-      MYSQL_PASSWORD: ${NESSIE_BACKEND_PASSWORD}
+      POSTGRES_USER: ${NESSIE_BACKEND_USERNAME}
+      POSTGRES_PASSWORD: ${NESSIE_BACKEND_PASSWORD}
+      POSTGRES_DB: ${NESSIE_BACKEND_DATABASE}
     volumes:
-      - ./docker/nessie/data:/var/lib/mysql
+      - ./docker/nessie/data:/var/lib/postgresql/data
     expose:
-      - "3306"
+      - "5432"
     networks:
       - nessie_net
     healthcheck:
-      test: ["CMD-SHELL", "mysql -h localhost -u${NESSIE_BACKEND_USERNAME} -p${NESSIE_BACKEND_PASSWORD} -e 'SELECT 1' ${NESSIE_BACKEND_DATABASE}"]
-      interval: 10s
-      retries: 5
-      start_period: 30s
+      test: ["CMD-SHELL", "pg_isready -U ${NESSIE_BACKEND_USERNAME} -d ${NESSIE_BACKEND_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 120s
 
   nessie-rest-catalog:
     container_name: nessie-rest-catalog
     image: ghcr.io/projectnessie/nessie:0.44.0
     environment:
-      JAVA_OPTS_APPEND: >
-        -Dnessie.version.store.type=JDBC2
-        -Dquarkus.http.port=19120
-        -Dnessie.version.store.persist.jdbc.datasource=mysql
-        -Dquarkus.datasource.mysql.jdbc.url=${NESSIE_BACKEND_URL}
-        -Dquarkus.datasource.mysql.username=${NESSIE_BACKEND_USERNAME}
-        -Dquarkus.datasource.mysql.password=${NESSIE_BACKEND_PASSWORD}
-        
-        -Dnessie.catalog.default-warehouse=${WAREHOUSE}
-        -Dnessie.catalog.warehouses.dev.location=${WAREHOUSE_LOCATION_DEV}
-        -Dnessie.catalog.warehouses.prod.location=${WAREHOUSE_LOCATION_PROD}
+      NESSIE_VERSION_STORE_TYPE: TRANSACTIONAL
+      NESSIE_VERSION_STORE_PERSIST_JDBC_DATASOURCE: postgres
+
+      QUARKUS_HTTP_PORT: ${NESSIE_PORT}
+
+      QUARKUS_DATASOURCE_DB_KIND: postgresql
+      QUARKUS_DATASOURCE_JDBC_URL: ${NESSIE_BACKEND_URL}
+      QUARKUS_DATASOURCE_USERNAME: ${NESSIE_BACKEND_USERNAME}
+      QUARKUS_DATASOURCE_PASSWORD: ${NESSIE_BACKEND_PASSWORD}
+
+      NESSIE_CATALOG_DEFAULT_WAREHOUSE: ${WAREHOUSE}
+      NESSIE_CATALOG_WAREHOUSES_DEV_LOCATION: ${WAREHOUSE_LOCATION_DEV}
+      NESSIE_CATALOG_WAREHOUSES_PROD_LOCATION: ${WAREHOUSE_LOCATION_PROD}
+    volumes:
+      - ./docker/nessie/rest_data:/var/lib/nessie/data
     ports:
       - "19120:19120"
     networks:
       - data_eng_net
       - nessie_net
     depends_on:
-      mysql-backend:
+      postgres-backend:
         condition: service_healthy
 
 networks:

@@ -29,7 +29,8 @@ airflow/config/webserver_config.py
 docker/airflow/data/
 docker/hadoop/namenode/
 docker/hadoop/datanode/
-docker/iceberg/data/
+docker/nessie/data/
+docker/nessie/rest_data/
 docker/mongo/data/
 docker/spark/docker/
  

@@ -14,7 +14,7 @@ services:
       - ./docker/mongo/data:/data/db
       - ./docker/mongo/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "mongosh", "--username", "$MONGO_USERNAME", "--password", "$MONGO_PASSWORD", "--authenticationDatabase", "admin", "--eval", "db.runCommand({ ping: 1 })"]
+      test: ["CMD", "mongosh", "--username", "${MONGO_USERNAME}", "--password", "${MONGO_PASSWORD}", "--authenticationDatabase", "admin", "--eval", "db.runCommand({ ping: 1 })"]
       interval: 10s
       timeout: 5s
       retries: 5
