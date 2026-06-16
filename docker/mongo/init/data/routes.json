@@ -1,12 +1,12 @@
 [
-  { "_id": 1, "train_id": 1, "origin": "GMR", "destination": "BD", "duration_minutes": 180, "distance_km": 150, "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 2, "train_id": 2, "origin": "GMR", "destination": "YK", "duration_minutes": 480, "distance_km": 500, "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 3, "train_id": 3, "origin": "GMR", "destination": "SBY", "duration_minutes": 720, "distance_km": 700, "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 4, "train_id": 4, "origin": "SBY", "destination": "YK", "duration_minutes": 390, "distance_km": 350, "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 5, "train_id": 5, "origin": "BD", "destination": "YK", "duration_minutes": 420, "distance_km": 400, "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 6, "train_id": 6, "origin": "GMR", "destination": "SOLO", "duration_minutes": 540, "distance_km": 490, "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 7, "train_id": 7, "origin": "SOLO", "destination": "SBY", "duration_minutes": 240, "distance_km": 210, "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 8, "train_id": 8, "origin": "BD", "destination": "SBY", "duration_minutes": 660, "distance_km": 670, "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 9, "train_id": 9, "origin": "CN", "destination": "YK", "duration_minutes": 420, "distance_km": 400, "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 10, "train_id": 10, "origin": "GMR", "destination": "SMT", "duration_minutes": 420, "distance_km": 410, "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" }
+  { "_id": 1, "train_id": 1, "origin": "GMR", "destination": "BD", "duration_minutes": 180, "distance_km": 150},
+  { "_id": 2, "train_id": 2, "origin": "GMR", "destination": "YK", "duration_minutes": 480, "distance_km": 500},
+  { "_id": 3, "train_id": 3, "origin": "GMR", "destination": "SBY", "duration_minutes": 720, "distance_km": 700},
+  { "_id": 4, "train_id": 4, "origin": "SBY", "destination": "YK", "duration_minutes": 390, "distance_km": 350},
+  { "_id": 5, "train_id": 5, "origin": "BD", "destination": "YK", "duration_minutes": 420, "distance_km": 400},
+  { "_id": 6, "train_id": 6, "origin": "GMR", "destination": "SOLO", "duration_minutes": 540, "distance_km": 490},
+  { "_id": 7, "train_id": 7, "origin": "SOLO", "destination": "SBY", "duration_minutes": 240, "distance_km": 210},
+  { "_id": 8, "train_id": 8, "origin": "BD", "destination": "SBY", "duration_minutes": 660, "distance_km": 670},
+  { "_id": 9, "train_id": 9, "origin": "CN", "destination": "YK", "duration_minutes": 420, "distance_km": 400},
+  { "_id": 10, "train_id": 10, "origin": "GMR", "destination": "SMT", "duration_minutes": 420, "distance_km": 410}
 ]

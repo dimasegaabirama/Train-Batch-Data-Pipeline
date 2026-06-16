@@ -63,7 +63,6 @@ class RoutesTransform(BaseTransform):
         stations_df = F.broadcast(stations_dataframe)
         trains_df = F.broadcast(trains_dataframe)
 
-
         r = routes_dataframe.alias("r")
 
         s1 = stations_df.withColumnRenamed("sk_id", "sk_org_station_id").alias("s1")

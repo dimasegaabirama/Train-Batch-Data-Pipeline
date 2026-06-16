@@ -23,7 +23,7 @@ docker compose -p nessie \
   up -d postgres-backend
 
 echo "⏳ Waiting for Postgres to be ready..."
-sleep 40
+sleep 30
 
 echo "🚀 Starting Nessie..."
 docker compose -p nessie \

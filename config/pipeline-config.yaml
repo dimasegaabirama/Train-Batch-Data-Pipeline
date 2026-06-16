@@ -156,6 +156,15 @@ schemas:
 
 
 tables:
+
+  common_query: &current_record
+    WITH CURRENT_RECORD AS (
+      SELECT 
+          id
+      FROM {catalog}.{schema}.{table_name}
+      WHERE is_active = true
+    )
+
   passengers:
     type: dim
     partitioned_by: updated_at
@@ -193,24 +202,47 @@ tables:
         start_date TIMESTAMP,
         end_date TIMESTAMP
 
-    query: |
-      MERGE INTO {catalog}.{namespace}.{table} t
-      USING {table_view} s
-      ON t.id = s.id AND t.is_active = true
+    query:
+      merge: |
+        MERGE INTO {catalog}.{schema}.{table_name} t
+        USING {table_view} s
+        ON t.id = s.id AND t.is_active = true
 
-      WHEN MATCHED AND (
-        t.name <> s.name OR 
-        t.gender <> s.gender OR 
-        t.phone <> s.phone OR 
-        t.email <> s.email
-      )
-      THEN UPDATE SET 
-        t.is_active = false,
-        t.end_date = s.updated_at
+        WHEN MATCHED AND (
+          t.name <> s.name OR 
+          t.gender <> s.gender OR 
+          t.phone <> s.phone OR 
+          t.email <> s.email
+        )
+        THEN UPDATE SET 
+          t.is_active = false,
+          t.end_date = s.updated_at
 
-      WHEN NOT MATCHED THEN 
-      INSERT (sk_id, id, name, gender, phone, email, is_active, start_date, end_date)
-      VALUES(s.sk_id, s.id, s.name, s.gender, s.phone, s.email, true, s.updated_at, null)
+        WHEN NOT MATCHED THEN 
+        INSERT (sk_id, id, name, gender, phone, email, is_active, start_date, end_date)
+        VALUES(s.sk_id, s.id, s.name, s.gender, s.phone, s.email, true, s.updated_at, null)
+      
+      insert: |
+        WITH CURRENT_RECORD AS (
+            SELECT 
+                id
+            FROM {catalog}.{schema}.{table_name}
+            WHERE is_active = true
+        )
+        INSERT INTO {catalog}.{schema}.{table_name}
+        SELECT 
+            pc.sk_id,
+            pc.id,
+            pc.name,
+            pc.gender,
+            pc.phone,
+            pc.email,
+            true as is_active,
+            pc.updated_at as start_date,
+            NULL as end_date 
+        FROM {table_view} pc 
+        LEFT ANTI JOIN 
+            CURRENT_RECORD cr ON pc.id = cr.id 
 
   stations:
     type: dim
@@ -246,21 +278,43 @@ tables:
         start_date TIMESTAMP,
         end_date TIMESTAMP
     
-    query: |
-      MERGE INTO {catalog}.{namespace}.{table} t
-      USING {table_view} s
-      ON t.id = s.id AND t.is_active = true
-      WHEN MATCHED AND 
-              (t.name <> s.name) OR 
-              (t.city <> s.city) OR 
-              (t.code <> s.code)
-          THEN 
-              UPDATE SET 
-                  t.is_active = false,
-                  t.end_date = s.updated_at
-      WHEN NOT MATCHED THEN 
-      INSERT (sk_id, id, name, city, code, is_active, start_date, end_date)
-      VALUES(s.sk_id, s.id, s.name, s.city, s.code, true, s.updated_at, null)
+    query:
+      merge: |
+        MERGE INTO {catalog}.{schema}.{table_name} t
+        USING {table_view} s
+        ON t.id = s.id AND t.is_active = true
+        WHEN MATCHED AND 
+                (t.name <> s.name) OR 
+                (t.city <> s.city) OR 
+                (t.code <> s.code)
+            THEN 
+                UPDATE SET 
+                    t.is_active = false,
+                    t.end_date = s.updated_at
+        WHEN NOT MATCHED THEN 
+        INSERT (sk_id, id, name, city, code, is_active, start_date, end_date)
+        VALUES(s.sk_id, s.id, s.name, s.city, s.code, true, s.updated_at, null)
+
+      insert: |
+        WITH CURRENT_RECORD AS (
+            SELECT 
+                id
+            FROM {catalog}.{schema}.{table_name}
+            WHERE is_active = true
+        )
+        INSERT INTO {catalog}.{schema}.{table_name}
+        SELECT
+            sc.sk_id,
+            sc.id,
+            sc.name,
+            sc.city,
+            sc.code,
+            true as is_active,
+            sc.updated_at as start_date,
+            NULL as end_date
+        FROM {table_view} sc 
+        LEFT ANTI JOIN CURRENT_RECORD cr 
+        ON sc.id = cr.id
 
   trains:
     type: dim
@@ -287,6 +341,7 @@ tables:
         updated_at TIMESTAMP
 
       silver: |
+        sk_id BIGINT,
         id INT,
         name STRING,
         type STRING,
@@ -296,23 +351,52 @@ tables:
         end_date TIMESTAMP
 
     
-    query: |
-      MERGE INTO {catalog}.{namespace}.{table} t
-      USING {table_view} s
-      ON t.id = s.id AND t.is_active = true
+    query: 
+      merge: |
+        MERGE INTO {catalog}.{namespace}.{table} t
+        USING {table_view} s
+        ON t.id = s.id AND t.is_active = true
 
-      WHEN MATCHED AND (
-          t.name <> s.name OR 
-          t.type <> s.type OR 
-          t.capacity <> s.capacity
-      )
-      THEN UPDATE SET 
-          t.is_active = false,
-          t.end_date = s.updated_at
+        WHEN MATCHED AND (
+            t.name <> s.name OR 
+            t.type <> s.type OR 
+            t.capacity <> s.capacity
+        )
+        THEN UPDATE SET 
+            t.is_active = false,
+            t.end_date = s.updated_at
 
-      WHEN NOT MATCHED THEN 
-      INSERT (sk_id, id, name, type, capacity, is_active, start_date, end_date)
-      VALUES(s.sk_id, s.id, s.name, s.type, s.capacity, true, s.updated_at, null)
+        WHEN NOT MATCHED THEN 
+        INSERT (sk_id, id, name, type, capacity, is_active, start_date, end_date)
+        VALUES(s.sk_id, s.id, s.name, s.type, s.capacity, true, s.updated_at, null)
+      
+      insert: |
+        WITH CHANGED_RECORDS AS (
+            SELECT s.*
+            FROM passengers_cleaned s
+            JOIN nessie.silver.passengers t
+                ON s.id = t.id
+              AND t.is_active = true
+            WHERE
+                t.name <> s.name OR
+                t.gender <> s.gender OR
+                t.phone <> s.phone OR
+                t.email <> s.email
+        )
+
+        INSERT INTO nessie.silver.passengers
+        SELECT
+            sk_id,
+            id,
+            name,
+            gender,
+            phone,
+            email,
+            true,
+            updated_at,
+            null
+        FROM CHANGED_RECORDS
+
    
   routes:
     type: dim
@@ -328,9 +412,7 @@ tables:
         destination STRING,
         train_id INT,
         distance_km INT,
-        duration_minutes INT,
-        created_at STRING,
-        updated_at STRING
+        duration_minutes INT
 
       bronze: |
         id INT,
@@ -338,20 +420,18 @@ tables:
         destination STRING,
         train_id INT,
         distance_km INT,
-        duration_minutes INT,
-        created_at TIMESTAMP,
-        updated_at TIMESTAMP
+        duration_minutes INT
       
       silver: |
-        id INT NOT NULL,
+        sk_id BIGINT,
+        id INT,
         org_station_id INT,
         dest_station_id INT,
         train_id INT,
         distance_km INT,
         duration_minutes INT,
         is_active BOOLEAN,
-        start_date TIMESTAMP,
-        end_date TIMESTAMP
+        is_deleted BOOLEAN
     
     query: |
       WITH source_latest AS (
@@ -391,7 +471,7 @@ tables:
 
   tickets:
     type: fact
-    partitioned_by: departure_date
+    partitioned_by: created_at
     write_mode:
       bronze: overwrite_partitions
       silver: custom
