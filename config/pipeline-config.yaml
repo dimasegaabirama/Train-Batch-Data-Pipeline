@@ -349,7 +349,6 @@ tables:
         is_active BOOLEAN,
         start_date TIMESTAMP,
         end_date TIMESTAMP
-
     
     query: 
       merge: |
@@ -371,32 +370,26 @@ tables:
         VALUES(s.sk_id, s.id, s.name, s.type, s.capacity, true, s.updated_at, null)
       
       insert: |
-        WITH CHANGED_RECORDS AS (
-            SELECT s.*
-            FROM passengers_cleaned s
-            JOIN nessie.silver.passengers t
-                ON s.id = t.id
-              AND t.is_active = true
-            WHERE
-                t.name <> s.name OR
-                t.gender <> s.gender OR
-                t.phone <> s.phone OR
-                t.email <> s.email
+        WITH CURRENT_RECORD AS (
+            SELECT 
+                id
+            FROM {catalog}.{schema}.{table_name}
+            WHERE is_active = true
         )
 
-        INSERT INTO nessie.silver.passengers
+        INSERT INTO {catalog}.{namespace}.{table}
         SELECT
-            sk_id,
-            id,
-            name,
-            gender,
-            phone,
-            email,
-            true,
-            updated_at,
-            null
-        FROM CHANGED_RECORDS
-
+            sc.sk_id,
+            sc.id,
+            sc.name,
+            sc.type,
+            sc.capacity,
+            true as is_active,
+            sc.updated_at as start_date,
+            NULL as end_date
+        FROM {table_view} sc 
+        LEFT ANTI JOIN CURRENT_RECORD cr 
+        ON sc.id = cr.id
    
   routes:
     type: dim
@@ -433,34 +426,37 @@ tables:
         is_active BOOLEAN,
         is_deleted BOOLEAN
     
-    query: |
-      WITH source_latest AS (
-          SELECT *
-          FROM (
-              SELECT *,
-                  ROW_NUMBER() OVER (PARTITION BY id ORDER BY updated_at DESC) AS rn
-              FROM {view}
-          ) t
-          WHERE rn = 1
-      )
+    query: 
+      merge: |      
+        MERGE INTO nessie.silver.routes t
+        USING ROUTES_CLEANED s
+        ON t.id = s.id
 
-      MERGE INTO {catalog}.{namespace}.{table} t
-      USING source_latest s
-      ON t.id = s.id AND t.is_active = true
-      WHEN MATCHED AND 
-              (t.org_station_id <> s.org_station_id) OR 
-              (t.dest_station_id <> s.dest_station_id) OR 
-              (t.train_id <> s.train_id) OR
-              (t.distance_km <> s.distance_km) OR 
-              (t.duration_minutes <> s.duration_minutes)
-          THEN 
-              UPDATE SET 
-                  t.is_active = false,
-                  t.end_date = s.updated_at
-      WHEN NOT MATCHED THEN 
-      INSERT (id, org_station_id, dest_station_id, train_id, distance_km, duration_minutes, is_active, start_date, end_date)
-      VALUES (s.id, s.org_station_id, s.dest_station_id, s.train_id, s.distance_km, s.duration_minutes, true, s.updated_at, null)
-    
+        WHEN MATCHED AND (
+            t.sk_org_station_id <> s.sk_org_station_id OR 
+            t.sk_dest_station_id <> s.sk_dest_station_id OR 
+            t.sk_train_id <> s.sk_train_id OR 
+            t.distance_km <> s.distance_km OR 
+            t.duration_minutes <> s.duration_minutes
+        )
+        THEN UPDATE SET 
+            sk_org_station_id = s.sk_org_station_id,
+            sk_dest_station_id = s.sk_dest_station_id,
+            sk_train_id = s.sk_train_id,
+            distance_km = s.distance_km,
+            duration_minutes = s.duration_minutes    
+
+        WHEN NOT MATCHED THEN 
+        INSERT (sk_id, id, sk_org_station_id, sk_dest_station_id, sk_train_id, distance_km, duration_minutes, is_active, is_deleted)
+        VALUES(s.sk_id, s.id, s.sk_org_station_id, s.sk_dest_station_id, s.sk_train_id, s.distance_km, s.duration_minutes, true, false)
+
+      update: |
+        UPDATE nessie.silver.routes r
+        SET
+            r.is_active = false,
+            r.is_deleted = true
+        WHERE NOT EXISTS (SELECT 1 FROM ROUTES_CLEANED rc WHERE r.id = rc.id)
+
     depends_on:
       stations:
         catalog: nessie
@@ -482,8 +478,8 @@ tables:
         route_id INT,
         passenger_id INT,
         train_id INT,
-        discount DECIMAL,
-        price DECIMAL,
+        discount DECIMAL(10, 2),
+        price DECIMAL(38, 2),
         class STRING,
         seat_number STRING,
         status STRING,
