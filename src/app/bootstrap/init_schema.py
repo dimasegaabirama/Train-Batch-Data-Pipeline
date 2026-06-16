@@ -54,12 +54,9 @@ def initialize_table(spark: SparkSession):
             destination STRING,
             train_id INT,
             distance_km INT,
-            duration_minutes INT,
-            updated_at TIMESTAMP,
-            created_at TIMESTAMP
+            duration_minutes INT
         )
         USING ICEBERG
-        PARTITIONED BY (days(updated_at))
         """,
         """
         CREATE TABLE IF NOT EXISTS nessie.bronze.tickets(
@@ -151,13 +148,15 @@ def initialize_table(spark: SparkSession):
         # SCD Type 1
         """
         CREATE TABLE IF NOT EXISTS nessie.silver.routes(
+            sk_id BIGINT,
             id INT,
             sk_org_station_id BIGINT,
             sk_dest_station_id BIGINT,
             sk_train_id BIGINT,
             distance_km INT,
             duration_minutes INT,
-            is_active BOOLEAN
+            is_active BOOLEAN,
+            is_deleted BOOLEAN
         )
         USING ICEBERG
         """,

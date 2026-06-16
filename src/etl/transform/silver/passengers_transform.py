@@ -37,6 +37,6 @@ class PassengersTransform(BaseTransform):
         return (self.dataframe
                     .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
                     .withColumn("name", F.trim(F.lower("name")))
-                    .withColumn("gender", F.coalesce(F.trim(F.lower("name")), F.lit("unknown")))
+                    .withColumn("gender", F.coalesce(F.trim(F.lower("gender")), F.lit("unknown")))
                     .withColumn("email", F.trim(F.lower("name")))
         )

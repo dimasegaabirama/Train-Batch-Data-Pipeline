@@ -40,8 +40,13 @@ class BronzeTransform(BaseTransform):
         df = (
             self.dataframe.withColumnRenamed("_id", "id")
             .withColumn("id", F.col("id").isNotNull())
-            .withColumn("created_at", F.to_timestamp("created_at"))
         )
+
+        if "created_at" in df.columns:
+            df = df.withColumn(
+                "created_at", F.to_timestamp("created_at"), format_timestamp
+            )
+            
 
         if "updated_at" in df.columns:
             df = df.withColumn(
