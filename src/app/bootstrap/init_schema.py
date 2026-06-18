@@ -6,6 +6,35 @@ def initialize_namespace(spark: SparkSession):
     for ns in namespaces:
         spark.sql(f"CREATE NAMESPACE IF NOT EXISTS {ns}")
 
+def initialize_seed(spark: SparkSession):
+    seeds = ["""
+        INSERT INTO nessie.silver.status (id, status)
+        VALUES 
+            (1, 'paid'),
+            (2, 'unpaid'),
+            (3, 'cancelled'),
+            (4, 'refunded')
+        """,
+        """
+        INSERT INTO nessie.silver.class (id, class_name)
+        VALUES 
+            (1, 'vip'),
+            (2, 'family'),
+            (3, 'regular'),
+            (4, 'promo')
+        """,
+        """
+        INSERT INTO nessie.silver.payment (id, method)
+        VALUES 
+            (1, 'credit_card'),
+            (2, 'debit_card'),
+            (3, 'e_wallet'),
+            (4, 'direct')
+        """
+    ]
+    for seed in seeds:
+        spark.sql(seed)
+
 
 def initialize_table(spark: SparkSession):
     tables = [

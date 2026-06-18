@@ -52,7 +52,16 @@ docker compose -p mongo \
   --project-directory . \
   -f ./docker/mongo/docker-compose.yaml \
   --env-file $ENV_FILE \
-  up -d
+  up mongo-db -d
+
+echo "⏳ Waiting for Hadoop to be ready..."
+sleep 20
+
+docker compose -p mongo \
+  --project-directory . \
+  -f ./docker/mongo/docker-compose.yaml \
+  --env-file $ENV_FILE \
+  up mongo-express -d
 
 echo "🚀 Starting Spark..."
 docker compose -p spark \

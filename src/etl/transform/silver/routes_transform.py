@@ -50,11 +50,11 @@ class RoutesTransform(BaseTransform):
         """
 
         routes_dataframe = (self.dataframe
-                        .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
-                        .withColumn("origin", F.trim(F.lower("origin")))
-                        .withColumn("destination", F.trim(F.lower("destination")))
-                        .withColumn("distance_km", F.coalesce("distance_km", F.lit(0)))
-                        .withColumn("distance_km", F.coalesce("duration_minutes", F.lit(0)))
+            .withColumn("sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
+            .withColumn("origin", F.trim(F.lower(F.col("origin"))))
+            .withColumn("destination", F.trim(F.lower(F.col("destination"))))
+            .withColumn("distance_km", F.coalesce(F.col("distance_km"), F.lit(0)))
+            .withColumn("duration_minutes", F.coalesce(F.col("duration_minutes"), F.lit(0)))
         )
 
         stations_dataframe = self.session.read.table(self.lookup_table_name["stations"])
@@ -65,23 +65,23 @@ class RoutesTransform(BaseTransform):
 
         r = routes_dataframe.alias("r")
 
-        s1 = stations_df.withColumnRenamed("sk_id", "sk_org_station_id").alias("s1")
-        s2 = stations_df.withColumnRenamed("sk_id", "sk_dest_station_id").alias("s2")
-        tr = trains_df.withColumnRenamed("sk_id", "sk_train_id").alias("tr")
+        s1 = stations_df.withColumnRenamed("sk_id", "sk_org_station_id").where(F.col("is_active") == True).alias("s1")
+        s2 = stations_df.withColumnRenamed("sk_id", "sk_dest_station_id").where(F.col("is_active") == True).alias("s2")
+        tr = trains_df.withColumnRenamed("sk_id", "sk_train_id").where(F.col("is_active") == True).alias("tr")
 
         df_joined = (
             r
-            .join(s1, (s1.code == r.origin) & (s1.is_active == True), "left")
-            .join(s2, (s2.code == r.destination) & (s2.is_active == True), "left")
-            .join(tr, (tr.id == r.train_id) & (tr.is_active == True), "left")
+            .join(s1, F.col("s1.code") == F.col("r.origin"), "left")
+            .join(s2, F.col("s2.code") == F.col("r.destination"), "left")
+            .join(tr, F.col("tr.id") == F.col("r.train_id"), "left")
             .select(
-                r.sk_id,
-                r.id,
-                s1.sk_org_station_id,
-                s2.sk_dest_station_id,
-                tr.sk_train_id,
-                r.distance_km,
-                r.duration_minutes
+                F.col("r.sk_id"),
+                F.col("r.id"),
+                F.col("s1.sk_org_station_id"),
+                F.col("s2.sk_dest_station_id"),
+                F.col("tr.sk_train_id"),
+                F.col("r.distance_km"),
+                F.col("r.duration_minutes")
             )
         )
 
