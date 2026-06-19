@@ -157,14 +157,6 @@ schemas:
 
 tables:
 
-  common_query: &current_record
-    WITH CURRENT_RECORD AS (
-      SELECT 
-          id
-      FROM {catalog}.{schema}.{table_name}
-      WHERE is_active = true
-    )
-
   passengers:
     type: dim
     partitioned_by: updated_at

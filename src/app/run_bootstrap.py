@@ -17,6 +17,9 @@ def main(session: Session, logger: logging.Logger):
     logger.info("SETUP TABLES...")
     initialize_table(session)
 
+    logger.info("SETUP SEED...")
+    initialize_seed(session)
+
     logger.info("SETUP BASE TAG...")
     initialize_tag(session)
 

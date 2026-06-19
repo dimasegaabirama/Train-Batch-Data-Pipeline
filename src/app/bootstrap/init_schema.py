@@ -13,7 +13,8 @@ def initialize_seed(spark: SparkSession):
             (1, 'paid'),
             (2, 'unpaid'),
             (3, 'cancelled'),
-            (4, 'refunded')
+            (4, 'refunded'),
+            (5, 'unknown')
         """,
         """
         INSERT INTO nessie.silver.class (id, class_name)
@@ -21,7 +22,8 @@ def initialize_seed(spark: SparkSession):
             (1, 'vip'),
             (2, 'family'),
             (3, 'regular'),
-            (4, 'promo')
+            (4, 'promo'),
+            (5, 'unknown')
         """,
         """
         INSERT INTO nessie.silver.payment (id, method)
@@ -29,7 +31,8 @@ def initialize_seed(spark: SparkSession):
             (1, 'credit_card'),
             (2, 'debit_card'),
             (3, 'e_wallet'),
-            (4, 'direct')
+            (4, 'direct'),
+            (5, 'unknown'),
         """
     ]
     for seed in seeds:
