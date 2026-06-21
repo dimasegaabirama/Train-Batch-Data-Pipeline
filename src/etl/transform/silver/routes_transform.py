@@ -65,15 +65,15 @@ class RoutesTransform(BaseTransform):
 
         r = routes_dataframe.alias("r")
 
-        s1 = stations_df.withColumnRenamed("sk_id", "sk_org_station_id").where(F.col("is_active") == True).alias("s1")
-        s2 = stations_df.withColumnRenamed("sk_id", "sk_dest_station_id").where(F.col("is_active") == True).alias("s2")
+        s1 = stations_df.withColumnRenamed("sk_id", "sk_org_station_id").where(F.col("is_deleted") == False).alias("s1")
+        s2 = stations_df.withColumnRenamed("sk_id", "sk_dest_station_id").where(F.col("is_deleted") == False).alias("s2")
         tr = trains_df.withColumnRenamed("sk_id", "sk_train_id").where(F.col("is_active") == True).alias("tr")
 
         df_joined = (
             r
-            .join(s1, F.col("s1.code") == F.col("r.origin"), "left")
-            .join(s2, F.col("s2.code") == F.col("r.destination"), "left")
-            .join(tr, F.col("tr.id") == F.col("r.train_id"), "left")
+            .join(s1, F.col("s1.code") == F.col("r.origin"))
+            .join(s2, F.col("s2.code") == F.col("r.destination"))
+            .join(tr, F.col("tr.id") == F.col("r.train_id"))
             .select(
                 F.col("r.sk_id"),
                 F.col("r.id"),

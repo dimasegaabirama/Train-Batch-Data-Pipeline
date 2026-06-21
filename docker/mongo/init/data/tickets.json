@@ -1,42 +1,1136 @@
 [
-  {"_id":1,"passenger_id":1,"route_id":1,"train_id":1,"seat_number":"A1","departure_date":"2024-01-02T07:00:00Z","price":350000,"status":"Paid","class":"VIP","addons":["meal","wifi"],"payment":{"method":"credit_card","bank":"BCA"},"discount":0.1,"created_at":"2024-01-01T10:15:00Z"},
-  {"_id":2,"passenger_id":2,"route_id":2,"train_id":2,"seat_number":"B3","departure_date":"2024-01-03T08:00:00Z","price":400000,"status":"Paid","class":"VIP","addons":["meal"],"payment":{"method":"e_wallet","provider":"GoPay"},"created_at":"2024-01-01T09:00:00Z"},
-  {"_id":3,"passenger_id":3,"route_id":3,"train_id":3,"seat_number":"C5","departure_date":"2024-01-04T09:30:00Z","price":500000,"status":"Paid","class":"VIP","addons":["meal","wifi","insurance"],"payment":{"method":"debit_card","bank":"Mandiri"},"discount":0.15,"created_at":"2024-01-02T11:40:00Z"},
-  {"_id":4,"passenger_id":4,"route_id":4,"train_id":4,"seat_number":"D7","departure_date":"2024-01-05T10:00:00Z","price":180000,"status":"Unpaid","class":"Promo","extra_info":{"promo_code":"HEMAT10","source":"mobile_app"},"created_at":"2024-01-03T08:30:00Z"},
-  {"_id":5,"passenger_id":5,"route_id":5,"train_id":5,"seat_number":"E9","departure_date":"2024-01-06T07:30:00Z","price":300000,"status":"Cancelled","class":"Family","extra_info":{"family_members":3,"child_discount":true},"created_at":"2024-01-04T10:50:00Z"},
-  {"_id":6,"passenger_id":1,"route_id":6,"train_id":6,"seat_number":"A12","departure_date":"2024-01-07T11:00:00Z","price":420000,"status":"Paid","class":"Regular","addons":["insurance"],"created_at":"2024-01-02T13:20:00Z"},
-  {"_id":7,"passenger_id":2,"route_id":7,"train_id":7,"seat_number":"B15","departure_date":"2024-01-08T06:30:00Z","price":320000,"status":"Paid","class":"Regular","created_at":"2024-01-03T09:40:00Z"},
-  {"_id":8,"passenger_id":3,"route_id":8,"train_id":8,"seat_number":"C18","departure_date":"2024-01-09T08:45:00Z","price":450000,"status":"Paid","class":"VIP","addons":["meal","wifi"],"created_at":"2024-01-04T14:00:00Z"},
-  {"_id":9,"passenger_id":4,"route_id":9,"train_id":9,"seat_number":"D20","departure_date":"2024-01-10T09:15:00Z","price":460000,"status":"Paid","class":"VIP","addons":["meal","wifi","insurance"],"created_at":"2024-01-05T07:20:00Z"},
-  {"_id":10,"passenger_id":5,"route_id":10,"train_id":10,"seat_number":"E22","departure_date":"2024-01-11T07:45:00Z","price":600000,"status":"Paid","class":"VIP","addons":["meal","insurance"],"created_at":"2024-01-06T10:55:00Z"},
-  {"_id":11,"passenger_id":1,"route_id":1,"train_id":1,"seat_number":"A2","departure_date":"2024-01-12T07:15:00Z","price":350000,"status":"Paid","class":"Regular","created_at":"2024-01-07T11:10:00Z"},
-  {"_id":12,"passenger_id":2,"route_id":2,"train_id":2,"seat_number":"B4","departure_date":"2024-01-13T06:45:00Z","price":400000,"status":"Unpaid","class":"Promo","extra_info":{"promo_code":"SAVE10","source":"website"},"created_at":"2024-01-08T09:20:00Z"},
-  {"_id":13,"passenger_id":3,"route_id":3,"train_id":3,"seat_number":"C6","departure_date":"2024-01-14T08:20:00Z","price":500000,"status":"Paid","class":"VIP","addons":["wifi","meal"],"created_at":"2024-01-09T15:00:00Z"},
-  {"_id":14,"passenger_id":4,"route_id":4,"train_id":4,"seat_number":"D8","departure_date":"2024-01-15T09:10:00Z","price":180000,"status":"Paid","class":"Regular","created_at":"2024-01-10T07:25:00Z"},
-  {"_id":15,"passenger_id":5,"route_id":5,"train_id":5,"seat_number":"E10","departure_date":"2024-01-16T07:00:00Z","price":300000,"status":"Unpaid","class":"Family","created_at":"2024-01-11T10:00:00Z"},
-  {"_id":16,"passenger_id":1,"route_id":6,"train_id":6,"seat_number":"A13","departure_date":"2024-01-17T11:30:00Z","price":420000,"status":"Paid","class":"Regular","created_at":"2024-01-12T12:30:00Z"},
-  {"_id":17,"passenger_id":2,"route_id":7,"train_id":7,"seat_number":"B16","departure_date":"2024-01-18T06:50:00Z","price":320000,"status":"Cancelled","class":"Promo","extra_info":{"promo_code":"OCTSALE","source":"email"},"created_at":"2024-01-13T09:30:00Z"},
-  {"_id":18,"passenger_id":3,"route_id":8,"train_id":8,"seat_number":"C19","departure_date":"2024-01-19T08:40:00Z","price":450000,"status":"Paid","class":"VIP","addons":["meal"],"created_at":"2024-01-14T08:20:00Z"},
-  {"_id":19,"passenger_id":4,"route_id":9,"train_id":9,"seat_number":"D21","departure_date":"2024-01-20T09:25:00Z","price":460000,"status":"Refunded","class":"VIP","addons":["wifi"],"created_at":"2024-01-15T11:50:00Z"},
-  {"_id":20,"passenger_id":5,"route_id":10,"train_id":10,"seat_number":"E23","departure_date":"2024-01-21T07:35:00Z","price":600000,"status":"Paid","class":"VIP","addons":["insurance","meal"],"created_at":"2024-01-16T13:10:00Z"},
-  {"_id":21,"passenger_id":1,"route_id":1,"train_id":1,"seat_number":"A3","departure_date":"2024-01-22T07:20:00Z","price":350000,"status":"Paid","class":"Regular","created_at":"2024-01-12T12:10:00Z"},
-  {"_id":22,"passenger_id":2,"route_id":2,"train_id":2,"seat_number":"B5","departure_date":"2024-01-23T08:10:00Z","price":400000,"status":"Paid","class":"VIP","addons":["meal","wifi"],"created_at":"2024-01-13T09:10:00Z"},
-  {"_id":23,"passenger_id":3,"route_id":3,"train_id":3,"seat_number":"C7","departure_date":"2024-01-24T09:45:00Z","price":500000,"status":"Unpaid","class":"Promo","extra_info":{"promo_code":"OCTDEAL","source":"mobile_app"},"created_at":"2024-01-14T11:30:00Z"},
-  {"_id":24,"passenger_id":4,"route_id":4,"train_id":4,"seat_number":"D9","departure_date":"2024-01-25T10:30:00Z","price":180000,"status":"Paid","class":"Regular","created_at":"2024-01-10T10:15:00Z"},
-  {"_id":25,"passenger_id":5,"route_id":5,"train_id":5,"seat_number":"E11","departure_date":"2024-01-26T07:50:00Z","price":300000,"status":"Paid","class":"Family","extra_info":{"family_members":2},"created_at":"2024-01-11T14:10:00Z"},
-  {"_id":26,"passenger_id":1,"route_id":6,"train_id":6,"seat_number":"A14","departure_date":"2024-01-27T11:10:00Z","price":420000,"status":"Paid","class":"VIP","addons":["meal"],"created_at":"2024-01-15T13:20:00Z"},
-  {"_id":27,"passenger_id":2,"route_id":7,"train_id":7,"seat_number":"B17","departure_date":"2024-01-28T06:55:00Z","price":320000,"status":"Unpaid","class":"Promo","extra_info":{"promo_code":"OCTVIP","source":"email"},"created_at":"2024-01-16T07:40:00Z"},
-  {"_id":28,"passenger_id":3,"route_id":8,"train_id":8,"seat_number":"C20","departure_date":"2024-01-29T08:50:00Z","price":450000,"status":"Paid","class":"VIP","addons":["wifi","insurance"],"created_at":"2024-01-17T09:50:00Z"},
-  {"_id":29,"passenger_id":4,"route_id":9,"train_id":9,"seat_number":"D22","departure_date":"2024-01-30T09:35:00Z","price":460000,"status":"Paid","class":"VIP","addons":["meal","wifi"],"created_at":"2024-01-18T08:20:00Z"},
-  {"_id":30,"passenger_id":5,"route_id":10,"train_id":10,"seat_number":"E24","departure_date":"2024-01-31T07:40:00Z","price":600000,"status":"Paid","class":"VIP","addons":["meal","insurance"],"created_at":"2024-01-19T12:15:00Z"},
-  {"_id":31,"passenger_id":1,"route_id":1,"train_id":1,"seat_number":"A4","departure_date":"2024-02-01T07:25:00Z","price":350000,"status":"Paid","class":"Regular","created_at":"2024-01-20T14:05:00Z"},
-  {"_id":32,"passenger_id":2,"route_id":2,"train_id":2,"seat_number":"B6","departure_date":"2024-02-02T08:20:00Z","price":400000,"status":"Paid","class":"VIP","addons":["wifi"],"created_at":"2024-01-21T10:20:00Z"},
-  {"_id":33,"passenger_id":3,"route_id":3,"train_id":3,"seat_number":"C8","departure_date":"2024-02-03T09:55:00Z","price":500000,"status":"Paid","class":"VIP","addons":["meal","wifi"],"created_at":"2024-01-22T08:10:00Z"},
-  {"_id":34,"passenger_id":4,"route_id":4,"train_id":4,"seat_number":"D10","departure_date":"2024-02-04T10:40:00Z","price":180000,"status":"Unpaid","class":"Promo","extra_info":{"promo_code":"NOVSALE","source":"website"},"created_at":"2024-01-23T10:30:00Z"},
-  {"_id":35,"passenger_id":5,"route_id":5,"train_id":5,"seat_number":"E12","departure_date":"2024-02-05T07:55:00Z","price":300000,"status":"Paid","class":"Family","created_at":"2024-01-24T12:45:00Z"},
-  {"_id":36,"passenger_id":1,"route_id":6,"train_id":6,"seat_number":"A15","departure_date":"2024-02-06T11:20:00Z","price":420000,"status":"Paid","class":"VIP","addons":["insurance"],"created_at":"2024-01-25T13:25:00Z"},
-  {"_id":37,"passenger_id":2,"route_id":7,"train_id":7,"seat_number":"B18","departure_date":"2024-02-07T07:00:00Z","price":320000,"status":"Paid","class":"Regular","created_at":"2024-01-26T10:00:00Z"},
-  {"_id":38,"passenger_id":3,"route_id":8,"train_id":8,"seat_number":"C21","departure_date":"2024-02-08T09:00:00Z","price":450000,"status":"Paid","class":"VIP","addons":["meal"],"created_at":"2024-01-27T11:30:00Z"},
-  {"_id":39,"passenger_id":4,"route_id":9,"train_id":9,"seat_number":"D23","departure_date":"2024-02-09T09:45:00Z","price":460000,"status":"Cancelled","class":"VIP","created_at":"2024-01-28T14:55:00Z"},
-  {"_id":40,"passenger_id":5,"route_id":10,"train_id":10,"seat_number":"E25","departure_date":"2024-02-10T08:00:00Z","price":600000,"status":"Paid","class":"VIP","addons":["meal","insurance"],"created_at":"2024-01-29T09:35:00Z"}
+  {
+    "_id": 1,
+    "ticket_id": "TKT-20240101-0001",
+    "passenger_id": 1,
+    "route_id": 1,
+    "train_id": 1,
+    "seat_number": "A1",
+    "departure_date": "2024-01-02T07:00:00Z",
+    "price": 350000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "wifi"
+    ],
+    "payment": {
+      "method": "credit_card",
+      "bank": "BCA"
+    },
+    "discount": 0.1,
+    "created_at": "2024-01-01T10:15:00Z"
+  },
+  {
+    "_id": 2,
+    "ticket_id": "TKT-20240101-0002",
+    "passenger_id": 2,
+    "route_id": 2,
+    "train_id": 2,
+    "seat_number": "B3",
+    "departure_date": "2024-01-03T08:00:00Z",
+    "price": 400000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal"
+    ],
+    "payment": {
+      "method": "e_wallet",
+      "provider": "GoPay"
+    },
+    "created_at": "2024-01-01T09:00:00Z"
+  },
+  {
+    "_id": 3,
+    "ticket_id": "TKT-20240102-0003",
+    "passenger_id": 3,
+    "route_id": 3,
+    "train_id": 3,
+    "seat_number": "C5",
+    "departure_date": "2024-01-04T09:30:00Z",
+    "price": 500000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "wifi",
+      "insurance"
+    ],
+    "payment": {
+      "method": "debit_card",
+      "bank": "Mandiri"
+    },
+    "discount": 0.15,
+    "created_at": "2024-01-02T11:40:00Z"
+  },
+  {
+    "_id": 4,
+    "ticket_id": "TKT-20240103-0004",
+    "passenger_id": 4,
+    "route_id": 4,
+    "train_id": 4,
+    "seat_number": "D7",
+    "departure_date": "2024-01-05T10:00:00Z",
+    "price": 180000,
+    "status": "unpaid",
+    "class": "Promo",
+    "extra_info": {
+      "promo_code": "HEMAT10",
+      "source": "mobile_app"
+    },
+    "created_at": "2024-01-03T08:30:00Z"
+  },
+  {
+    "_id": 5,
+    "ticket_id": "TKT-20240104-0005",
+    "passenger_id": 5,
+    "route_id": 5,
+    "train_id": 5,
+    "seat_number": "E9",
+    "departure_date": "2024-01-06T07:30:00Z",
+    "price": 300000,
+    "status": "cancelled",
+    "class": "Family",
+    "extra_info": {
+      "family_members": 3,
+      "child_discount": true
+    },
+    "created_at": "2024-01-04T10:50:00Z"
+  },
+  {
+    "_id": 6,
+    "ticket_id": "TKT-20240102-0006",
+    "passenger_id": 1,
+    "route_id": 6,
+    "train_id": 6,
+    "seat_number": "A12",
+    "departure_date": "2024-01-07T11:00:00Z",
+    "price": 420000,
+    "status": "paid",
+    "class": "Regular",
+    "addons": [
+      "insurance"
+    ],
+    "payment": {
+      "method": "direct",
+      "location": "loket"
+    },
+    "created_at": "2024-01-02T13:20:00Z"
+  },
+  {
+    "_id": 7,
+    "ticket_id": "TKT-20240103-0007",
+    "passenger_id": 2,
+    "route_id": 7,
+    "train_id": 7,
+    "seat_number": "B15",
+    "departure_date": "2024-01-08T06:30:00Z",
+    "price": 320000,
+    "status": "paid",
+    "class": "Regular",
+    "payment": {
+      "method": "bank_transfer",
+      "bank": "BRI"
+    },
+    "created_at": "2024-01-03T09:40:00Z"
+  },
+  {
+    "_id": 8,
+    "ticket_id": "TKT-20240104-0008",
+    "passenger_id": 3,
+    "route_id": 8,
+    "train_id": 8,
+    "seat_number": "C18",
+    "departure_date": "2024-01-09T08:45:00Z",
+    "price": 450000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "wifi"
+    ],
+    "payment": {
+      "method": "e_wallet",
+      "provider": "OVO"
+    },
+    "created_at": "2024-01-04T14:00:00Z"
+  },
+  {
+    "_id": 9,
+    "ticket_id": "TKT-20240105-0009",
+    "passenger_id": 4,
+    "route_id": 9,
+    "train_id": 9,
+    "seat_number": "D20",
+    "departure_date": "2024-01-10T09:15:00Z",
+    "price": 460000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "wifi",
+      "insurance"
+    ],
+    "payment": {
+      "method": "credit_card",
+      "bank": "CIMB"
+    },
+    "created_at": "2024-01-05T07:20:00Z"
+  },
+  {
+    "_id": 10,
+    "ticket_id": "TKT-20240106-0010",
+    "passenger_id": 5,
+    "route_id": 10,
+    "train_id": 10,
+    "seat_number": "E22",
+    "departure_date": "2024-01-11T07:45:00Z",
+    "price": 600000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "insurance"
+    ],
+    "payment": {
+      "method": "direct",
+      "location": "loket"
+    },
+    "created_at": "2024-01-06T10:55:00Z"
+  },
+  {
+    "_id": 11,
+    "ticket_id": "TKT-20240107-0011",
+    "passenger_id": 1,
+    "route_id": 1,
+    "train_id": 1,
+    "seat_number": "A2",
+    "departure_date": "2024-01-12T07:15:00Z",
+    "price": 350000,
+    "status": "paid",
+    "class": "Regular",
+    "payment": {
+      "method": "credit_card",
+      "bank": "Mandiri"
+    },
+    "created_at": "2024-01-07T11:10:00Z"
+  },
+  {
+    "_id": 12,
+    "ticket_id": "TKT-20240108-0012",
+    "passenger_id": 2,
+    "route_id": 2,
+    "train_id": 2,
+    "seat_number": "B4",
+    "departure_date": "2024-01-13T06:45:00Z",
+    "price": 400000,
+    "status": "unpaid",
+    "class": "Promo",
+    "extra_info": {
+      "promo_code": "SAVE10",
+      "source": "website"
+    },
+    "created_at": "2024-01-08T09:20:00Z"
+  },
+  {
+    "_id": 13,
+    "ticket_id": "TKT-20240109-0013",
+    "passenger_id": 3,
+    "route_id": 3,
+    "train_id": 3,
+    "seat_number": "C6",
+    "departure_date": "2024-01-14T08:20:00Z",
+    "price": 500000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "wifi",
+      "meal"
+    ],
+    "payment": {
+      "method": "debit_card",
+      "bank": "BNI"
+    },
+    "created_at": "2024-01-09T15:00:00Z"
+  },
+  {
+    "_id": 14,
+    "ticket_id": "TKT-20240110-0014",
+    "passenger_id": 4,
+    "route_id": 4,
+    "train_id": 4,
+    "seat_number": "D8",
+    "departure_date": "2024-01-15T09:10:00Z",
+    "price": 180000,
+    "status": "paid",
+    "class": "Regular",
+    "payment": {
+      "method": "direct",
+      "location": "loket"
+    },
+    "created_at": "2024-01-10T07:25:00Z"
+  },
+  {
+    "_id": 15,
+    "ticket_id": "TKT-20240111-0015",
+    "passenger_id": 5,
+    "route_id": 5,
+    "train_id": 5,
+    "seat_number": "E10",
+    "departure_date": "2024-01-16T07:00:00Z",
+    "price": 300000,
+    "status": "unpaid",
+    "class": "Family",
+    "created_at": "2024-01-11T10:00:00Z"
+  },
+  {
+    "_id": 16,
+    "ticket_id": "TKT-20240112-0016",
+    "passenger_id": 1,
+    "route_id": 6,
+    "train_id": 6,
+    "seat_number": "A13",
+    "departure_date": "2024-01-17T11:30:00Z",
+    "price": 420000,
+    "status": "paid",
+    "class": "Regular",
+    "payment": {
+      "method": "bank_transfer",
+      "bank": "BTN"
+    },
+    "created_at": "2024-01-12T12:30:00Z"
+  },
+  {
+    "_id": 17,
+    "ticket_id": "TKT-20240113-0017",
+    "passenger_id": 2,
+    "route_id": 7,
+    "train_id": 7,
+    "seat_number": "B16",
+    "departure_date": "2024-01-18T06:50:00Z",
+    "price": 320000,
+    "status": "cancelled",
+    "class": "Promo",
+    "extra_info": {
+      "promo_code": "OCTSALE",
+      "source": "email"
+    },
+    "created_at": "2024-01-13T09:30:00Z"
+  },
+  {
+    "_id": 18,
+    "ticket_id": "TKT-20240114-0018",
+    "passenger_id": 3,
+    "route_id": 8,
+    "train_id": 8,
+    "seat_number": "C19",
+    "departure_date": "2024-01-19T08:40:00Z",
+    "price": 450000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal"
+    ],
+    "payment": {
+      "method": "e_wallet",
+      "provider": "Dana"
+    },
+    "created_at": "2024-01-14T08:20:00Z"
+  },
+  {
+    "_id": 19,
+    "ticket_id": "TKT-20240115-0019",
+    "passenger_id": 4,
+    "route_id": 9,
+    "train_id": 9,
+    "seat_number": "D21",
+    "departure_date": "2024-01-20T09:25:00Z",
+    "price": 460000,
+    "status": "refunded",
+    "class": "VIP",
+    "addons": [
+      "wifi"
+    ],
+    "payment": {
+      "method": "debit_card",
+      "bank": "BRI"
+    },
+    "created_at": "2024-01-15T11:50:00Z"
+  },
+  {
+    "_id": 20,
+    "ticket_id": "TKT-20240116-0020",
+    "passenger_id": 5,
+    "route_id": 10,
+    "train_id": 10,
+    "seat_number": "E23",
+    "departure_date": "2024-01-21T07:35:00Z",
+    "price": 600000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "insurance",
+      "meal"
+    ],
+    "payment": {
+      "method": "e_wallet",
+      "provider": "GoPay"
+    },
+    "created_at": "2024-01-16T13:10:00Z"
+  },
+  {
+    "_id": 21,
+    "ticket_id": "TKT-20240112-0021",
+    "passenger_id": 1,
+    "route_id": 1,
+    "train_id": 1,
+    "seat_number": "A3",
+    "departure_date": "2024-01-22T07:20:00Z",
+    "price": 350000,
+    "status": "paid",
+    "class": "Regular",
+    "payment": {
+      "method": "credit_card",
+      "bank": "BNI"
+    },
+    "created_at": "2024-01-12T12:10:00Z"
+  },
+  {
+    "_id": 22,
+    "ticket_id": "TKT-20240113-0022",
+    "passenger_id": 2,
+    "route_id": 2,
+    "train_id": 2,
+    "seat_number": "B5",
+    "departure_date": "2024-01-23T08:10:00Z",
+    "price": 400000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "wifi"
+    ],
+    "payment": {
+      "method": "e_wallet",
+      "provider": "ShopeePay"
+    },
+    "created_at": "2024-01-13T09:10:00Z"
+  },
+  {
+    "_id": 23,
+    "ticket_id": "TKT-20240114-0023",
+    "passenger_id": 3,
+    "route_id": 3,
+    "train_id": 3,
+    "seat_number": "C7",
+    "departure_date": "2024-01-24T09:45:00Z",
+    "price": 500000,
+    "status": "unpaid",
+    "class": "Promo",
+    "extra_info": {
+      "promo_code": "OCTDEAL",
+      "source": "mobile_app"
+    },
+    "created_at": "2024-01-14T11:30:00Z"
+  },
+  {
+    "_id": 24,
+    "ticket_id": "TKT-20240110-0024",
+    "passenger_id": 4,
+    "route_id": 4,
+    "train_id": 4,
+    "seat_number": "D9",
+    "departure_date": "2024-01-25T10:30:00Z",
+    "price": 180000,
+    "status": "paid",
+    "class": "Regular",
+    "payment": {
+      "method": "direct",
+      "location": "loket"
+    },
+    "created_at": "2024-01-10T10:15:00Z"
+  },
+  {
+    "_id": 25,
+    "ticket_id": "TKT-20240111-0025",
+    "passenger_id": 5,
+    "route_id": 5,
+    "train_id": 5,
+    "seat_number": "E11",
+    "departure_date": "2024-01-26T07:50:00Z",
+    "price": 300000,
+    "status": "paid",
+    "class": "Family",
+    "extra_info": {
+      "family_members": 2
+    },
+    "payment": {
+      "method": "bank_transfer",
+      "bank": "BRI"
+    },
+    "created_at": "2024-01-11T14:10:00Z"
+  },
+  {
+    "_id": 26,
+    "ticket_id": "TKT-20240115-0026",
+    "passenger_id": 1,
+    "route_id": 6,
+    "train_id": 6,
+    "seat_number": "A14",
+    "departure_date": "2024-01-27T11:10:00Z",
+    "price": 420000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal"
+    ],
+    "payment": {
+      "method": "credit_card",
+      "bank": "BCA"
+    },
+    "created_at": "2024-01-15T13:20:00Z"
+  },
+  {
+    "_id": 27,
+    "ticket_id": "TKT-20240116-0027",
+    "passenger_id": 2,
+    "route_id": 7,
+    "train_id": 7,
+    "seat_number": "B17",
+    "departure_date": "2024-01-28T06:55:00Z",
+    "price": 320000,
+    "status": "unpaid",
+    "class": "Promo",
+    "extra_info": {
+      "promo_code": "OCTVIP",
+      "source": "email"
+    },
+    "created_at": "2024-01-16T07:40:00Z"
+  },
+  {
+    "_id": 28,
+    "ticket_id": "TKT-20240117-0028",
+    "passenger_id": 3,
+    "route_id": 8,
+    "train_id": 8,
+    "seat_number": "C20",
+    "departure_date": "2024-01-29T08:50:00Z",
+    "price": 450000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "wifi",
+      "insurance"
+    ],
+    "payment": {
+      "method": "debit_card",
+      "bank": "Mandiri"
+    },
+    "created_at": "2024-01-17T09:50:00Z"
+  },
+  {
+    "_id": 29,
+    "ticket_id": "TKT-20240118-0029",
+    "passenger_id": 4,
+    "route_id": 9,
+    "train_id": 9,
+    "seat_number": "D22",
+    "departure_date": "2024-01-30T09:35:00Z",
+    "price": 460000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "wifi"
+    ],
+    "payment": {
+      "method": "credit_card",
+      "bank": "CIMB"
+    },
+    "created_at": "2024-01-18T08:20:00Z"
+  },
+  {
+    "_id": 30,
+    "ticket_id": "TKT-20240119-0030",
+    "passenger_id": 5,
+    "route_id": 10,
+    "train_id": 10,
+    "seat_number": "E24",
+    "departure_date": "2024-01-31T07:40:00Z",
+    "price": 600000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "insurance"
+    ],
+    "payment": {
+      "method": "e_wallet",
+      "provider": "OVO"
+    },
+    "created_at": "2024-01-19T12:15:00Z"
+  },
+  {
+    "_id": 31,
+    "ticket_id": "TKT-20240120-0031",
+    "passenger_id": 1,
+    "route_id": 1,
+    "train_id": 1,
+    "seat_number": "A4",
+    "departure_date": "2024-02-01T07:25:00Z",
+    "price": 350000,
+    "status": "paid",
+    "class": "Regular",
+    "payment": {
+      "method": "bank_transfer",
+      "bank": "BNI"
+    },
+    "created_at": "2024-01-20T14:05:00Z"
+  },
+  {
+    "_id": 32,
+    "ticket_id": "TKT-20240121-0032",
+    "passenger_id": 2,
+    "route_id": 2,
+    "train_id": 2,
+    "seat_number": "B6",
+    "departure_date": "2024-02-02T08:20:00Z",
+    "price": 400000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "wifi"
+    ],
+    "payment": {
+      "method": "e_wallet",
+      "provider": "Dana"
+    },
+    "created_at": "2024-01-21T10:20:00Z"
+  },
+  {
+    "_id": 33,
+    "ticket_id": "TKT-20240122-0033",
+    "passenger_id": 3,
+    "route_id": 3,
+    "train_id": 3,
+    "seat_number": "C8",
+    "departure_date": "2024-02-03T09:55:00Z",
+    "price": 500000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "wifi"
+    ],
+    "payment": {
+      "method": "credit_card",
+      "bank": "Mandiri"
+    },
+    "created_at": "2024-01-22T08:10:00Z"
+  },
+  {
+    "_id": 34,
+    "ticket_id": "TKT-20240123-0034",
+    "passenger_id": 4,
+    "route_id": 4,
+    "train_id": 4,
+    "seat_number": "D10",
+    "departure_date": "2024-02-04T10:40:00Z",
+    "price": 180000,
+    "status": "unpaid",
+    "class": "Promo",
+    "extra_info": {
+      "promo_code": "NOVSALE",
+      "source": "website"
+    },
+    "created_at": "2024-01-23T10:30:00Z"
+  },
+  {
+    "_id": 35,
+    "ticket_id": "TKT-20240124-0035",
+    "passenger_id": 5,
+    "route_id": 5,
+    "train_id": 5,
+    "seat_number": "E12",
+    "departure_date": "2024-02-05T07:55:00Z",
+    "price": 300000,
+    "status": "paid",
+    "class": "Family",
+    "payment": {
+      "method": "direct",
+      "location": "loket"
+    },
+    "created_at": "2024-01-24T12:45:00Z"
+  },
+  {
+    "_id": 36,
+    "ticket_id": "TKT-20240125-0036",
+    "passenger_id": 1,
+    "route_id": 6,
+    "train_id": 6,
+    "seat_number": "A15",
+    "departure_date": "2024-02-06T11:20:00Z",
+    "price": 420000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "insurance"
+    ],
+    "payment": {
+      "method": "debit_card",
+      "bank": "BNI"
+    },
+    "created_at": "2024-01-25T13:25:00Z"
+  },
+  {
+    "_id": 37,
+    "ticket_id": "TKT-20240126-0037",
+    "passenger_id": 2,
+    "route_id": 7,
+    "train_id": 7,
+    "seat_number": "B18",
+    "departure_date": "2024-02-07T07:00:00Z",
+    "price": 320000,
+    "status": "paid",
+    "class": "Regular",
+    "payment": {
+      "method": "bank_transfer",
+      "bank": "BTN"
+    },
+    "created_at": "2024-01-26T10:00:00Z"
+  },
+  {
+    "_id": 38,
+    "ticket_id": "TKT-20240127-0038",
+    "passenger_id": 3,
+    "route_id": 8,
+    "train_id": 8,
+    "seat_number": "C21",
+    "departure_date": "2024-02-08T09:00:00Z",
+    "price": 450000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal"
+    ],
+    "payment": {
+      "method": "e_wallet",
+      "provider": "ShopeePay"
+    },
+    "created_at": "2024-01-27T11:30:00Z"
+  },
+  {
+    "_id": 39,
+    "ticket_id": "TKT-20240128-0039",
+    "passenger_id": 4,
+    "route_id": 9,
+    "train_id": 9,
+    "seat_number": "D23",
+    "departure_date": "2024-02-09T09:45:00Z",
+    "price": 460000,
+    "status": "cancelled",
+    "class": "VIP",
+    "created_at": "2024-01-28T14:55:00Z"
+  },
+  {
+    "_id": 40,
+    "ticket_id": "TKT-20240129-0040",
+    "passenger_id": 5,
+    "route_id": 10,
+    "train_id": 10,
+    "seat_number": "E25",
+    "departure_date": "2024-02-10T08:00:00Z",
+    "price": 600000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "insurance"
+    ],
+    "payment": {
+      "method": "debit_card",
+      "bank": "BRI"
+    },
+    "created_at": "2024-01-29T09:35:00Z"
+  },
+  {
+    "_id": 41,
+    "ticket_id": "TKT-20240130-0041",
+    "passenger_id": 6,
+    "route_id": 1,
+    "train_id": 1,
+    "seat_number": "F1",
+    "departure_date": "2024-02-11T07:00:00Z",
+    "price": 350000,
+    "status": "paid",
+    "class": "Regular",
+    "payment": {
+      "method": "credit_card",
+      "bank": "BNI"
+    },
+    "created_at": "2024-01-30T08:00:00Z"
+  },
+  {
+    "_id": 42,
+    "ticket_id": "TKT-20240130-0042",
+    "passenger_id": 7,
+    "route_id": 2,
+    "train_id": 2,
+    "seat_number": "G3",
+    "departure_date": "2024-02-12T08:00:00Z",
+    "price": 400000,
+    "status": "unpaid",
+    "class": "Promo",
+    "extra_info": {
+      "promo_code": "FEB10",
+      "source": "mobile_app"
+    },
+    "created_at": "2024-01-30T09:30:00Z"
+  },
+  {
+    "_id": 43,
+    "ticket_id": "TKT-20240131-0043",
+    "passenger_id": 8,
+    "route_id": 3,
+    "train_id": 3,
+    "seat_number": "H5",
+    "departure_date": "2024-02-13T09:30:00Z",
+    "price": 500000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "wifi",
+      "insurance"
+    ],
+    "payment": {
+      "method": "e_wallet",
+      "provider": "OVO"
+    },
+    "created_at": "2024-01-31T10:00:00Z"
+  },
+  {
+    "_id": 44,
+    "ticket_id": "TKT-20240131-0044",
+    "passenger_id": 9,
+    "route_id": 4,
+    "train_id": 4,
+    "seat_number": "I7",
+    "departure_date": "2024-02-14T10:00:00Z",
+    "price": 180000,
+    "status": "cancelled",
+    "class": "Promo",
+    "extra_info": {
+      "promo_code": "VALE14",
+      "source": "website"
+    },
+    "created_at": "2024-01-31T11:15:00Z"
+  },
+  {
+    "_id": 45,
+    "ticket_id": "TKT-20240201-0045",
+    "passenger_id": 10,
+    "route_id": 5,
+    "train_id": 5,
+    "seat_number": "J9",
+    "departure_date": "2024-02-15T07:30:00Z",
+    "price": 300000,
+    "status": "paid",
+    "class": "Family",
+    "extra_info": {
+      "family_members": 4,
+      "child_discount": true
+    },
+    "payment": {
+      "method": "direct",
+      "location": "loket"
+    },
+    "created_at": "2024-02-01T08:00:00Z"
+  },
+  {
+    "_id": 46,
+    "ticket_id": "TKT-20240201-0046",
+    "passenger_id": 6,
+    "route_id": 6,
+    "train_id": 6,
+    "seat_number": "F12",
+    "departure_date": "2024-02-16T11:00:00Z",
+    "price": 420000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "wifi"
+    ],
+    "payment": {
+      "method": "credit_card",
+      "bank": "BCA"
+    },
+    "created_at": "2024-02-01T09:45:00Z"
+  },
+  {
+    "_id": 47,
+    "ticket_id": "TKT-20240202-0047",
+    "passenger_id": 7,
+    "route_id": 7,
+    "train_id": 7,
+    "seat_number": "G15",
+    "departure_date": "2024-02-17T06:30:00Z",
+    "price": 320000,
+    "status": "refunded",
+    "class": "Regular",
+    "payment": {
+      "method": "debit_card",
+      "bank": "Mandiri"
+    },
+    "created_at": "2024-02-02T10:20:00Z"
+  },
+  {
+    "_id": 48,
+    "ticket_id": "TKT-20240203-0048",
+    "passenger_id": 8,
+    "route_id": 8,
+    "train_id": 8,
+    "seat_number": "H18",
+    "departure_date": "2024-02-18T08:45:00Z",
+    "price": 450000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal"
+    ],
+    "payment": {
+      "method": "e_wallet",
+      "provider": "Dana"
+    },
+    "created_at": "2024-02-03T07:50:00Z"
+  },
+  {
+    "_id": 49,
+    "ticket_id": "TKT-20240204-0049",
+    "passenger_id": 9,
+    "route_id": 9,
+    "train_id": 9,
+    "seat_number": "I20",
+    "departure_date": "2024-02-19T09:15:00Z",
+    "price": 460000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "wifi",
+      "insurance"
+    ],
+    "payment": {
+      "method": "credit_card",
+      "bank": "CIMB"
+    },
+    "created_at": "2024-02-04T08:30:00Z"
+  },
+  {
+    "_id": 50,
+    "ticket_id": "TKT-20240205-0050",
+    "passenger_id": 10,
+    "route_id": 10,
+    "train_id": 10,
+    "seat_number": "J22",
+    "departure_date": "2024-02-20T07:45:00Z",
+    "price": 600000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "wifi",
+      "insurance"
+    ],
+    "payment": {
+      "method": "e_wallet",
+      "provider": "GoPay"
+    },
+    "created_at": "2024-02-05T09:00:00Z"
+  },
+  {
+    "_id": 51,
+    "ticket_id": "TKT-20240206-0051",
+    "passenger_id": 1,
+    "route_id": 3,
+    "train_id": 3,
+    "seat_number": "A6",
+    "departure_date": "2024-02-21T09:30:00Z",
+    "price": 500000,
+    "status": "unpaid",
+    "class": "VIP",
+    "extra_info": {
+      "note": "pending_verification"
+    },
+    "created_at": "2024-02-06T10:00:00Z"
+  },
+  {
+    "_id": 52,
+    "ticket_id": "TKT-20240207-0052",
+    "passenger_id": 2,
+    "route_id": 4,
+    "train_id": 4,
+    "seat_number": "B9",
+    "departure_date": "2024-02-22T10:00:00Z",
+    "price": 180000,
+    "status": "paid",
+    "class": "Regular",
+    "payment": {
+      "method": "bank_transfer",
+      "bank": "BNI"
+    },
+    "created_at": "2024-02-07T08:00:00Z"
+  },
+  {
+    "_id": 53,
+    "ticket_id": "TKT-20240208-0053",
+    "passenger_id": 3,
+    "route_id": 5,
+    "train_id": 5,
+    "seat_number": "C11",
+    "departure_date": "2024-02-23T07:30:00Z",
+    "price": 300000,
+    "status": "paid",
+    "class": "Family",
+    "extra_info": {
+      "family_members": 2
+    },
+    "payment": {
+      "method": "debit_card",
+      "bank": "BNI"
+    },
+    "created_at": "2024-02-08T07:30:00Z"
+  },
+  {
+    "_id": 54,
+    "ticket_id": "TKT-20240209-0054",
+    "passenger_id": 4,
+    "route_id": 6,
+    "train_id": 6,
+    "seat_number": "D14",
+    "departure_date": "2024-02-24T11:00:00Z",
+    "price": 420000,
+    "status": "cancelled",
+    "class": "VIP",
+    "addons": [
+      "meal"
+    ],
+    "created_at": "2024-02-09T09:00:00Z"
+  },
+  {
+    "_id": 55,
+    "ticket_id": "TKT-20240210-0055",
+    "passenger_id": 5,
+    "route_id": 7,
+    "train_id": 7,
+    "seat_number": "E17",
+    "departure_date": "2024-02-25T06:30:00Z",
+    "price": 320000,
+    "status": "paid",
+    "class": "Regular",
+    "payment": {
+      "method": "credit_card",
+      "bank": "BCA"
+    },
+    "created_at": "2024-02-10T08:45:00Z"
+  },
+  {
+    "_id": 56,
+    "ticket_id": "TKT-20240211-0056",
+    "passenger_id": 6,
+    "route_id": 8,
+    "train_id": 8,
+    "seat_number": "F20",
+    "departure_date": "2024-02-26T08:45:00Z",
+    "price": 450000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "wifi",
+      "meal",
+      "insurance"
+    ],
+    "payment": {
+      "method": "e_wallet",
+      "provider": "ShopeePay"
+    },
+    "created_at": "2024-02-11T10:10:00Z"
+  },
+  {
+    "_id": 57,
+    "ticket_id": "TKT-20240212-0057",
+    "passenger_id": 7,
+    "route_id": 9,
+    "train_id": 9,
+    "seat_number": "G22",
+    "departure_date": "2024-02-27T09:15:00Z",
+    "price": 460000,
+    "status": "refunded",
+    "class": "VIP",
+    "addons": [
+      "meal"
+    ],
+    "payment": {
+      "method": "debit_card",
+      "bank": "BRI"
+    },
+    "created_at": "2024-02-12T11:00:00Z"
+  },
+  {
+    "_id": 58,
+    "ticket_id": "TKT-20240213-0058",
+    "passenger_id": 8,
+    "route_id": 10,
+    "train_id": 10,
+    "seat_number": "H24",
+    "departure_date": "2024-02-28T07:45:00Z",
+    "price": 600000,
+    "status": "paid",
+    "class": "VIP",
+    "addons": [
+      "meal",
+      "insurance"
+    ],
+    "payment": {
+      "method": "credit_card",
+      "bank": "Mandiri"
+    },
+    "discount": 0.05,
+    "created_at": "2024-02-13T09:30:00Z"
+  },
+  {
+    "_id": 59,
+    "ticket_id": "TKT-20240214-0059",
+    "passenger_id": 9,
+    "route_id": 1,
+    "train_id": 1,
+    "seat_number": "I1",
+    "departure_date": "2024-02-29T07:00:00Z",
+    "price": 350000,
+    "status": "paid",
+    "class": "Regular",
+    "payment": {
+      "method": "bank_transfer",
+      "bank": "BRI"
+    },
+    "created_at": "2024-02-14T08:15:00Z"
+  },
+  {
+    "_id": 60,
+    "ticket_id": "TKT-20240215-0060",
+    "passenger_id": 10,
+    "route_id": 2,
+    "train_id": 2,
+    "seat_number": "J3",
+    "departure_date": "2024-03-01T08:00:00Z",
+    "price": 400000,
+    "status": "unpaid",
+    "class": "Promo",
+    "extra_info": {
+      "promo_code": "MARCH5",
+      "source": "mobile_app"
+    },
+    "created_at": "2024-02-15T10:00:00Z"
+  }
 ]

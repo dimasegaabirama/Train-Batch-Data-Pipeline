@@ -13,8 +13,7 @@ def initialize_seed(spark: SparkSession):
             (1, 'paid'),
             (2, 'unpaid'),
             (3, 'cancelled'),
-            (4, 'refunded'),
-            (5, 'unknown')
+            (4, 'refunded')
         """,
         """
         INSERT INTO nessie.silver.class (id, class_name)
@@ -22,8 +21,7 @@ def initialize_seed(spark: SparkSession):
             (1, 'vip'),
             (2, 'family'),
             (3, 'regular'),
-            (4, 'promo'),
-            (5, 'unknown')
+            (4, 'promo')
         """,
         """
         INSERT INTO nessie.silver.payment (id, method)
@@ -31,8 +29,8 @@ def initialize_seed(spark: SparkSession):
             (1, 'credit_card'),
             (2, 'debit_card'),
             (3, 'e_wallet'),
-            (4, 'direct'),
-            (5, 'unknown'),
+            (4, 'bank_transfer'),
+            (5, 'cash')
         """
     ]
     for seed in seeds:
@@ -73,11 +71,10 @@ def initialize_table(spark: SparkSession):
             name STRING,
             city STRING,
             code STRING,
-            updated_at TIMESTAMP,
-            created_at TIMESTAMP
+            batch_end_date TIMESTAMP
         )
         USING ICEBERG
-        PARTITIONED BY (days(updated_at))
+        PARTITIONED BY (days(batch_end_date))
         """,
         """
         CREATE TABLE IF NOT EXISTS nessie.bronze.routes(
@@ -86,9 +83,11 @@ def initialize_table(spark: SparkSession):
             destination STRING,
             train_id INT,
             distance_km INT,
-            duration_minutes INT
+            duration_minutes INT,
+            batch_end_date TIMESTAMP
         )
         USING ICEBERG
+        PARTITIONED BY (days(batch_end_date))
         """,
         """
         CREATE TABLE IF NOT EXISTS nessie.bronze.tickets(
@@ -136,7 +135,7 @@ def initialize_table(spark: SparkSession):
             end_date TIMESTAMP
         )
         USING ICEBERG
-        PARTITIONED BY (bucket(8, id))
+        PARTITIONED BY (days(start_date), bucket(8, sk_id))
         """,
         """
         ALTER TABLE nessie.silver.passengers
@@ -166,15 +165,13 @@ def initialize_table(spark: SparkSession):
             name STRING,
             city STRING,
             code STRING,
-            is_active BOOLEAN,
-            start_date TIMESTAMP,
-            end_date TIMESTAMP
+            is_deleted BOOLEAN
         )
         USING ICEBERG
         """,
         """
         ALTER TABLE nessie.silver.stations
-        WRITE ORDERED BY id, start_date
+        WRITE ORDERED BY id
         """,
 
         # SCD Type 1
@@ -187,7 +184,6 @@ def initialize_table(spark: SparkSession):
             sk_train_id BIGINT,
             distance_km INT,
             duration_minutes INT,
-            is_active BOOLEAN,
             is_deleted BOOLEAN
         )
         USING ICEBERG
@@ -240,22 +236,36 @@ def initialize_table(spark: SparkSession):
         """
         CREATE TABLE IF NOT EXISTS nessie.silver.tickets(
             id INT,
-            sk_passenger_id BIGINT,
-            sk_train_id BIGINT,
-            status_id INT,
-            class_id INT,
-            payment_id INT,
-            route_id INT,
+            route_sk_id BIGINT,
+            passenger_sk_id BIGINT,
+            train_sk_id BIGINT,
+            
             price DECIMAL(38, 2),
             discount DECIMAL(10, 2),
             final_price DECIMAL(38, 2),
-            seat_number STRING,
-            source STRING,
+            
+            class_id INT,
+            payment_id INT,
+
+            paid_at TIMESTAMP,
+            cancelled_at TIMESTAMP,
+            refunded_at TIMESTAMP,
+            
+            current_status_id INT,
+            
+            family_flag BOOLEAN,
+            has_child BOOLEAN,
+            has_promo BOOLEAN,
+            
             departure_date TIMESTAMP,
-            load_at DATE
+            day_of_week INTEGER,
+            is_weekend BOOLEAN,
+            bookings_lead_days INT,
+
+            created_at TIMESTAMP
         )
         USING ICEBERG
-        PARTITIONED BY (days(departure_date))
+        PARTITIONED BY (days(created_at), bucket(8, passenger_sk_id))
         """,
         """
         ALTER TABLE nessie.silver.tickets

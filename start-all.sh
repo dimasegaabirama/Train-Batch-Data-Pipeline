@@ -20,7 +20,7 @@ docker compose -p nessie \
   --project-directory . \
   -f ./docker/nessie/docker-compose.yaml \
   --env-file $ENV_FILE \
-  up -d postgres-backend
+  up postgres-backend -d
 
 echo "⏳ Waiting for Postgres to be ready..."
 sleep 30
@@ -30,7 +30,7 @@ docker compose -p nessie \
   --project-directory . \
   -f ./docker/nessie/docker-compose.yaml \
   --env-file $ENV_FILE \
-  up -d nessie-rest-catalog
+  up nessie-rest-catalog -d
 
 echo "🚀 Starting Hadoop..."
 docker compose -p hadoop \
@@ -54,8 +54,8 @@ docker compose -p mongo \
   --env-file $ENV_FILE \
   up mongo-db -d
 
-echo "⏳ Waiting for Hadoop to be ready..."
-sleep 20
+echo "⏳ Waiting for Mongo DB to be ready..."
+sleep 10
 
 docker compose -p mongo \
   --project-directory . \

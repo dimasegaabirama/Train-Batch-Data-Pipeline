@@ -248,17 +248,13 @@ tables:
         _id INT,
         name STRING,
         city STRING,
-        code STRING,
-        created_at STRING,
-        updated_at STRING
+        code STRING
 
       bronze: |
         id INT,
         name STRING,
         city STRING,
-        code STRING,
-        created_at TIMESTAMP,
-        updated_at TIMESTAMP
+        code STRING
 
       silver: |
         sk_id BIGINT,
@@ -266,47 +262,52 @@ tables:
         name STRING,
         city STRING,
         code STRING,
-        is_active BOOLEAN,
-        start_date TIMESTAMP,
-        end_date TIMESTAMP
+        is_deleted BOOLEAN
     
     query:
       merge: |
-        MERGE INTO {catalog}.{schema}.{table_name} t
-        USING {table_view} s
-        ON t.id = s.id AND t.is_active = true
-        WHEN MATCHED AND 
-                (t.name <> s.name) OR 
-                (t.city <> s.city) OR 
-                (t.code <> s.code)
-            THEN 
-                UPDATE SET 
-                    t.is_active = false,
-                    t.end_date = s.updated_at
-        WHEN NOT MATCHED THEN 
-        INSERT (sk_id, id, name, city, code, is_active, start_date, end_date)
-        VALUES(s.sk_id, s.id, s.name, s.city, s.code, true, s.updated_at, null)
+        MERGE INTO nessie.silver.stations t
+        USING stations_cleaned s
+        ON t.id = s.id
 
-      insert: |
-        WITH CURRENT_RECORD AS (
-            SELECT 
-                id
-            FROM {catalog}.{schema}.{table_name}
-            WHERE is_active = true
+        WHEN MATCHED AND (
+            t.name <> s.name OR
+            t.city <> s.city OR
+            t.code <> s.code OR
+            t.is_deleted = true
         )
-        INSERT INTO {catalog}.{schema}.{table_name}
-        SELECT
-            sc.sk_id,
-            sc.id,
-            sc.name,
-            sc.city,
-            sc.code,
-            true as is_active,
-            sc.updated_at as start_date,
-            NULL as end_date
-        FROM {table_view} sc 
-        LEFT ANTI JOIN CURRENT_RECORD cr 
-        ON sc.id = cr.id
+        THEN UPDATE SET
+            t.name = s.name,
+            t.city = s.city,
+            t.code = s.code,
+            t.is_deleted = false
+
+        WHEN NOT MATCHED THEN
+        INSERT (
+            sk_id,
+            id,
+            name,
+            city,
+            code,
+            is_deleted
+        )
+        VALUES (
+            s.sk_id,
+            s.id,
+            s.name,
+            s.city,
+            s.code,
+            false
+        )
+
+      update: |
+        UPDATE nessie.silver.stations t
+        SET is_deleted = true
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM stations_cleaned s
+            WHERE s.id = t.id
+        )
 
   trains:
     type: dim
@@ -316,7 +317,7 @@ tables:
       silver: custom
       gold: custom
     schema: 
-      bronze: |
+      source: |
         _id INT,
         name STRING,
         type STRING,
@@ -415,13 +416,12 @@ tables:
         train_id INT,
         distance_km INT,
         duration_minutes INT,
-        is_active BOOLEAN,
         is_deleted BOOLEAN
     
     query: 
       merge: |      
-        MERGE INTO nessie.silver.routes t
-        USING ROUTES_CLEANED s
+        MERGE INTO {catalog}.{namespace}.{table} t
+        USING {table_view} s
         ON t.id = s.id
 
         WHEN MATCHED AND (
@@ -429,25 +429,48 @@ tables:
             t.sk_dest_station_id <> s.sk_dest_station_id OR 
             t.sk_train_id <> s.sk_train_id OR 
             t.distance_km <> s.distance_km OR 
-            t.duration_minutes <> s.duration_minutes
+            t.duration_minutes <> s.duration_minutes OR
+            t.is_deleted = true
         )
         THEN UPDATE SET 
             sk_org_station_id = s.sk_org_station_id,
             sk_dest_station_id = s.sk_dest_station_id,
             sk_train_id = s.sk_train_id,
             distance_km = s.distance_km,
-            duration_minutes = s.duration_minutes    
+            duration_minutes = s.duration_minutes,
+            is_deleted = false
 
         WHEN NOT MATCHED THEN 
-        INSERT (sk_id, id, sk_org_station_id, sk_dest_station_id, sk_train_id, distance_km, duration_minutes, is_active, is_deleted)
-        VALUES(s.sk_id, s.id, s.sk_org_station_id, s.sk_dest_station_id, s.sk_train_id, s.distance_km, s.duration_minutes, true, false)
+        INSERT (
+          sk_id, 
+          id, 
+          sk_org_station_id, 
+          sk_dest_station_id, 
+          sk_train_id, 
+          distance_km, 
+          duration_minutes, 
+          is_deleted
+        )
+        
+        VALUES(
+          s.sk_id, 
+          s.id, 
+          s.sk_org_station_id, 
+          s.sk_dest_station_id, 
+          s.sk_train_id, 
+          s.distance_km, 
+          s.duration_minutes, 
+          false
+        )
 
       update: |
-        UPDATE nessie.silver.routes r
-        SET
-            r.is_active = false,
-            r.is_deleted = true
-        WHERE NOT EXISTS (SELECT 1 FROM ROUTES_CLEANED rc WHERE r.id = rc.id)
+        UPDATE {catalog}.{namespace}.{table} r
+        SET is_deleted = true
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM {table_view} s
+            WHERE s.id = r.id
+        )
 
     depends_on:
       stations:
@@ -488,30 +511,82 @@ tables:
           provider: STRING
         >,
         addons ARRAY<STRING>,
-        created_at TIMESTAMP
-      
-      silver: |
-        id INT NOT NULL,
+        created_at STRING
+
+      bronze: |
+        id INT,
         route_id INT,
         passenger_id INT,
         train_id INT,
+        discount DECIMAL(10, 2),
+        price DECIMAL(38, 2),
+        class STRING,
+        seat_number STRING,
+        status STRING,
+        departure_date STRING,
+        extra_info STRUCT<
+          child_discount: BOOLEAN,
+          family_members: INT,
+          promo_code: STRING,
+          source: STRING
+        >,
+        payment STRUCT<
+          method: STRING,
+          bank: STRING,
+          provider: STRING
+        >,
+        addons ARRAY<STRING>,
+        created_at TIMESTAMP
+      
+      silver: |
+        id INT,
+        route_sk_id BIGINT,
+        passenger_sk_id BIGINT,
+        train_sk_id BIGINT,
         price DECIMAL(38, 2),
         discount DECIMAL(10, 2),
         final_price DECIMAL(38, 2),
-        status STRING,
-        class STRING,
-        seat_number STRING,
-        source STRING,
-        method STRING,
+        class_id INT,
+        payment_id INT,
+        paid_at TIMESTAMP,
+        cancelled_at TIMESTAMP,
+        refunded_at TIMESTAMP,
+        current_status_id INT,
+        family_flag BOOLEAN,
+        has_child BOOLEAN,
+        has_promo BOOLEAN,
         departure_date TIMESTAMP,
-        created_at DATE
-
-    
+        day_of_week INTEGER,
+        is_weekend BOOLEAN,
+        bookings_lead_days INT,
+        created_at TIMESTAMP
+  
     query: |
       INSERT OVERWRITE TABLE {catalog}.{namespace}.{table}
       PARTITION ({partitioned_by})
       SELECT *
       FROM {view}
+
+
+    depends_on:
+      stations:
+        catalog: nessie
+        schema: silver
+      trains:
+        catalog: nessie
+        schema: silver
+      passengers:
+        catalog: nessie
+        schema: silver
+      class:
+        catalog: nessie
+        schema: silver
+      status:
+        catalog: nessie
+        schema: silver
+      payment:
+        catalog: nessie
+        schema: silver
 
 # =====================================================
 # PUSHDOWN FILTERS
