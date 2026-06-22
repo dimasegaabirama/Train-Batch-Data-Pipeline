@@ -147,11 +147,11 @@ class StoragesConfig(BaseModel):
 
 
 class TableContext(BaseModel):
-    type: Literal["dim", "fact"]
+    type: Literal["scd1", "scd2", "fact"]
     partitioned_by: str
     write_mode: Dict[StageType, WriteType]
     schema: Dict[StageType, str]
-    query: str
+    query: List[str]
     depends_on: Optional[dict] = None
 
 
@@ -165,3 +165,5 @@ class TablesConfig(BaseModel):
 
 class TableNames(BaseModel):
     names: List[Literal["passengers", "routes", "stations", "trains", "tickets"]]
+
+

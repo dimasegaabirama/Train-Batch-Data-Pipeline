@@ -6,10 +6,10 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-    ports:
-      - "27017:27017"
-    # expose:
-    #   - "27017"
+    # ports:
+    #   - "27017:27017"
+    expose:
+      - "27017"
     volumes:
       - ./docker/mongo/data:/data/db
       - ./docker/mongo/init:/docker-entrypoint-initdb.d
@@ -17,7 +17,7 @@ services:
       test: ["CMD", "mongosh", "--username", "${MONGO_USERNAME}", "--password", "${MONGO_PASSWORD}", "--authenticationDatabase", "admin", "--eval", "db.runCommand({ ping: 1 })"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 20
       start_period: 20s
     networks:
       - data_eng_net

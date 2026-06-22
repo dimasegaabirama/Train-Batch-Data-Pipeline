@@ -22,8 +22,8 @@ docker compose -p nessie \
   --env-file $ENV_FILE \
   up postgres-backend -d
 
-echo "⏳ Waiting for Postgres to be ready..."
-sleep 30
+echo "⏳ Waiting for Nessie Postgres Backend to be ready..."
+sleep 60
 
 echo "🚀 Starting Nessie..."
 docker compose -p nessie \
@@ -55,7 +55,7 @@ docker compose -p mongo \
   up mongo-db -d
 
 echo "⏳ Waiting for Mongo DB to be ready..."
-sleep 10
+sleep 60
 
 docker compose -p mongo \
   --project-directory . \

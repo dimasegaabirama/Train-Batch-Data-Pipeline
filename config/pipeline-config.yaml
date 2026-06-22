@@ -68,13 +68,13 @@ storages:
 # SPARK CONFIGURATION
 # =====================================================
 spark:
-  master: "spark://spark-master:7077"
+  master: "local[*]"
 
   common_config: &spark_common
     spark.sql.shuffle.partitions: 20
     spark.serializer: org.apache.spark.serializer.KryoSerializer
     spark.driver.bindAddress: 0.0.0.0
-    spark.driver.host: spark-submit
+    spark.driver.host: localhost
     spark.driver.port: 4040
     spark.jars.packages: org.mongodb:mongodb-driver-sync:4.11.1,org.mongodb.spark:mongo-spark-connector_2.12:10.5.0,org.apache.iceberg:iceberg-spark-runtime-3.2_2.12:1.4.3,org.projectnessie.nessie-integrations:nessie-spark-extensions-3.2_2.12:0.67.0
     spark.sql.extensions: org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions,org.projectnessie.spark.extensions.NessieSparkSessionExtensions
@@ -156,9 +156,8 @@ schemas:
 
 
 tables:
-
   passengers:
-    type: dim
+    type: scd2
     partitioned_by: updated_at
     write_mode:
       bronze: overwrite_partitions
@@ -195,7 +194,7 @@ tables:
         end_date TIMESTAMP
 
     query:
-      merge: |
+      - |  
         MERGE INTO {catalog}.{schema}.{table_name} t
         USING {table_view} s
         ON t.id = s.id AND t.is_active = true
@@ -213,8 +212,8 @@ tables:
         WHEN NOT MATCHED THEN 
         INSERT (sk_id, id, name, gender, phone, email, is_active, start_date, end_date)
         VALUES(s.sk_id, s.id, s.name, s.gender, s.phone, s.email, true, s.updated_at, null)
-      
-      insert: |
+
+      - |
         WITH CURRENT_RECORD AS (
             SELECT 
                 id
@@ -237,7 +236,7 @@ tables:
             CURRENT_RECORD cr ON pc.id = cr.id 
 
   stations:
-    type: dim
+    type: scd1
     partitioned_by: updated_at
     write_mode:
       bronze: overwrite_partitions
@@ -265,7 +264,7 @@ tables:
         is_deleted BOOLEAN
     
     query:
-      merge: |
+      - |
         MERGE INTO nessie.silver.stations t
         USING stations_cleaned s
         ON t.id = s.id
@@ -300,7 +299,7 @@ tables:
             false
         )
 
-      update: |
+      - |
         UPDATE nessie.silver.stations t
         SET is_deleted = true
         WHERE NOT EXISTS (
@@ -310,7 +309,7 @@ tables:
         )
 
   trains:
-    type: dim
+    type: scd2
     partitioned_by: updated_at
     write_mode:
       bronze: overwrite_partitions
@@ -344,7 +343,7 @@ tables:
         end_date TIMESTAMP
     
     query: 
-      merge: |
+      - |
         MERGE INTO {catalog}.{namespace}.{table} t
         USING {table_view} s
         ON t.id = s.id AND t.is_active = true
@@ -362,7 +361,7 @@ tables:
         INSERT (sk_id, id, name, type, capacity, is_active, start_date, end_date)
         VALUES(s.sk_id, s.id, s.name, s.type, s.capacity, true, s.updated_at, null)
       
-      insert: |
+      - |
         WITH CURRENT_RECORD AS (
             SELECT 
                 id
@@ -385,7 +384,7 @@ tables:
         ON sc.id = cr.id
    
   routes:
-    type: dim
+    type: scd1
     partitioned_by: updated_at
     write_mode:
       bronze: overwrite_partitions
@@ -419,7 +418,7 @@ tables:
         is_deleted BOOLEAN
     
     query: 
-      merge: |      
+      - |      
         MERGE INTO {catalog}.{namespace}.{table} t
         USING {table_view} s
         ON t.id = s.id
@@ -463,7 +462,7 @@ tables:
           false
         )
 
-      update: |
+      - |
         UPDATE {catalog}.{namespace}.{table} r
         SET is_deleted = true
         WHERE NOT EXISTS (
@@ -558,14 +557,15 @@ tables:
         departure_date TIMESTAMP,
         day_of_week INTEGER,
         is_weekend BOOLEAN,
-        bookings_lead_days INT,
+        booking_lead_days INT,
         created_at TIMESTAMP
   
-    query: |
-      INSERT OVERWRITE TABLE {catalog}.{namespace}.{table}
-      PARTITION ({partitioned_by})
-      SELECT *
-      FROM {view}
+    query: 
+      - |
+        INSERT OVERWRITE TABLE {catalog}.{namespace}.{table}
+        PARTITION ({partitioned_by})
+        SELECT *
+        FROM {view}
 
 
     depends_on:

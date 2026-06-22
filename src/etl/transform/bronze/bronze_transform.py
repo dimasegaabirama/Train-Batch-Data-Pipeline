@@ -5,8 +5,9 @@ from src.etl.transform.base_transform import BaseTransform
 
 
 class BronzeTransform(BaseTransform):
-    def __init__(self, session, config, dataframe, **kwargs):
+    def __init__(self, session, config, dataframe, table_name,**kwargs):
         super().__init__(session, config, dataframe, **kwargs)
+        self.table_name = table_name
 
     @staticmethod
     def requires():
@@ -36,22 +37,25 @@ class BronzeTransform(BaseTransform):
         """
 
         format_timestamp = "yyyy-MM-dd'T'HH:mm:ssX"
+        date_columns = ["created_at", "updated_at"]
 
-        df = (
-            self.dataframe.withColumnRenamed("_id", "id")
-            .withColumn("id", F.col("id").isNotNull())
-        )
+        df = self.dataframe.withColumnRenamed("_id", "id")
 
-        if "created_at" in df.columns:
+        if self.config.get_table_type(self.table_name) == "scd1":
             df = df.withColumn(
-                "created_at", F.to_timestamp("created_at"), format_timestamp
+                "batch_end_date",
+                F.to_timestamp(
+                    F.lit(self.config.get_end_date()),
+                    format_timestamp
+                )
             )
-            
 
-        if "updated_at" in df.columns:
-            df = df.withColumn(
-                "updated_at", F.to_timestamp("updated_at", format_timestamp)
-            )
+        for column in date_columns:
+            if column in df.columns:
+                df = df.withColumn(
+                    column,
+                    F.to_timestamp(column, format_timestamp)
+                )
 
         return df
 

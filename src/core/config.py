@@ -104,6 +104,13 @@ class Config:
         return cfg
 
     @classmethod
+    def get_table_type(cls, table_name: str) -> str:
+        cfg = getattr(cls.get_table_config(table_name), "type", None)
+        if cfg is None:
+            raise ValueError(f"Table type '{table_name}' not found")
+        return cfg
+
+    @classmethod
     def get_schema_table(self, table_name: str) -> str:
         cfg = getattr(self.config.get_table_config(table_name), "schema", None)
         if not cfg:
@@ -262,10 +269,9 @@ if __name__ == "__main__":
     logger = AppLogger.get_logger()
     conf = Config()
 
-    session = Session(config=conf, logger=logger).get_session("dev")
-
-    tes = getattr(conf.get_table_config("routes"), "depends_on", None)
-    print(tes)
+    configs = conf.get_table_config("passengers").query
+    for x in configs:
+        print(x)
 
     
 
