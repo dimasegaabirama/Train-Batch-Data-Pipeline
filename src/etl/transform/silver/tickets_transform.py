@@ -1,6 +1,7 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.types import TimestampType
+from pyspark.sql import Window
 
 from src.etl.transform.base_transform import BaseTransform
 from src.utils.data_cleaning_utils import (
@@ -56,6 +57,7 @@ class TicketsTransform(BaseTransform):
 
         tickets_dataframe = (
             self.dataframe
+            .withColumn("ticket_id", F.lower(F.trim(F.col("ticket_id"))))
             .withColumn("departure_date", F.col("departure_date").cast(TimestampType()))
             .withColumn("price", F.coalesce("price", F.lit(0.0)))
             .withColumn("discount", F.coalesce("discount", F.lit(0.0)))
@@ -68,47 +70,43 @@ class TicketsTransform(BaseTransform):
             .withColumn("has_promo", F.when(F.col("extra_info.promo_code").isNotNull(), F.lit(True)).otherwise(F.lit(False)))
             .withColumn("day_of_week", F.dayofweek(F.col("departure_date")))
             .withColumn("is_weekend", F.dayofweek(F.col("departure_date")).isin([1, 7]))
-            .withColumn("booking_lead_days", F.datediff(F.col("created_at"), F.col("departure_date")))
-        ).alias("tc")
+            .withColumn("booking_lead_days", F.datediff(F.col("departure_date"), F.col("created_at")))
+        )
+
+        window_latest = Window.partitionBy("ticket_id").orderBy(F.col("created_at").desc())
 
         tickets_deduped = (
-            tickets_dataframe.groupBy("id")
-            .agg(
-                F.max_by("price", "created_at").alias("price"),
-                F.max_by("discount", "created_at").alias("discount"),
-                F.max_by("final_price", "created_at").alias("final_price"),
-                F.max_by("class", "created_at").alias("class"),
-                F.max_by("status", "created_at").alias("current_status"),
-                F.max_by("payment", "created_at").alias("payment"),
-                F.max_by("has_child", "created_at").alias("has_child"),
-                F.max_by("family_flag", "created_at").alias("family_flag"),
-                F.max_by("has_promo", "created_at").alias("has_promo"),
-                F.max_by("day_of_week", "created_at").alias("day_of_week"),
-                F.max_by("is_weekend", "created_at").alias("is_weekend"),
-                F.max_by("booking_lead_days", "created_at").alias("booking_lead_days"),
-                F.max_by("departure_date", "created_at").alias("departure_date"),
-                F.max_by("route_id", "created_at").alias("route_id"),
-                F.max_by("train_id", "created_at").alias("train_id"),
-                F.max_by("passenger_id", "created_at").alias("passenger_id"),
-
-                F.max("created_at").alias("created_at"),
-
-                F.max(
-                    F.when(F.col("status") == "paid",
-                        F.col("created_at"))
-                ).alias("paid_at"),
-
-                F.max(
-                    F.when(F.col("status") == "cancelled",
-                        F.col("created_at"))
-                ).alias("cancelled_at"),
-
-                F.max(
-                    F.when(F.col("status") == "refunded",
-                        F.col("created_at"))
-                ).alias("refunded_at")
+            tickets_dataframe
+            .withColumn("rn", F.row_number().over(window_latest))
+            .withColumn("active_status",      F.first("status").over(window_latest))
+            .withColumn("paid_at",            F.max(F.when(F.col("status") == "paid", F.col("created_at"))).over(Window.partitionBy("id")))
+            .withColumn("cancelled_at",       F.max(F.when(F.col("status") == "cancelled", F.col("created_at"))).over(Window.partitionBy("id")))
+            .withColumn("refunded_at",        F.max(F.when(F.col("status") == "refunded", F.col("created_at"))).over(Window.partitionBy("id")))
+            .filter(F.col("rn") == 1)  # ambil row terbaru per id
+            .select(
+                F.col("ticket_id"),
+                F.col("price"),
+                F.col("discount"),
+                F.col("final_price"),
+                F.col("class"),
+                F.col("payment"),
+                F.col("has_child"),
+                F.col("family_flag"),
+                F.col("has_promo"),
+                F.col("day_of_week"),
+                F.col("is_weekend"),
+                F.col("booking_lead_days"),
+                F.col("departure_date"),
+                F.col("route_id"),
+                F.col("train_id"),
+                F.col("passenger_id"),
+                F.col("created_at"),
+                F.col("active_status"),
+                F.col("paid_at"),
+                F.col("cancelled_at"),
+                F.col("refunded_at"),
             )
-        ).alias("tc")  
+        ).alias("td")
 
         routes_dataframe = self.session.read.table(self.lookup_table_name["routes"])
         trains_dataframe = self.session.read.table(self.lookup_table_name["trains"])
@@ -124,49 +122,52 @@ class TicketsTransform(BaseTransform):
         payment_df = F.broadcast(payment_dataframe).alias("py")
 
         tickets_cleaned = (
-            tickets_dataframe
-                .join(
-                    routes_df,
-                    (F.col("r.id") == F.col("tc.route_id")),
-                    "left"
-                )
-                .join(
-                    trains_df,
-                    (F.col("tr.id") == F.col("tc.train_id")) &
-                    (F.col("tc.departure_date") >= F.col("tr.start_date")) &
-                    (F.col("tr.end_date").isNull() | (F.col("tc.departure_date") < F.col("tr.end_date"))),
-                    "left"
-                )
-                .join(
-                    passengers_dataframe,
-                    (F.col("p.id") == F.col("tc.passenger_id")) &
-                    (F.col("tc.departure_date") >= F.col("p.start_date")) &
-                    (F.col("p.end_date").isNull() | (F.col("tc.departure_date") < F.col("p.end_date"))),
-                    "left"
-                )
-                .join(class_df, F.col("cl.class_name") == F.col("tc.class"), "left")
-                .join(status_df, F.col("st.status") == F.col("tc.status"), "left")
-                .join(payment_df, F.col("py.method") == F.col("tc.payment"), "left")
-                .select(
-                    F.col("tc.id")                  .alias("id"),
-                    F.col("r.sk_id")                .alias("route_sk_id"),
-                    F.col("p.sk_id")                .alias("passenger_sk_id"),
-                    F.col("tr.sk_id")               .alias("train_sk_id"),
-                    F.col("tc.price")               .alias("price"),
-                    F.col("tc.discount")            .alias("discount"),
-                    F.col("tc.final_price")         .alias("final_price"),
-                    F.col("cl.id")                  .alias("class_id"),
-                    F.col("st.id")                  .alias("status_id"),
-                    F.col("py.id")                  .alias("payment_id"),
-                    F.col("tc.family_flag")         .alias("family_flag"),
-                    F.col("tc.has_child")           .alias("has_child"),
-                    F.col("tc.has_promo")           .alias("has_promo"),
-                    F.col("tc.departure_date")      .alias("departure_date"),
-                    F.col("tc.day_of_week")         .alias("day_of_week"),
-                    F.col("tc.is_weekend")          .alias("is_weekend"),
-                    F.col("tc.booking_lead_days")  .alias("booking_lead_days"),
-                    F.col("tc.created_at")          .alias("created_at")
-                )
+                    tickets_deduped
+                        .join(
+                            routes_df,
+                            (F.col("r.id") == F.col("td.route_id")),
+                            "left"
+                        )
+                        .join(
+                            trains_df,
+                            (F.col("tr.id") == F.col("td.train_id")) &
+                            (F.col("td.departure_date") >= F.col("tr.start_date")) &
+                            (F.col("tr.end_date").isNull() | (F.col("td.departure_date") < F.col("tr.end_date"))),
+                            "left"
+                        )
+                        .join(
+                            passengers_dataframe,
+                            (F.col("p.id") == F.col("td.passenger_id")) &
+                            (F.col("td.departure_date") >= F.col("p.start_date")) &
+                            (F.col("p.end_date").isNull() | (F.col("td.departure_date") < F.col("p.end_date"))),
+                            "left"
+                        )
+                        .join(class_df, F.col("cl.class_name") == F.col("td.class"), "left")
+                        .join(status_df, F.col("st.status") == F.col("td.active_status"), "left")
+                        .join(payment_df, F.col("py.method") == F.col("td.payment"), "left")
+                        .select(
+                            F.col("td.ticket_id"),
+                            F.col("r.sk_id").alias("route_sk_id"),
+                            F.col("p.sk_id").alias("passenger_sk_id"),
+                            F.col("tr.sk_id").alias("train_sk_id"),
+                            F.col("st.id").alias("active_status_id"),
+                            F.col("td.price").alias("price"),
+                            F.col("td.discount").alias("discount"),
+                            F.col("td.final_price").alias("final_price"),
+                            F.col("cl.id").alias("class_id"),
+                            F.col("py.id").alias("payment_id"),
+                            F.col("td.family_flag").alias("family_flag"),
+                            F.col("td.has_child").alias("has_child"),
+                            F.col("td.has_promo").alias("has_promo"),
+                            F.col("td.is_weekend").alias("is_weekend"),
+                            F.col("td.day_of_week").alias("day_of_week"),
+                            F.col("td.booking_lead_days").alias("booking_lead_days"),
+                            F.col("td.departure_date").alias("departure_date"),
+                            F.col("td.paid_at").alias("paid_at"),
+                            F.col("td.cancelled_at").alias("cancelled_at"),
+                            F.col("td.refunded_at").alias("refunded_at"),
+                            F.col("td.created_at").alias("created_at")
+                        )
         )
         
 #  |-- id: integer (nullable = true)
