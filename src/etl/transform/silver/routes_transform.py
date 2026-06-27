@@ -7,7 +7,6 @@ from src.utils.data_cleaning_utils import normalize_numeric
 class RoutesTransform(BaseTransform):
     def __init__(self, session, config, dataframe, lookup_table_name, **kwargs):
         super().__init__(session, config, dataframe, **kwargs)
-        self.table_name = "routes"
         self.lookup_table_name = lookup_table_name
 
     def transform(self):

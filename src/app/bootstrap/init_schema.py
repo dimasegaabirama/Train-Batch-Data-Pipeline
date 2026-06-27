@@ -92,6 +92,7 @@ def initialize_table(spark: SparkSession):
         """
         CREATE TABLE IF NOT EXISTS nessie.bronze.tickets(
             id INT,
+            ticket_id STRING,
             route_id INT,
             passenger_id INT,
             train_id INT,
@@ -236,6 +237,7 @@ def initialize_table(spark: SparkSession):
         """
         CREATE TABLE IF NOT EXISTS nessie.silver.tickets(
             id INT,
+            ticket_id STRING,
             route_sk_id BIGINT,
             passenger_sk_id BIGINT,
             train_sk_id BIGINT,

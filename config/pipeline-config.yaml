@@ -247,13 +247,17 @@ tables:
         _id INT,
         name STRING,
         city STRING,
-        code STRING
+        code STRING,
+        updated_at STRING,
+        created_at STRING
 
       bronze: |
         id INT,
         name STRING,
         city STRING,
-        code STRING
+        code STRING,
+        updated_at TIMESTAMP,
+        created_at TIMESTAMP
 
       silver: |
         sk_id BIGINT,
@@ -397,7 +401,9 @@ tables:
         destination STRING,
         train_id INT,
         distance_km INT,
-        duration_minutes INT
+        duration_minutes INT,
+        updated_at STRING,
+        created_at STRING
 
       bronze: |
         id INT,
@@ -405,7 +411,9 @@ tables:
         destination STRING,
         train_id INT,
         distance_km INT,
-        duration_minutes INT
+        duration_minutes INT,
+        updated_at TIMESTAMP,
+        created_at TIMESTAMP
       
       silver: |
         sk_id BIGINT,
@@ -487,8 +495,9 @@ tables:
       silver: custom
       gold: custom
     schema: 
-      bronze: |
-        id INT,
+      source: |
+        _id INT,
+        ticket_id INT,
         route_id INT,
         passenger_id INT,
         train_id INT,
@@ -514,6 +523,7 @@ tables:
 
       bronze: |
         id INT,
+        ticket_id INT,
         route_id INT,
         passenger_id INT,
         train_id INT,
@@ -522,7 +532,7 @@ tables:
         class STRING,
         seat_number STRING,
         status STRING,
-        departure_date STRING,
+        departure_date TIMESTAMP,
         extra_info STRUCT<
           child_discount: BOOLEAN,
           family_members: INT,
@@ -539,6 +549,7 @@ tables:
       
       silver: |
         id INT,
+        ticket_id INT,
         route_sk_id BIGINT,
         passenger_sk_id BIGINT,
         train_sk_id BIGINT,

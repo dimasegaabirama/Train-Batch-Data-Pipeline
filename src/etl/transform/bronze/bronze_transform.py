@@ -36,25 +36,15 @@ class BronzeTransform(BaseTransform):
             Transformed DataFrame with normalized columns and filtered rows.
         """
 
-        format_timestamp = "yyyy-MM-dd'T'HH:mm:ssX"
-        date_columns = ["created_at", "updated_at"]
+        date_columns = ["created_at", "updated_at", "departure_date"]
 
         df = self.dataframe.withColumnRenamed("_id", "id")
-
-        if self.config.get_table_type(self.table_name) == "scd1":
-            df = df.withColumn(
-                "batch_end_date",
-                F.to_timestamp(
-                    F.lit(self.config.get_end_date()),
-                    format_timestamp
-                )
-            )
 
         for column in date_columns:
             if column in df.columns:
                 df = df.withColumn(
                     column,
-                    F.to_timestamp(column, format_timestamp)
+                    F.to_timestamp(column)
                 )
 
         return df

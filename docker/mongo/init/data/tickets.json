@@ -1132,5 +1132,22 @@
       "source": "mobile_app"
     },
     "created_at": "2024-02-15T10:00:00Z"
+  },
+  {
+    "_id": 61,
+    "ticket_id": "TKT-20240215-0060",
+    "passenger_id": 10,
+    "route_id": 2,
+    "train_id": 2,
+    "seat_number": "J3",
+    "departure_date": "2024-03-01T08:00:00Z",
+    "price": 400000,
+    "status": "refunded",
+    "class": "Promo",
+    "extra_info": {
+      "promo_code": "MARCH5",
+      "source": "mobile_app"
+    },
+    "created_at": "2024-02-15T11:00:00Z"
   }
 ]
