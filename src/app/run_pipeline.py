@@ -67,43 +67,6 @@ class PipelineOrchestrator:
     # EXTRACT
     # =========================
     def extract(self, stage: StageType, table_name: str) -> DataFrame:
-        """
-        Extract data from the appropriate source based on the current pipeline stage.
-
-        This method applies different extraction strategies depending on the pipeline stage:
-        - For the "bronze" stage, data is extracted from the source system (e.g., MongoDB)
-        using pushdown filtering to limit data retrieval at the source level.
-        - For non-bronze stages (e.g., "silver", "gold"), data is extracted from Iceberg
-        tables with an incremental filter applied within the Spark layer.
-
-        Parameters
-        ----------
-        table_name : str
-            The name of the source table or collection to extract data from.
-
-        Returns
-        -------
-        DataFrame
-            A Spark DataFrame containing the extracted data.
-
-        Notes
-        -----
-        - "bronze" stage:
-            * Extracts data from MongoDB (or source system)
-            * Applies filter pushdown (executed at the source level)
-            * Reduces data transfer and improves performance
-
-        - "silver" / "gold" stages:
-            * Extracts data from Iceberg tables
-            * Applies incremental filtering in Spark:
-                updated_at >= start_date AND updated_at < end_date
-            * The date range is obtained from the pipeline configuration
-
-        Raises
-        ------
-        Any exception raised by the underlying extractor implementation
-        (e.g., connection issues, invalid table name, etc.).
-        """
 
         catalog_type = self.config.get_catalog_type()
 
@@ -205,20 +168,18 @@ class PipelineOrchestrator:
         # GET STAGE TARGET
         stage_target = self.get_pipeline_flow(stage=stage)["target"]
 
-
         # EXTRACT, TRANSFORM, LOAD
-        extract_stage = self.extract(stage=stage, table_name=table_name)
         print("=== extract ===")
+        extract_stage = self.extract(stage=stage, table_name=table_name)
         print(extract_stage.show())
 
+        print("=== transform ===")
         transform_stage = self.transform(
             stage=stage, dataframe=extract_stage, table_name=table_name
         )
-        print("=== transform ===")
         print(transform_stage.show())
 
-        print(transform_stage.where("id is null").show())
-
+        print("=== load ===")
         self.load(
             stage=stage,
             stage_target=stage_target,

@@ -11,7 +11,6 @@ from .data_config import (
 )
 from .pipeline_config import PipelineConfig
 from .spark_config import SparkConfig
-from .checks_config import QualityConfig
 
 
 class BaseConfig(BaseModel):
@@ -25,4 +24,3 @@ class BaseConfig(BaseModel):
     schemas: SchemasConfig
     tables: TablesConfig
     filters: FilterConfig
-    data_quality: QualityConfig

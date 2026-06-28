@@ -23,7 +23,6 @@ from src.models.data_config import (
 )
 from src.models.pipeline_config import PipelineConfig
 from src.models.spark_config import SparkConfig
-from src.models.checks_config import QualityConfig, QualityContext
 from src.utils.table_utils import create_table_fullname
 from src.utils.text_utils import replace_env
 
@@ -250,21 +249,12 @@ class Config:
 
         return tbl_cfg.field
 
-    # =========================
-    # Data Quality
-    # =========================
-
-    @classmethod
-    def get_all_dq_config(cls) -> QualityConfig:
-        return cls.get_config().data_quality
-
 
 
 if __name__ == "__main__":
 
     from src.core.session import Session
     from src.core.logger import AppLogger
-    from src.data_quality.technical_cheks import TechnicalChecks
 
     logger = AppLogger.get_logger()
     conf = Config()

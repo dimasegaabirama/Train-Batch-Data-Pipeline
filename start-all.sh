@@ -2,90 +2,129 @@
 
 set -e
 
-echo "🚧 Creating networks (if not exist)..."
-
-docker network create hadoop_net || true
-docker network create spark_net || true 
-docker network create airflow_net || true
-docker network create mongo_net || true
-docker network create nessie_net || true
-docker network create data_eng_net || true
-
-echo "✅ Networks ready"
-
+# ─────────────────────────────────────────
+# CONSTANTS
+# ─────────────────────────────────────────
 ENV_FILE=".env.global"
+NAMENODE_CONTAINER="namenode"
 
-echo "🚀 Starting POSTGRESQL (nessie backend)..."
-docker compose -p nessie \
-  --project-directory . \
-  -f ./docker/nessie/docker-compose.yaml \
-  --env-file $ENV_FILE \
-  up postgres-backend -d
+# ─────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────
+log()     { echo "➡️  $*"; }
+success() { echo "✅ $*"; }
+warn()    { echo "⚠️  $*"; }
+error()   { echo "❌ $*" >&2; exit 1; }
 
-echo "⏳ Waiting for Nessie Postgres Backend to be ready..."
-sleep 60
+wait_for() {
+  local label=$1
+  local seconds=$2
+  echo "⏳ Waiting ${seconds}s for ${label} to be ready..."
+  sleep "$seconds"
+}
 
-echo "🚀 Starting Nessie..."
-docker compose -p nessie \
-  --project-directory . \
-  -f ./docker/nessie/docker-compose.yaml \
-  --env-file $ENV_FILE \
-  up nessie-rest-catalog -d
+compose_up() {
+  local project=$1
+  local compose_file=$2
+  shift 2
+  docker compose -p "$project" \
+    --project-directory . \
+    -f "$compose_file" \
+    --env-file "$ENV_FILE" \
+    up -d "$@"
+}
 
-echo "🚀 Starting Hadoop..."
-docker compose -p hadoop \
-  --project-directory . \
-  -f ./docker/hadoop/docker-compose.yaml \
-  --env-file $ENV_FILE \
-  up -d
+# ─────────────────────────────────────────
+# NETWORKS
+# ─────────────────────────────────────────
+log "Creating networks (if not exist)..."
+for net in hadoop_net spark_net airflow_net mongo_net nessie_net data_eng_net; do
+  docker network create "$net" 2>/dev/null || true
+done
+success "Networks ready"
 
-echo "⏳ Waiting for Hadoop to be ready..."
-sleep 10
+# ─────────────────────────────────────────
+# NESSIE — Postgres Backend
+# ─────────────────────────────────────────
+log "Starting PostgreSQL (Nessie backend)..."
+compose_up nessie ./docker/nessie/docker-compose.yaml postgres-backend
+wait_for "Nessie Postgres Backend" 60
 
-docker exec -it namenode bash -c "
-  hdfs dfs -mkdir -p /warehouse_dev && 
+# ─────────────────────────────────────────
+# NESSIE — REST Catalog
+# ─────────────────────────────────────────
+log "Starting Nessie REST Catalog..."
+compose_up nessie ./docker/nessie/docker-compose.yaml nessie-rest-catalog
+
+# ─────────────────────────────────────────
+# HADOOP
+# ─────────────────────────────────────────
+log "Starting Hadoop..."
+compose_up hadoop ./docker/hadoop/docker-compose.yaml
+wait_for "Hadoop" 10
+
+log "Creating HDFS directories..."
+docker exec "$NAMENODE_CONTAINER" bash -c "
+  hdfs dfs -mkdir -p /warehouse_dev &&
   hdfs dfs -mkdir -p /warehouse
 "
 
-echo "🚀 Starting Mongo..."
-docker compose -p mongo \
-  --project-directory . \
-  -f ./docker/mongo/docker-compose.yaml \
-  --env-file $ENV_FILE \
-  up mongo-db -d
+# ─────────────────────────────────────────
+# HDFS SAFE MODE CHECK (via docker exec)
+# ─────────────────────────────────────────
+log "Checking HDFS Safe Mode..."
+SAFEMODE=$(docker exec "$NAMENODE_CONTAINER" hdfs dfsadmin -safemode get 2>/dev/null)
 
-echo "⏳ Waiting for Mongo DB to be ready..."
-sleep 60
+if echo "$SAFEMODE" | grep -q "ON"; then
+  warn "Safe mode is ON, checking HDFS health..."
 
-docker compose -p mongo \
-  --project-directory . \
-  -f ./docker/mongo/docker-compose.yaml \
-  --env-file $ENV_FILE \
-  up mongo-express -d
+  MISSING=$(docker exec "$NAMENODE_CONTAINER" \
+    bash -c "hdfs dfsadmin -report 2>/dev/null | grep 'Missing blocks:' | awk '{print \$3}'"
+  )
+  CORRUPT=$(docker exec "$NAMENODE_CONTAINER" \
+    bash -c "hdfs dfsadmin -report 2>/dev/null | grep 'Blocks with corrupt replicas:' | awk '{print \$5}'"
+  )
 
-echo "🚀 Starting Spark..."
-docker compose -p spark \
-  --project-directory . \
-  -f ./docker/spark/docker-compose.yaml \
-  --env-file $ENV_FILE \
-  up spark-master -d
+  if [ "$MISSING" = "0" ] && [ "$CORRUPT" = "0" ]; then
+    log "HDFS is healthy, leaving safe mode..."
+    docker exec "$NAMENODE_CONTAINER" hdfs dfsadmin -safemode leave
+    success "Safe mode OFF, proceeding..."
+  else
+    error "HDFS has issues! Missing: $MISSING, Corrupt: $CORRUPT — fix HDFS first."
+  fi
+else
+  success "Safe mode is OFF, proceeding..."
+fi
 
-echo "⏳ Waiting for Spark Master to be ready..."
-sleep 10
+# ─────────────────────────────────────────
+# MONGO
+# ─────────────────────────────────────────
+log "Starting MongoDB..."
+compose_up mongo ./docker/mongo/docker-compose.yaml mongo-db
+wait_for "MongoDB" 60
 
-docker compose -p spark \
-  --project-directory . \
-  -f ./docker/spark/docker-compose.yaml \
-  --env-file $ENV_FILE \
-  up spark-worker-1 spark-worker-2 spark-jupyter -d
+log "Starting Mongo Express..."
+compose_up mongo ./docker/mongo/docker-compose.yaml mongo-express
 
-# airflow optional
-# echo "🚀 Starting Airflow..."
+# ─────────────────────────────────────────
+# SPARK
+# ─────────────────────────────────────────
+log "Starting Spark Master..."
+compose_up spark ./docker/spark/docker-compose.yaml spark-master
+wait_for "Spark Master" 10
+
+log "Starting Spark Workers & Jupyter..."
+compose_up spark ./docker/spark/docker-compose.yaml spark-worker-1 spark-worker-2 spark-jupyter
+
+# ─────────────────────────────────────────
+# AIRFLOW (optional)
+# ─────────────────────────────────────────
+# log "Starting Airflow..."
 # docker compose -p airflow \
 #   --project-directory . \
 #   -f ./docker/airflow/docker-compose.yaml \
 #   -f ./docker/airflow/docker-compose.override.yaml \
-#   --env-file $ENV_FILE \
+#   --env-file "$ENV_FILE" \
 #   up -d
 
-echo "🎉 All services started!"
+success "All services started! 🎉"

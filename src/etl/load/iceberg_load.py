@@ -14,7 +14,6 @@ class IcebergLoad(BaseLoad):
         )
 
     def resolve_full_table_name(self) -> str:
-
         return create_table_fullname(
             catalog_name=self.config.get_catalog_name(),
             schema_name=self.config.get_schema_name(self.stage),

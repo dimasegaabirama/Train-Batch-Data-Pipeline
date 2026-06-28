@@ -497,7 +497,7 @@ tables:
     schema: 
       source: |
         _id INT,
-        ticket_id INT,
+        ticket_id STRING,
         route_id INT,
         passenger_id INT,
         train_id INT,
@@ -523,7 +523,7 @@ tables:
 
       bronze: |
         id INT,
-        ticket_id INT,
+        ticket_id STRING,
         route_id INT,
         passenger_id INT,
         train_id INT,
@@ -546,30 +546,29 @@ tables:
         >,
         addons ARRAY<STRING>,
         created_at TIMESTAMP
-      
+
       silver: |
-        id INT,
-        ticket_id INT,
-        route_sk_id BIGINT,
-        passenger_sk_id BIGINT,
-        train_sk_id BIGINT,
-        price DECIMAL(38, 2),
-        discount DECIMAL(10, 2),
-        final_price DECIMAL(38, 2),
-        class_id INT,
-        payment_id INT,
-        paid_at TIMESTAMP,
-        cancelled_at TIMESTAMP,
-        refunded_at TIMESTAMP,
-        current_status_id INT,
-        family_flag BOOLEAN,
-        has_child BOOLEAN,
-        has_promo BOOLEAN,
-        departure_date TIMESTAMP,
-        day_of_week INTEGER,
-        is_weekend BOOLEAN,
+        ticket_id         STRING,
+        route_sk_id       BIGINT,
+        passenger_sk_id   BIGINT,
+        train_sk_id       BIGINT,
+        class_id          INT,
+        payment_id        INT,
+        active_status_id  INT,
+        day_of_week       TINYINT,
         booking_lead_days INT,
-        created_at TIMESTAMP
+        departure_date    TIMESTAMP,
+        paid_at           TIMESTAMP,
+        cancelled_at      TIMESTAMP,
+        refunded_at       TIMESTAMP,
+        created_at        TIMESTAMP,
+        price             DECIMAL(18, 2),
+        discount          DECIMAL(18, 2),
+        final_price       DECIMAL(18, 2),
+        family_flag       BOOLEAN,
+        has_child         BOOLEAN,
+        has_promo         BOOLEAN,
+        is_weekend        BOOLEAN
   
     query: 
       - |
@@ -630,102 +629,6 @@ filters:
         field: updated_at
       stations:
         field: updated_at
-
-# =====================================================
-# DATA QUALITY
-# =====================================================
-
-data_quality:
-  bronze:
-    default:
-      - method: check_duplicates
-        params:
-          subset: ["id", "created_at", "updated_at", "load_at"]
-
-    tables:
-      tickets:
-        checks:
-          - method: check_duplicates
-            params:
-              subset: ["id", "created_at", "load_at"]
-
-  silver:
-    default:
-      - method: check_schema
-        params:
-          table_name: null
-          recursive: true
-      - method: check_accepted_values
-        params:
-          column: is_active
-          accepted_values: [true, false]
-          recursive: true
-
-    tables:
-      passengers:
-        checks:
-          - method: check_accepted_values
-            params:
-              column: gender
-              accepted_values: ["male", "female"]
-
-          - method: check_regex_contains
-            params:
-              column: email
-              pattern: ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$
-
-          - method: check_regex_contains
-            params:
-              column: phone
-              pattern: "^08[0-9]+{10,13}$"
-
-      trains:
-        checks:
-          - method: check_accepted_values
-            params:
-              column: type
-              accepted_values: ["executive", "bussiness", "economy"]
-
-          - method: check_value_range
-            params:
-              column: capacity
-              min_val: 400
-              max_val: 800
-
-      tickets:
-        checks:
-          - method: check_accepted_values
-            params:
-              column: class
-              accepted_values: ["vip", "promo", "family", "regular"]
-
-          - method: check_accepted_values
-            params:
-              column: status
-              accepted_values: ["paid", "unpaid", "cancelled"]
-
-          - method: check_accepted_values
-            params:
-              column: method
-              accepted_values: ["debit_card", "e_wallet", "credit_card", "cash"]
-
-          - method: check_accepted_values
-            params:
-              column: method
-              accepted_values: ["debit_card", "e_wallet", "credit_card", "cash"]
-
-          - method: check_accepted_values
-            params:
-              column: source
-              accepted_values: ["mobile_app", "website", "email", "direct"]
-
-          - method: check_referential_integrity
-            params:
-              column: route_id
-              ref_catalog_name: nessie
-              ref_schema: silver
-              ref_column: id
-
 
       
       

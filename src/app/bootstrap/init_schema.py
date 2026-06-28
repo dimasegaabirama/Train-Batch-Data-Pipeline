@@ -236,35 +236,32 @@ def initialize_table(spark: SparkSession):
         # Fact table
         """
         CREATE TABLE IF NOT EXISTS nessie.silver.tickets(
-            id INT,
-            ticket_id STRING,
-            route_sk_id BIGINT,
-            passenger_sk_id BIGINT,
-            train_sk_id BIGINT,
-            
-            price DECIMAL(38, 2),
-            discount DECIMAL(10, 2),
-            final_price DECIMAL(38, 2),
-            
-            class_id INT,
-            payment_id INT,
+            ticket_id         STRING,
+            route_sk_id       BIGINT,
+            passenger_sk_id   BIGINT,
+            train_sk_id       BIGINT,
 
-            paid_at TIMESTAMP,
-            cancelled_at TIMESTAMP,
-            refunded_at TIMESTAMP,
-            
-            current_status_id INT,
-            
-            family_flag BOOLEAN,
-            has_child BOOLEAN,
-            has_promo BOOLEAN,
-            
-            departure_date TIMESTAMP,
-            day_of_week INTEGER,
-            is_weekend BOOLEAN,
-            bookings_lead_days INT,
+            class_id          INT,
+            payment_id        INT,
+            active_status_id  INT,
 
-            created_at TIMESTAMP
+            day_of_week       TINYINT,
+            booking_lead_days INT,
+
+            departure_date    TIMESTAMP,
+            paid_at           TIMESTAMP,
+            cancelled_at      TIMESTAMP,
+            refunded_at       TIMESTAMP,
+            created_at        TIMESTAMP,
+
+            price             DECIMAL(18, 2),
+            discount          DECIMAL(18, 2),
+            final_price       DECIMAL(18, 2),
+
+            family_flag       BOOLEAN,
+            has_child         BOOLEAN,
+            has_promo         BOOLEAN,
+            is_weekend        BOOLEAN
         )
         USING ICEBERG
         PARTITIONED BY (days(created_at), bucket(8, passenger_sk_id))
