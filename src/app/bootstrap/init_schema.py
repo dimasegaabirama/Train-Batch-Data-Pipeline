@@ -268,7 +268,7 @@ def initialize_table(spark: SparkSession):
         """,
         """
         ALTER TABLE nessie.silver.tickets
-        WRITE ORDERED BY id
+        WRITE ORDERED BY ticket_id
         """
     ]
     for table in tables:

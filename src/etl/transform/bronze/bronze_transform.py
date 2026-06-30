@@ -2,11 +2,12 @@ import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 
 from src.etl.transform.base_transform import BaseTransform
-
+from src.core.constant import _DATE_COLUMNS
 
 class BronzeTransform(BaseTransform):
-    def __init__(self, session, config, dataframe, table_name,**kwargs):
-        super().__init__(session, config, dataframe, **kwargs)
+
+    def __init__(self, logger, session, config, dataframe, table_name,**kwargs):
+        super().__init__(logger, session, config, dataframe, **kwargs)
         self.table_name = table_name
 
     @staticmethod
@@ -35,12 +36,10 @@ class BronzeTransform(BaseTransform):
         DataFrame
             Transformed DataFrame with normalized columns and filtered rows.
         """
-
-        date_columns = ["created_at", "updated_at", "departure_date"]
-
+    
         df = self.dataframe.withColumnRenamed("_id", "id")
 
-        for column in date_columns:
+        for column in _DATE_COLUMNS:
             if column in df.columns:
                 df = df.withColumn(
                     column,

@@ -1,7 +1,7 @@
 from typing_extensions import Dict
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
-from typing_extensions import List
+from typing_extensions import List, Union
 
 from src.core.config import Config
 from src.core.logger import AppLogger
@@ -31,9 +31,12 @@ class PipelineOrchestrator:
     # =========================
     # FIND DEPENDENCY
     # =========================
-    def get_table_deps(self, table_names: List[str]) -> Dict[str, str]:
+    def get_table_deps(self, table_names: Union[str, List[str]]) -> Dict[str, str]:
 
         dependencies = {}
+
+        if isinstance(table_names, str):
+            table_names = [table_names]
 
         for table_name in table_names:
             cfg = getattr(self.config.get_table_config(table_name), "depends_on", None)
@@ -102,8 +105,9 @@ class PipelineOrchestrator:
             config=self.config,
             catalog_type=catalog_type,
             table_name=table_name,
+            schema=
             stage=stage,
-            condition=condition,
+            condition=condition
         ).extract()
 
     # =========================
@@ -124,10 +128,12 @@ class PipelineOrchestrator:
         )
 
         return transformer(
+            logger=self.logger,
             session=self.spark,
             config=self.config,
+            table_name=table_name,
             dataframe=dataframe,
-            lookup_table_name=lookup_table_names,
+            lookup_table_name=lookup_table_names
         ).transform()
 
     # =========================
@@ -169,17 +175,15 @@ class PipelineOrchestrator:
         stage_target = self.get_pipeline_flow(stage=stage)["target"]
 
         # EXTRACT, TRANSFORM, LOAD
-        print("=== extract ===")
+        self.logger.info(f"[{stage}] Extract Table: {table_name}")
         extract_stage = self.extract(stage=stage, table_name=table_name)
-        print(extract_stage.show())
 
-        print("=== transform ===")
+        self.logger.info(f"[{stage}] Transform Table: {table_name}")
         transform_stage = self.transform(
             stage=stage, dataframe=extract_stage, table_name=table_name
         )
-        print(transform_stage.show())
 
-        print("=== load ===")
+        self.logger.info(f"[{stage}] Load Table: {table_name}")
         self.load(
             stage=stage,
             stage_target=stage_target,

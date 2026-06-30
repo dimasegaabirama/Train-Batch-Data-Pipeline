@@ -20,23 +20,23 @@ class IcebergExtract(BaseExtract):
     def extract(self):
 
         try:
-            self.logger.info(
+            self.logger.debug(
                 f"[Extract Iceberg] Reading table {self.table_name} from Iceberg..."
             )
 
             df = self.session.read
 
             if self.schema:
-                self.logger.info(f"[Extract Iceberg] Applying schema registry '{self.table_name}'")
+                self.logger.debug(f"[Extract Iceberg] Applying schema registry '{self.table_name}'")
                 df = df.schema(self.schema)
 
             df = df.table(self.resolve_full_table_name())
 
             if self.condition:
-                self.logger.info(f"[Extract Iceberg] Applying condition on '{self.table_name}'")
+                self.logger.debug(f"[Extract Iceberg] Applying condition on '{self.table_name}'")
                 df = df.where(self.condition)
 
-            self.logger.info(
+            self.logger.debug(
                 f"[Extract Iceberg] Successfully read from '{self.table_name}'."
             )
 

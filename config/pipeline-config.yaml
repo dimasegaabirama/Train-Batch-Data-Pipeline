@@ -68,13 +68,13 @@ storages:
 # SPARK CONFIGURATION
 # =====================================================
 spark:
-  master: "local[*]"
+  master: "${SPARK_MASTER}"
 
   common_config: &spark_common
     spark.sql.shuffle.partitions: 20
     spark.serializer: org.apache.spark.serializer.KryoSerializer
     spark.driver.bindAddress: 0.0.0.0
-    spark.driver.host: localhost
+    spark.driver.host: spark-submit
     spark.driver.port: 4040
     spark.jars.packages: org.mongodb:mongodb-driver-sync:4.11.1,org.mongodb.spark:mongo-spark-connector_2.12:10.5.0,org.apache.iceberg:iceberg-spark-runtime-3.2_2.12:1.4.3,org.projectnessie.nessie-integrations:nessie-spark-extensions-3.2_2.12:0.67.0
     spark.sql.extensions: org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions,org.projectnessie.spark.extensions.NessieSparkSessionExtensions
@@ -85,6 +85,8 @@ spark:
     spark.sql.catalog.nessie.warehouse: "${WAREHOUSE_LOCATION_PROD}"
     spark.mongodb.read.connection.uri: "${MONGO_URL}"
     spark.mongodb.write.connection.uri: "${MONGO_URL}"
+    spark.mongodb.read.partitioner: com.mongodb.spark.sql.connector.read.partitioner.PaginateIntoPartitionsPartitioner
+    spark.mongodb.read.partitionerOptions.numberOfPartitions: 10
 
   dev:
     app_name: "Development"
@@ -153,7 +155,6 @@ schemas:
 # =====================================================
 # TABLES
 # =====================================================
-
 
 tables:
   passengers:

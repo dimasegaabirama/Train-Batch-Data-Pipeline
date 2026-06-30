@@ -15,7 +15,6 @@ from src.utils.filter_utils import (
     build_mongo_incremental_filter,
 )
 
-from src.data_quality.bronze import BronzeDQ
 
 _FILTER_REGISTRY = {
     "bronze": {"default": build_mongo_incremental_filter},
@@ -47,17 +46,6 @@ _LOAD_REGISTRY = {
     "bronze": {"default": IcebergLoad},
     "silver": {"default": IcebergLoad},
     "gold": {"default": IcebergLoad},
-}
-
-_DATA_QUALITY_REGISTRY = {
-    "bronze": {"default": BronzeDQ},
-    "silver": {
-        "passengers": PassengersDQ,
-        "trains": TrainsDQ,
-        "stations": StationsDQ,
-        "routes": RoutesDQ,
-        "tickets": TicketsDQ,
-    }
 }
 
 def resolve_registry_class(

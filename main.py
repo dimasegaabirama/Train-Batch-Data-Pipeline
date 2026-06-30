@@ -124,13 +124,15 @@ def main():
     # =========================
     # Resolve Catalog and Table
     # =========================
-
     pipeline_cfg = config.get_pipeline_config()
     table_names = args.tables or pipeline_cfg.tablenames
     
+    print(args.tables)
+    print(pipeline_cfg.tablenames)
+
     if not table_names:
         raise ValueError(
-            "--tables is required unless --full_run is set."
+            "--tables is required."
         )
 
     # =========================
@@ -145,7 +147,6 @@ def main():
     # =========================
     # Execute Pipeline
     # =========================
-
     pipeline.run_all_tables(
         stage=stage,
         table_names=table_names

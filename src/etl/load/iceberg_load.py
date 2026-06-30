@@ -25,7 +25,7 @@ class IcebergLoad(BaseLoad):
         write_mode = self.get_write_mode(self.stage)
         query = self.get_query()
 
-        self.logger.info(
+        self.logger.debug(
             f"[IcebergLoad] Start writing to {full_name} with mode='{write_mode}'"
         )
 
@@ -50,10 +50,10 @@ class IcebergLoad(BaseLoad):
 
                 action()
 
-            self.logger.info(f"[IcebergLoad] Successfully wrote to {full_name}")
+            self.logger.debug(f"[IcebergLoad] Successfully wrote to {full_name}")
 
         except Exception as e:
-            self.logger.error(
+            self.logger.exception(
                 f"[IcebergLoad] Failed writing to {full_name} with mode='{write_mode}': {e}"
             )
             raise

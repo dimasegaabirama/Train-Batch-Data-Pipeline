@@ -29,7 +29,7 @@ class MongoExtract(BaseExtract):
         condition = self.condition
 
         try:
-            self.logger.info(
+            self.logger.debug(
                 f"[Extract Mongo] Reading collection '{collection}' from MongoDB"
             )
 
@@ -40,16 +40,16 @@ class MongoExtract(BaseExtract):
             )
 
             if condition:
-                self.logger.info(f"[Extract Mongo] Applying pipeline on '{collection}'")
+                self.logger.debug(f"[Extract Mongo] Applying pipeline on '{collection}'")
                 reader = reader.option("pipeline", condition)
 
             if self.schema:
-                self.logger.info("[Extract Mongo] Applying schema registry")
+                self.logger.debug("[Extract Mongo] Applying schema registry")
                 reader = reader.schema(self.schema)
 
             df = reader.load()
 
-            self.logger.info(f"[Extract Mongo] Successfully read '{collection}'")
+            self.logger.debug(f"[Extract Mongo] Successfully read '{collection}'")
 
             return df
 

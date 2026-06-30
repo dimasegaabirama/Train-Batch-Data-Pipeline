@@ -252,16 +252,7 @@ class Config:
 
 
 if __name__ == "__main__":
-
-    from src.core.session import Session
-    from src.core.logger import AppLogger
-
-    logger = AppLogger.get_logger()
-    conf = Config()
-
-    configs = conf.get_table_config("passengers").query
-    for x in configs:
-        print(x)
+    pass
 
     
 

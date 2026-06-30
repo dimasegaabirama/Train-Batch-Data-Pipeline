@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from logging import Logger
+from typing_extensions import Optional
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
@@ -25,7 +26,7 @@ class BaseLoad(ABC):
         self.stage = stage
         self.dataframe = dataframe
 
-    def get_query(self) -> str | None:
+    def get_query(self) -> Optional[str]:
         return getattr(self.config.get_table_config(self.table_name), "query", None)
 
     def get_write_mode(self, stage: StageType) -> WriteType:
