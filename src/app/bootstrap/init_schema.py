@@ -71,10 +71,11 @@ def initialize_table(spark: SparkSession):
             name STRING,
             city STRING,
             code STRING,
-            batch_end_date TIMESTAMP
+            updated_at TIMESTAMP,
+            created_at TIMESTAMP
         )
         USING ICEBERG
-        PARTITIONED BY (days(batch_end_date))
+        PARTITIONED BY (days(updated_at))
         """,
         """
         CREATE TABLE IF NOT EXISTS nessie.bronze.routes(
@@ -84,10 +85,11 @@ def initialize_table(spark: SparkSession):
             train_id INT,
             distance_km INT,
             duration_minutes INT,
-            batch_end_date TIMESTAMP
+            updated_at TIMESTAMP,
+            created_at TIMESTAMP
         )
         USING ICEBERG
-        PARTITIONED BY (days(batch_end_date))
+        PARTITIONED BY (days(updated_at))
         """,
         """
         CREATE TABLE IF NOT EXISTS nessie.bronze.tickets(

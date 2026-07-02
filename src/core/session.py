@@ -3,7 +3,8 @@ from logging import Logger
 from pyspark.sql import SparkSession
 from typing_extensions import Literal
 
-from src.core.config import Config
+from src.core import Config
+
 from src.models.spark_config import SparkLayerContext
 from src.models.data_config import StageType
 

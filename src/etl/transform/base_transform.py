@@ -3,8 +3,7 @@ from abc import ABC, abstractmethod
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
-from src.core.config import Config
-from src.core.logger import AppLogger
+from src.core import Config, AppLogger
 
 
 class BaseTransform(ABC):

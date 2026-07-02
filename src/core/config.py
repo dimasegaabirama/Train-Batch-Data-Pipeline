@@ -110,11 +110,11 @@ class Config:
         return cfg
 
     @classmethod
-    def get_schema_table(self, table_name: str) -> str:
-        cfg = getattr(self.config.get_table_config(table_name), "schema", None)
+    def get_schema_table(cls, table_name: str, stage: StageType) -> str:
+        cfg = getattr(cls.get_table_config(table_name), "schema", None)
         if not cfg:
             raise ValueError(f"Schema for '{table_name}' is not found!")
-        return cfg
+        return getattr(cfg, stage)
     
     # =========================
     # Catalogs

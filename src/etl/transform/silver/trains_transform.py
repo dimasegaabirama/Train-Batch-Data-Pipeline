@@ -2,8 +2,7 @@ import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.types import TimestampType
 
-from src.etl.transform.base_transform import BaseTransform
-from src.utils.data_cleaning_utils import normalize_string
+from src.etl.transform import BaseTransform
 
 
 class TrainsTransform(BaseTransform):

@@ -3,15 +3,8 @@ from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 from typing_extensions import List, Union
 
-from src.core.config import Config
-from src.core.logger import AppLogger
-from src.core.registry import (
-    _EXTRACT_REGISTRY,
-    _FILTER_REGISTRY,
-    _LOAD_REGISTRY,
-    _TRANSFORMER_REGISTRY,
-    resolve_registry_class,
-)
+from src.core import Config, AppLogger, resolve_registry_class
+
 from src.models.data_config import StageType
 from src.models.pipeline_config import FlowKey
 from src.utils.nessie_utils import pipeline_branch
@@ -53,18 +46,13 @@ class PipelineOrchestrator:
     # =========================
     # PIPELINE FLOW
     # =========================
-    def get_pipeline_flow(self, stage: StageType) -> Dict[FlowKey, StageType]:
-        cfg = getattr(self.config.get_pipeline_config(), "schema_flow", None)
+    def get_schema_flow(self, stage: StageType) -> Dict[FlowKey, StageType]:
+        cfg = getattr(self.config.get_schema_config(stage), "upstream", None)
 
         if cfg is None:
             raise ValueError("Schema flow from Pipeline Config not found!")
 
-        flow_cfg = getattr(cfg, stage, None)
-
-        if flow_cfg is None:
-            raise ValueError(f"Pipeline flow for {stage} not found!")
-
-        return flow_cfg
+        return cfg
 
     # =========================
     # EXTRACT
@@ -93,11 +81,15 @@ class PipelineOrchestrator:
             required=False,
         )
 
+        # === Filter ===
         field = self.config.get_filter_field(stage=stage, table_name=table_name)
         if field:
             condition = condition(
                 stage=stage, field=field, start_date=start_date, end_date=end_date
             )
+
+        # === Schema ===
+        schema = self.config.get_schema_table(table_name=table_name, stage=stage)
 
         return extractor(
             logger=self.logger,
@@ -105,7 +97,7 @@ class PipelineOrchestrator:
             config=self.config,
             catalog_type=catalog_type,
             table_name=table_name,
-            schema=
+            schema=schema,
             stage=stage,
             condition=condition
         ).extract()

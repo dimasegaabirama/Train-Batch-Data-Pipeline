@@ -3,7 +3,7 @@ from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.types import TimestampType, BooleanType
 from pyspark.sql import Window
 
-from src.etl.transform.base_transform import BaseTransform
+from src.etl.transform import BaseTransform
 
 
 class TicketsTransform(BaseTransform):

@@ -93,8 +93,8 @@ spark:
     config:
       <<: *spark_common
       spark.driver.memory: 2g
-      spark.executor.cores: 2
-      spark.executor.instances: 2
+      spark.executor.cores: 1
+      spark.cores.max: 5
       spark.executor.memory: 512m
       spark.sql.catalog.nessie.warehouse: "${WAREHOUSE_LOCATION_DEV}"
       spark.local.dir: "/app/spark_local_dir"
@@ -108,7 +108,7 @@ spark:
     config:
       <<: *spark_common
       spark.executor.cores: 1
-      spark.executor.instances: 8
+      spark.cores.max: 5
       spark.executor.memory: "512m"
       spark.sql.shuffle.partitions: 16
 
@@ -138,18 +138,21 @@ schemas:
     name: bronze
     description: Raw ingested data from sources
     owner: data_engineering_team
+    upstream: source
     retention_days: 30
 
   silver:
     name: silver
     description: Cleaned and conformed data
     owner: data_engineering_team
+    upstream: bronze
     retention_days: 180
     
   gold:
     name: gold
     description: Analytics-ready data for BI and ML
     owner: analytics_team
+    upstream: gold
     retention_days: 365
 
 # =====================================================

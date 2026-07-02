@@ -1,3 +1,5 @@
+from typing_extensions import Literal
+
 from src.etl.extract import IcebergExtract, MongoExtract
 from src.etl.transform.bronze import BronzeTransform
 from src.etl.transform.silver import (
@@ -12,9 +14,10 @@ from src.etl.load import IcebergLoad
 
 from src.utils.filter_utils import (
     build_iceberg_incremental_filter,
-    build_mongo_incremental_filter,
+    build_mongo_incremental_filter
 )
 
+Behavior = Literal["extract", "transform", "load"]
 
 _FILTER_REGISTRY = {
     "bronze": {"default": build_mongo_incremental_filter},
@@ -48,18 +51,26 @@ _LOAD_REGISTRY = {
     "gold": {"default": IcebergLoad},
 }
 
+
+_REGISTRY_MAP = {
+    "extract": _EXTRACT_REGISTRY,
+    "transform": _TRANSFORMER_REGISTRY,
+    "load": _LOAD_REGISTRY,
+}
+
+
 def resolve_registry_class(
-    registry: dict,
+    behavior: Behavior,
     stage: str,
     table_name: str,
     component_name: str,
     required: bool = True,
 ):
-
-    stage_components = registry.get(stage)
+    
+    stage_components = _REGISTRY_MAP[behavior]
 
     if not stage_components:
-        raise ValueError(f"Stage '{stage}' is not registered for {component_name}")
+        raise ValueError(f"Stage '{stage}' is not registered for behavior {behavior}")
 
     component_cls = stage_components.get(table_name) or stage_components.get("default")
 

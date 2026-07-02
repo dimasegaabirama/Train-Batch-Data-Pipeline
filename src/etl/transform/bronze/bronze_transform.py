@@ -1,8 +1,8 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 
-from src.etl.transform.base_transform import BaseTransform
-from src.core.constant import _DATE_COLUMNS
+from src.etl.transform import BaseTransform
+from src.core import DATE_COLUMNS
 
 class BronzeTransform(BaseTransform):
 
@@ -39,7 +39,7 @@ class BronzeTransform(BaseTransform):
     
         df = self.dataframe.withColumnRenamed("_id", "id")
 
-        for column in _DATE_COLUMNS:
+        for column in DATE_COLUMNS:
             if column in df.columns:
                 df = df.withColumn(
                     column,
