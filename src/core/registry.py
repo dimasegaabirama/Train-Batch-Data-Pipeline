@@ -17,7 +17,7 @@ from src.utils.filter_utils import (
     build_mongo_incremental_filter
 )
 
-Behavior = Literal["extract", "transform", "load"]
+Component = Literal["extract", "transform", "load", "filter"]
 
 _FILTER_REGISTRY = {
     "bronze": {"default": build_mongo_incremental_filter},
@@ -56,21 +56,21 @@ _REGISTRY_MAP = {
     "extract": _EXTRACT_REGISTRY,
     "transform": _TRANSFORMER_REGISTRY,
     "load": _LOAD_REGISTRY,
+    "filter": _FILTER_REGISTRY
 }
 
 
 def resolve_registry_class(
-    behavior: Behavior,
     stage: str,
     table_name: str,
-    component_name: str,
+    component_name: Component,
     required: bool = True,
 ):
     
-    stage_components = _REGISTRY_MAP[behavior]
+    stage_components = _REGISTRY_MAP[component_name]
 
     if not stage_components:
-        raise ValueError(f"Stage '{stage}' is not registered for behavior {behavior}")
+        raise ValueError(f"Stage '{stage}' is not registered for behavior {component_name}")
 
     component_cls = stage_components.get(table_name) or stage_components.get("default")
 

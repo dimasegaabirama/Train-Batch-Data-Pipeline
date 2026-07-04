@@ -7,7 +7,7 @@ from typing_extensions import Dict, List, Literal, Optional
 # Stage Type
 # =========================
 
-StageType = Literal["mongo", "source", "bronze", "silver", "gold"]
+StageType = Literal["source", "bronze", "silver", "gold"]
 
 # =========================
 # Write Type
@@ -84,11 +84,11 @@ class FilterConfig(BaseModel):
 # Schema
 # =========================
 
-
 class SchemaContext(BaseModel):
     name: str
     description: str
     owner: str
+    upstream: StageType
     retention_days: PositiveInt
 
 

@@ -20,16 +20,6 @@ pipeline:
     - stations
     - routes
     - tickets
-  schema_flow:
-    bronze:
-      source: mongo
-      target: bronze
-    silver:
-      source: bronze
-      target: silver
-    gold:
-      source: silver
-      target: gold
 
 # =====================================================
 # SOURCES
@@ -152,7 +142,7 @@ schemas:
     name: gold
     description: Analytics-ready data for BI and ML
     owner: analytics_team
-    upstream: gold
+    upstream: silver
     retention_days: 365
 
 # =====================================================

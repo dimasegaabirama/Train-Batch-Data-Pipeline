@@ -14,11 +14,11 @@ class PipelineOrchestrator:
     def __init__(
         self,
         logger: AppLogger,
-        spark: SparkSession,
+        session: SparkSession,
         config: Config
     ):
         self.logger = logger
-        self.spark = spark
+        self.session = session
         self.config = config
 
     # =========================
@@ -46,7 +46,7 @@ class PipelineOrchestrator:
     # =========================
     # PIPELINE FLOW
     # =========================
-    def get_schema_flow(self, stage: StageType) -> Dict[FlowKey, StageType]:
+    def get_schema_upstream(self, stage: StageType) -> Dict[FlowKey, StageType]:
         cfg = getattr(self.config.get_schema_config(stage), "upstream", None)
 
         if cfg is None:
@@ -66,15 +66,13 @@ class PipelineOrchestrator:
 
         # === Extractor ===
         extractor = resolve_registry_class(
-            registry=_EXTRACT_REGISTRY,
             stage=stage,
             table_name=table_name,
-            component_name="Extractor",
+            component_name="extract"
         )
 
         # === Condition ===
         condition = resolve_registry_class(
-            registry=_FILTER_REGISTRY,
             stage=stage,
             table_name=table_name,
             component_name="Filter",
@@ -93,7 +91,7 @@ class PipelineOrchestrator:
 
         return extractor(
             logger=self.logger,
-            session=self.spark,
+            session=self.session,
             config=self.config,
             catalog_type=catalog_type,
             table_name=table_name,
@@ -113,15 +111,14 @@ class PipelineOrchestrator:
 
         # === Transformer ===
         transformer = resolve_registry_class(
-            registry=_TRANSFORMER_REGISTRY,
             stage=stage,
             table_name=table_name,
-            component_name="Transform",
+            component_name="transform"
         )
 
         return transformer(
             logger=self.logger,
-            session=self.spark,
+            session=self.session,
             config=self.config,
             table_name=table_name,
             dataframe=dataframe,
@@ -140,15 +137,14 @@ class PipelineOrchestrator:
     ) -> DataFrame:
         # === Loader ===
         loader = resolve_registry_class(
-            registry=_LOAD_REGISTRY,
             stage=stage,
             table_name=table_name,
-            component_name="Load",
+            component_name="load"
         )
 
         return loader(
             logger=self.logger,
-            session=self.spark,
+            session=self.session,
             config=self.config,
             table_name=table_name,
             stage=stage_target,
@@ -163,18 +159,20 @@ class PipelineOrchestrator:
 
         self.logger.info(f"[{stage}] Start pipeline: {table_name}")
 
-        # GET STAGE TARGET
-        stage_target = self.get_pipeline_flow(stage=stage)["target"]
+        # === STAGE TARGET ===
+        stage_target = self.get_schema_upstream(stage=stage)
 
-        # EXTRACT, TRANSFORM, LOAD
+        # === EXTRACT ===
         self.logger.info(f"[{stage}] Extract Table: {table_name}")
         extract_stage = self.extract(stage=stage, table_name=table_name)
 
+        # === TRANSFORM ===
         self.logger.info(f"[{stage}] Transform Table: {table_name}")
         transform_stage = self.transform(
             stage=stage, dataframe=extract_stage, table_name=table_name
         )
 
+        # === LOAD ===
         self.logger.info(f"[{stage}] Load Table: {table_name}")
         self.load(
             stage=stage,

@@ -17,7 +17,7 @@ def pipeline_branch(func):
     def wrapper(*args, **kwargs):
         self = args[0]
         logger: Logger = self.logger
-        session: SparkSession = self.spark  # fix: was self.session
+        session: SparkSession = self.session
         catalog: str = self.config.get_catalog_name()
         branch_name: str = kwargs["stage"]
 

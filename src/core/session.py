@@ -1,7 +1,6 @@
 from logging import Logger
 
 from pyspark.sql import SparkSession
-from typing_extensions import Literal
 
 from src.core import Config
 

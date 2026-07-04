@@ -18,4 +18,3 @@ class PipelineConfig(BaseModel):
     catalog_type: str
     stages: List
     tablenames: List
-    schema_flow: PipelineFlow
