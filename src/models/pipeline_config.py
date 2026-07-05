@@ -15,6 +15,7 @@ class PipelineFlow(BaseModel):
 
 class PipelineConfig(BaseModel):
     name: str
+    source_type: str
     catalog_type: str
     stages: List
     tablenames: List

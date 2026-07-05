@@ -5,8 +5,9 @@ from src.etl.transform import BaseTransform
 
 
 class PassengersTransform(BaseTransform):
-    def __init__(self, logger, session, config, dataframe, **kwargs):
-        super().__init__(logger, session, config, dataframe, **kwargs)
+
+    def __init__(self, logger, session, config, dataframe, **extra):
+        super().__init__(logger, session, config, dataframe, **extra)
 
     def transform(self) -> DataFrame:
         """

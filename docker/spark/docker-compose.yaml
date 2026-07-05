@@ -73,7 +73,7 @@ services:
       - ./src/notebooks:/app
     ports:
       - 8888:8888
-      - 4041:4041
+      - 4042:4042
     depends_on:
       spark-master:
         condition: service_healthy

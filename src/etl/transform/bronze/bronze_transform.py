@@ -6,9 +6,8 @@ from src.core import DATE_COLUMNS
 
 class BronzeTransform(BaseTransform):
 
-    def __init__(self, logger, session, config, dataframe, table_name,**kwargs):
-        super().__init__(logger, session, config, dataframe, **kwargs)
-        self.table_name = table_name
+    def __init__(self, logger, session, config, dataframe, **extra):
+        super().__init__(logger, session, config, dataframe, **extra)
 
     @staticmethod
     def requires():

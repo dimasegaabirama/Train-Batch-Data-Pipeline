@@ -6,8 +6,8 @@ from typing_extensions import List, Union
 from src.core import Config, AppLogger, resolve_registry_class
 
 from src.models.data_config import StageType
-from src.models.pipeline_config import FlowKey
 from src.utils.nessie_utils import pipeline_branch
+from src.utils.table_utils import create_table_fullname
 
 
 class PipelineOrchestrator:
@@ -21,45 +21,11 @@ class PipelineOrchestrator:
         self.session = session
         self.config = config
 
-    # =========================
-    # FIND DEPENDENCY
-    # =========================
-    def get_table_deps(self, table_names: Union[str, List[str]]) -> Dict[str, str]:
-
-        dependencies = {}
-
-        if isinstance(table_names, str):
-            table_names = [table_names]
-
-        for table_name in table_names:
-            cfg = getattr(self.config.get_table_config(table_name), "depends_on", None)
-
-            if not cfg:
-                continue
-
-            dependencies.update({
-                key: f"{val['catalog']}.{val['schema']}.{key}" for key, val in cfg.items()
-            })
-        
-        return dependencies
-
-    # =========================
-    # PIPELINE FLOW
-    # =========================
-    def get_schema_upstream(self, stage: StageType) -> Dict[FlowKey, StageType]:
-        cfg = getattr(self.config.get_schema_config(stage), "upstream", None)
-
-        if cfg is None:
-            raise ValueError("Schema flow from Pipeline Config not found!")
-
-        return cfg
 
     # =========================
     # EXTRACT
     # =========================
     def extract(self, stage: StageType, table_name: str) -> DataFrame:
-
-        catalog_type = self.config.get_catalog_type()
 
         start_date = self.config.get_start_date()
         end_date = self.config.get_end_date()
@@ -75,7 +41,7 @@ class PipelineOrchestrator:
         condition = resolve_registry_class(
             stage=stage,
             table_name=table_name,
-            component_name="Filter",
+            component_name="filter",
             required=False,
         )
 
@@ -86,19 +52,19 @@ class PipelineOrchestrator:
                 stage=stage, field=field, start_date=start_date, end_date=end_date
             )
 
-        # === Schema ===
-        schema = self.config.get_schema_table(table_name=table_name, stage=stage)
+        # === Table Schema ===
+        table_schema = self.config.get_schema_table(table_name=table_name, stage=stage)
 
         return extractor(
+            stage=stage,
             logger=self.logger,
             session=self.session,
             config=self.config,
-            catalog_type=catalog_type,
-            table_name=table_name,
-            schema=schema,
-            stage=stage,
-            condition=condition
+            table_name=table_name
+            condition=condition,
+            table_schema=table_schema
         ).extract()
+    
 
     # =========================
     # TRANSFORM
@@ -107,7 +73,7 @@ class PipelineOrchestrator:
         self, stage: StageType, dataframe: DataFrame, table_name: str
     ) -> DataFrame:
 
-        lookup_table_names = self.get_table_deps(table_name)
+        lookup_table_name = self.config.get_table_deps(table_name)
 
         # === Transformer ===
         transformer = resolve_registry_class(
@@ -120,9 +86,8 @@ class PipelineOrchestrator:
             logger=self.logger,
             session=self.session,
             config=self.config,
-            table_name=table_name,
             dataframe=dataframe,
-            lookup_table_name=lookup_table_names
+            lookup_table_name=lookup_table_name
         ).transform()
 
     # =========================
@@ -135,6 +100,13 @@ class PipelineOrchestrator:
         dataframe: DataFrame,
         table_name: str,
     ) -> DataFrame:
+        
+        # === Write Mode ===
+        write_mode = self.config.get_table_write_mode(table_name=table_name, stage=stage_target)
+
+        # === Query ===
+        queries = self.config.get_query_table(table_name=table_name)
+        
         # === Loader ===
         loader = resolve_registry_class(
             stage=stage,
@@ -143,11 +115,13 @@ class PipelineOrchestrator:
         )
 
         return loader(
+            stage=stage_target,
             logger=self.logger,
             session=self.session,
             config=self.config,
             table_name=table_name,
-            stage=stage_target,
+            write_mode=write_mode,
+            query=
             dataframe=dataframe
         ).load()
 
@@ -160,7 +134,7 @@ class PipelineOrchestrator:
         self.logger.info(f"[{stage}] Start pipeline: {table_name}")
 
         # === STAGE TARGET ===
-        stage_target = self.get_schema_upstream(stage=stage)
+        stage_target = self.config.get_schema_downstream(stage=stage)
 
         # === EXTRACT ===
         self.logger.info(f"[{stage}] Extract Table: {table_name}")

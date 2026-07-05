@@ -4,9 +4,9 @@ from src.etl.transform import BaseTransform
 
 
 class RoutesTransform(BaseTransform):
-    def __init__(self, session, config, dataframe, lookup_table_name, **kwargs):
-        super().__init__(session, config, dataframe, **kwargs)
-        self.lookup_table_name = lookup_table_name
+    def __init__(self, logger, session, config, dataframe, **extra):
+        super().__init__(logger, session, config, dataframe, **extra)
+        self.lookup_table_name = self.extra["lookup_table_name"]
 
     def transform(self):
         """

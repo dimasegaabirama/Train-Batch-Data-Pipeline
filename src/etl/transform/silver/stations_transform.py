@@ -5,8 +5,8 @@ from src.etl.transform import BaseTransform
 
 
 class StationsTransform(BaseTransform):
-    def __init__(self, session, config, dataframe, **kwargs):
-        super().__init__(session, config, dataframe, **kwargs)
+    def __init__(self, logger, session, config, dataframe, **extra):
+        super().__init__(logger, session, config, dataframe, **extra)
 
     def transform(self) -> DataFrame:
         """

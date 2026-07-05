@@ -89,6 +89,7 @@ class SchemaContext(BaseModel):
     description: str
     owner: str
     upstream: StageType
+    downstream: StageType
     retention_days: PositiveInt
 
 

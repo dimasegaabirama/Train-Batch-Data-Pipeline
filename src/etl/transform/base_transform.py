@@ -8,24 +8,16 @@ from src.core import Config, AppLogger
 
 class BaseTransform(ABC):
     def __init__(
-        self, logger: AppLogger, session: SparkSession, config: Config, dataframe: DataFrame, **kwargs
+        self, logger: AppLogger, session: SparkSession, config: Config, dataframe: DataFrame, **extra
     ):
         self.logger = logger
         self.session = session
         self.config = config
         self.dataframe = dataframe
 
-    @abstractmethod
-    def requires(self):
-        """
-        Returns any dependencies required before this transform runs.
+        self.extra = extra
 
-        Returns
-        -------
-        None
-        """
-        return None
-
+        
     @abstractmethod
     def transform(self):
         return None

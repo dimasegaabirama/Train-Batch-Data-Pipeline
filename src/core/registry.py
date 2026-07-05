@@ -67,12 +67,13 @@ def resolve_registry_class(
     required: bool = True,
 ):
     
-    stage_components = _REGISTRY_MAP[component_name]
+    get_component = _REGISTRY_MAP[component_name]
 
-    if not stage_components:
+    if not get_component:
         raise ValueError(f"Stage '{stage}' is not registered for behavior {component_name}")
-
-    component_cls = stage_components.get(table_name) or stage_components.get("default")
+    
+    stage_component = get_component[stage]
+    component_cls = stage_component.get(table_name) or stage_component.get("default")
 
     if not component_cls and required:
         raise ValueError(

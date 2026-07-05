@@ -9,6 +9,7 @@ run_date:
 # =====================================================
 pipeline:
   name: sales_delta_pipeline
+  source_type: mongo
   catalog_type: nessie
   stages:
     - bronze
@@ -129,6 +130,7 @@ schemas:
     description: Raw ingested data from sources
     owner: data_engineering_team
     upstream: source
+    downstream: silver
     retention_days: 30
 
   silver:
@@ -136,6 +138,7 @@ schemas:
     description: Cleaned and conformed data
     owner: data_engineering_team
     upstream: bronze
+    downstream: gold
     retention_days: 180
     
   gold:
@@ -143,6 +146,7 @@ schemas:
     description: Analytics-ready data for BI and ML
     owner: analytics_team
     upstream: silver
+    downstream: gold
     retention_days: 365
 
 # =====================================================
@@ -263,8 +267,8 @@ tables:
     
     query:
       - |
-        MERGE INTO nessie.silver.stations t
-        USING stations_cleaned s
+        MERGE INTO {catalog}.{schema}.{table_name} t
+        USING {table_view} s
         ON t.id = s.id
 
         WHEN MATCHED AND (
@@ -298,11 +302,11 @@ tables:
         )
 
       - |
-        UPDATE nessie.silver.stations t
+        UPDATE {catalog}.{schema}.{table_name} t
         SET is_deleted = true
         WHERE NOT EXISTS (
             SELECT 1
-            FROM stations_cleaned s
+            FROM {table_view} s
             WHERE s.id = t.id
         )
 
