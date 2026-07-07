@@ -72,7 +72,7 @@ def resolve_registry_class(
     if not get_component:
         raise ValueError(f"Stage '{stage}' is not registered for behavior {component_name}")
     
-    stage_component = get_component[stage]
+    stage_component = get_component.get(stage, {})
     component_cls = stage_component.get(table_name) or stage_component.get("default")
 
     if not component_cls and required:

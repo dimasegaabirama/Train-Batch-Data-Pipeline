@@ -5,8 +5,8 @@ SOURCE_TYPE = "mongo"
 
 class MongoExtract(BaseExtract):
 
-    def __init__(self, stage, logger, session, config, table_name, condition=None, table_schema=None, **extra):
-        super().__init__(stage, logger, session, config, table_name, condition, table_schema, **extra)
+    def __init__(self, stage, logger, session, config, table_name, condition=None, **extra):
+        super().__init__(stage, logger, session, config, table_name, condition, **extra)
 
     def get_mongo_database_name(self) -> str:
         cfg = getattr(self.config.get_source_config(SOURCE_TYPE), "database", None)

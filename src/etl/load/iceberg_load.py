@@ -3,9 +3,9 @@ from .base_load import BaseLoad
 
 
 class IcebergLoad(BaseLoad):
-    def __init__(self, stage, logger, session, config, table_name, write_mode, query = None, **extra):
-        super().__init__(stage, logger, session, config, table_name, write_mode, query, **extra)
-        self.full_table_name = self.resolve_full_table_name()
+    def __init__(self, stage, logger, session, config, table_name, queries = None, **extra):
+        super().__init__(stage, logger, session, config, table_name, queries, **extra)
+        self.full_table_name = self.config.get_full_table_name(stage=stage, table_name=table_name)
 
     def load(self) -> None:
         self.logger.debug(
@@ -16,7 +16,9 @@ class IcebergLoad(BaseLoad):
             if self.write_mode == "custom":
                 if not self.query:
                     raise ValueError("Mode 'custom' requires a SQL query.")
-                self.session.sql(self.query)
+                
+                for query in self.queries:
+                    self.session.sql(self.query)
 
             else:
                 writer = self.dataframe.writeTo(self.full_table_name)

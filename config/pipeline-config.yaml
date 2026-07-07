@@ -62,64 +62,57 @@ spark:
   master: "${SPARK_MASTER}"
 
   common_config: &spark_common
-    spark.sql.shuffle.partitions: 20
-    spark.serializer: org.apache.spark.serializer.KryoSerializer
-    spark.driver.bindAddress: 0.0.0.0
-    spark.driver.host: spark-submit
+
+    spark.driver.bindAddress: "0.0.0.0"
+    spark.driver.host: "spark-submit"
     spark.driver.port: 4040
+
+    spark.driver.memory: "2g"
+    spark.executor.memory: "1g"
+    spark.executor.cores: 2
+    spark.executor.instances: 4
+
+    spark.serializer: "org.apache.spark.serializer.KryoSerializer"
     spark.jars.packages: org.mongodb:mongodb-driver-sync:4.11.1,org.mongodb.spark:mongo-spark-connector_2.12:10.5.0,org.apache.iceberg:iceberg-spark-runtime-3.2_2.12:1.4.3,org.projectnessie.nessie-integrations:nessie-spark-extensions-3.2_2.12:0.67.0
     spark.sql.extensions: org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions,org.projectnessie.spark.extensions.NessieSparkSessionExtensions
+    
     spark.sql.catalog.nessie: org.apache.iceberg.spark.SparkCatalog
     spark.sql.catalog.nessie.catalog-impl: org.apache.iceberg.nessie.NessieCatalog
     spark.sql.catalog.nessie.uri: "${NESSIE_URL}"
     spark.sql.catalog.nessie.ref: "${NESSIE_REF}"
-    spark.sql.catalog.nessie.warehouse: "${WAREHOUSE_LOCATION_PROD}"
+
     spark.mongodb.read.connection.uri: "${MONGO_URL}"
     spark.mongodb.write.connection.uri: "${MONGO_URL}"
     spark.mongodb.read.partitioner: com.mongodb.spark.sql.connector.read.partitioner.PaginateIntoPartitionsPartitioner
     spark.mongodb.read.partitionerOptions.numberOfPartitions: 10
 
+    spark.sql.catalog.nessie.warehouse: "${WAREHOUSE_LOCATION_DEV}"
+
   dev:
     app_name: "Development"
     config:
       <<: *spark_common
-      spark.driver.memory: 2g
-      spark.executor.cores: 1
-      spark.cores.max: 5
-      spark.executor.memory: 512m
-      spark.sql.catalog.nessie.warehouse: "${WAREHOUSE_LOCATION_DEV}"
-      spark.local.dir: "/app/spark_local_dir"
-
-      # Mongo partition
-      spark.mongodb.read.partitioner: com.mongodb.spark.sql.connector.read.partitioner.PaginateIntoPartitionsPartitioner
-      spark.mongodb.read.partitionerOptions.numberOfPartitions: 10
+      spark.sql.shuffle.partitions: 16
 
   bronze:
     app_name: "Bronze_Pipeline"
     config:
       <<: *spark_common
-      spark.executor.cores: 1
-      spark.cores.max: 5
-      spark.executor.memory: "512m"
       spark.sql.shuffle.partitions: 16
 
   silver:
     app_name: "Silver_Pipeline"
     config:
       <<: *spark_common
-      spark.executor.cores: 2
-      spark.executor.instances: 4
-      spark.executor.memory: "1024m"
       spark.sql.shuffle.partitions: 8
+      spark.sql.adaptive.enabled: true
 
   gold:
     app_name: "Gold_Pipeline"
     config:
       <<: *spark_common
-      spark.executor.cores: 2
-      spark.executor.instances: 4
-      spark.executor.memory: "1024m"
       spark.sql.shuffle.partitions: 8
+      spark.sql.adaptive.enabled: true
 
 # =====================================================
 # SCHEMAS / NAMESPACES
@@ -193,7 +186,7 @@ tables:
 
     query:
       - |  
-        MERGE INTO {catalog}.{schema}.{table_name} t
+        MERGE INTO {full_table_name} t
         USING {table_view} s
         ON t.id = s.id AND t.is_active = true
 
@@ -215,10 +208,10 @@ tables:
         WITH CURRENT_RECORD AS (
             SELECT 
                 id
-            FROM {catalog}.{schema}.{table_name}
+            FROM {full_table_name}
             WHERE is_active = true
         )
-        INSERT INTO {catalog}.{schema}.{table_name}
+        INSERT INTO {full_table_name}
         SELECT 
             pc.sk_id,
             pc.id,
@@ -267,7 +260,7 @@ tables:
     
     query:
       - |
-        MERGE INTO {catalog}.{schema}.{table_name} t
+        MERGE INTO {full_table_name} t
         USING {table_view} s
         ON t.id = s.id
 
@@ -302,7 +295,7 @@ tables:
         )
 
       - |
-        UPDATE {catalog}.{schema}.{table_name} t
+        UPDATE {full_table_name} t
         SET is_deleted = true
         WHERE NOT EXISTS (
             SELECT 1
@@ -346,7 +339,7 @@ tables:
     
     query: 
       - |
-        MERGE INTO {catalog}.{namespace}.{table} t
+        MERGE INTO {full_table_name} t
         USING {table_view} s
         ON t.id = s.id AND t.is_active = true
 
@@ -367,11 +360,11 @@ tables:
         WITH CURRENT_RECORD AS (
             SELECT 
                 id
-            FROM {catalog}.{schema}.{table_name}
+            FROM {full_table_name}
             WHERE is_active = true
         )
 
-        INSERT INTO {catalog}.{namespace}.{table}
+        INSERT INTO {full_table_name}
         SELECT
             sc.sk_id,
             sc.id,
@@ -425,7 +418,7 @@ tables:
     
     query: 
       - |      
-        MERGE INTO {catalog}.{namespace}.{table} t
+        MERGE INTO {full_table_name} t
         USING {table_view} s
         ON t.id = s.id
 
@@ -469,7 +462,7 @@ tables:
         )
 
       - |
-        UPDATE {catalog}.{namespace}.{table} r
+        UPDATE {full_table_name} r
         SET is_deleted = true
         WHERE NOT EXISTS (
             SELECT 1
@@ -570,7 +563,7 @@ tables:
   
     query: 
       - |
-        INSERT OVERWRITE TABLE {catalog}.{namespace}.{table}
+        INSERT OVERWRITE TABLE {catalog}.{namespace}.{table_name}
         PARTITION ({partitioned_by})
         SELECT *
         FROM {view}

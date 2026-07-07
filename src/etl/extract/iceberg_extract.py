@@ -2,9 +2,9 @@ from .base_extract import BaseExtract
 
 class IcebergExtract(BaseExtract):
 
-    def __init__(self, logger, session, config, table_name, condition=None, table_schema=None, **extra):
-        super().__init__(logger, session, config, table_name, condition, table_schema, **extra)
-        self.full_table_name = self.resolve_full_table_name()
+    def __init__(self, stage, logger, session, config, table_name, condition=None, table_schema=None, **extra):
+        super().__init__(stage, logger, session, config, table_name, condition, table_schema, **extra)
+        self.full_table_name = self.config.get_full_table_name(stage=self.stage, table_name=table_name)
 
     def extract(self):
 
