@@ -1,12 +1,12 @@
 [
-  { "_id": 1, "code": "GMR", "name": "Gambir", "city": "Jakarta", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 2, "code": "BD", "name": "Bandung", "city": "Bandung", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 3, "code": "SMT", "name": "Semarang Tawang", "city": "Semarang", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 4, "code": "YK", "name": "Yogyakarta", "city": "Yogyakarta", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 5, "code": "SBY", "name": "Surabaya Gubeng", "city": "Surabaya", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 6, "code": "ML", "name": "Malang", "city": "Malang", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 7, "code": "SOLO", "name": "Solo Balapan", "city": "Surakarta", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 8, "code": "CN", "name": "Cirebon", "city": "Cirebon", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 9, "code": "PWK", "name": "Purwakarta", "city": "Purwakarta", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" },
-  { "_id": 10, "code": "KDS", "name": "Kertosono", "city": "Nganjuk", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z" }
+  { "_id": 1, "code": "GMR", "name": "Gambir", "city": "Jakarta", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z"},
+  { "_id": 2, "code": "BD", "name": "Bandung", "city": "Bandung", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z"},
+  { "_id": 3, "code": "SMT", "name": "Semarang Tawang", "city": "Semarang", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z"},
+  { "_id": 4, "code": "YK", "name": "Yogyakarta", "city": "Yogyakarta", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z"},
+  { "_id": 5, "code": "SBY", "name": "Surabaya Gubeng", "city": "Surabaya", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z"},
+  { "_id": 6, "code": "ML", "name": "Malang", "city": "Malang", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z"},
+  { "_id": 7, "code": "SOLO", "name": "Solo Balapan", "city": "Surakarta", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z"},
+  { "_id": 8, "code": "CN", "name": "Cirebon", "city": "Cirebon", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z"},
+  { "_id": 9, "code": "PWK", "name": "Purwakarta", "city": "Purwakarta", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z"},
+  { "_id": 10, "code": "KDS", "name": "Kertosono", "city": "Nganjuk", "created_at": "2024-01-01T00:00:00Z", "updated_at": "2024-01-01T00:00:00Z"}
 ]

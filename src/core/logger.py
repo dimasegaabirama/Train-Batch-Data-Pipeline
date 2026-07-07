@@ -85,14 +85,6 @@ class AppLogger:
 
     @staticmethod
     def log_stage(stage: "StageType | None" = None):
-        """
-        Decorator that logs start/end time and exceptions for a pipeline stage.
-
-        Looks for a logger in (in order):
-          1. kwargs['logger']
-          2. self.logger (if decorating a method)
-        """
-
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):

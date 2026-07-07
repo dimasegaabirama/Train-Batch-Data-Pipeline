@@ -1,35 +1,30 @@
 from pyspark.sql.dataframe import DataFrame
-
 from .base_extract import BaseExtract
 
-from src.utils.table_utils import create_table_fullname
-
+SOURCE_TYPE = "mongo"
 
 class MongoExtract(BaseExtract):
-    def __init__(self, logger, session, config, table_name, condition, schema = None, **kwargs):
-        super().__init__(logger, session, config, table_name, schema, **kwargs)
-        self.source_name = "mongo"
-        self.condition = condition
 
-    def get_database_name(self) -> str:
-        cfg = getattr(self.config.get_source_config(self.source_name), "database", None)
+    def __init__(self, stage, logger, session, config, table_name, condition=None, **extra):
+        super().__init__(stage, logger, session, config, table_name, condition, **extra)
+
+    def get_mongo_database_name(self) -> str:
+        cfg = getattr(self.config.get_source_config(SOURCE_TYPE), "database", None)
 
         if cfg is None:
-            raise ValueError(f"Database name from '{self.source_name}' not found")
+            raise ValueError(f"Database name from '{SOURCE_TYPE}' not found")
 
         return cfg
 
     def extract(self) -> DataFrame:
 
-        # Get Source Collection & Database
         collection = self.table_name
-        database = self.get_database_name()
+        database = self.get_mongo_database_name()
 
-        # Get Condition
         condition = self.condition
 
         try:
-            self.logger.info(
+            self.logger.debug(
                 f"[Extract Mongo] Reading collection '{collection}' from MongoDB"
             )
 
@@ -40,16 +35,16 @@ class MongoExtract(BaseExtract):
             )
 
             if condition:
-                self.logger.info(f"[Extract Mongo] Applying pipeline on '{collection}'")
+                self.logger.debug(f"[Extract Mongo] Applying pipeline on '{collection}'")
                 reader = reader.option("pipeline", condition)
 
-            if self.schema:
-                self.logger.info("[Extract Mongo] Applying schema registry")
-                reader = reader.schema(self.schema)
+            if self.table_schema:
+                self.logger.debug("[Extract Mongo] Applying schema registry")
+                reader = reader.schema(self.table_schema)
 
             df = reader.load()
 
-            self.logger.info(f"[Extract Mongo] Successfully read '{collection}'")
+            self.logger.debug(f"[Extract Mongo] Successfully read '{collection}'")
 
             return df
 

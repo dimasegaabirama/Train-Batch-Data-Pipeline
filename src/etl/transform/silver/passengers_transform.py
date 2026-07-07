@@ -1,13 +1,13 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 
-from src.etl.transform.base_transform import BaseTransform
-from src.utils.data_cleaning_utils import normalize_string
+from src.etl.transform import BaseTransform
 
 
 class PassengersTransform(BaseTransform):
-    def __init__(self, session, config, dataframe, **kwargs):
-        super().__init__(session, config, dataframe, **kwargs)
+
+    def __init__(self, logger, session, config, dataframe, **extra):
+        super().__init__(logger, session, config, dataframe, **extra)
 
     def transform(self) -> DataFrame:
         """
@@ -23,16 +23,6 @@ class PassengersTransform(BaseTransform):
         DataFrame
             Transformed DataFrame with normalized 'city' and no duplicates.
         """
-
-        # sk_id BIGINT,
-        # id INT,
-        # name STRING,
-        # gender STRING,
-        # phone STRING,
-        # email STRING,
-        # is_active BOOLEAN,
-        # start_date TIMESTAMP,
-        # end_date TIMESTAMP
 
         return (self.dataframe
                     .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))

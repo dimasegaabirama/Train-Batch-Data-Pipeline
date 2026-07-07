@@ -1,5 +1,6 @@
+from typing_extensions import Literal
+
 from src.etl.extract import IcebergExtract, MongoExtract
-from src.etl.load import IcebergLoad
 from src.etl.transform.bronze import BronzeTransform
 from src.etl.transform.silver import (
     PassengersTransform,
@@ -8,12 +9,15 @@ from src.etl.transform.silver import (
     TicketsTransform,
     TrainsTransform,
 )
+
+from src.etl.load import IcebergLoad
+
 from src.utils.filter_utils import (
     build_iceberg_incremental_filter,
-    build_mongo_incremental_filter,
+    build_mongo_incremental_filter
 )
 
-from src.models.checks_config import CheckConfig, CheckContext
+Component = Literal["extract", "transform", "load", "filter"]
 
 _FILTER_REGISTRY = {
     "bronze": {"default": build_mongo_incremental_filter},
@@ -47,20 +51,29 @@ _LOAD_REGISTRY = {
     "gold": {"default": IcebergLoad},
 }
 
+
+_REGISTRY_MAP = {
+    "extract": _EXTRACT_REGISTRY,
+    "transform": _TRANSFORMER_REGISTRY,
+    "load": _LOAD_REGISTRY,
+    "filter": _FILTER_REGISTRY
+}
+
+
 def resolve_registry_class(
-    registry: dict,
     stage: str,
     table_name: str,
-    component_name: str,
+    component_name: Component,
     required: bool = True,
 ):
+    
+    get_component = _REGISTRY_MAP[component_name]
 
-    stage_components = registry.get(stage)
-
-    if not stage_components:
-        raise ValueError(f"Stage '{stage}' is not registered for {component_name}")
-
-    component_cls = stage_components.get(table_name) or stage_components.get("default")
+    if not get_component:
+        raise ValueError(f"Stage '{stage}' is not registered for behavior {component_name}")
+    
+    stage_component = get_component.get(stage, {})
+    component_cls = stage_component.get(table_name) or stage_component.get("default")
 
     if not component_cls and required:
         raise ValueError(

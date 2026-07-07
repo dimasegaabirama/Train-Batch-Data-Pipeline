@@ -1,13 +1,14 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.types import TimestampType
 
-from src.etl.transform.base_transform import BaseTransform
-from src.utils.data_cleaning_utils import normalize_string
+from src.etl.transform import BaseTransform
 
 
 class TrainsTransform(BaseTransform):
-    def __init__(self, session, config, dataframe, **kwargs):
-        super().__init__(session, config, dataframe, **kwargs)
+    def __init__(self, logger, session, config, dataframe, **extra):
+        super().__init__(logger, session, config, dataframe, **extra)
+        self.lookup_table_name = self.extra["lookup_table_name"]
 
     def transform(self) -> DataFrame:
         """
@@ -37,10 +38,12 @@ class TrainsTransform(BaseTransform):
         - Only the 'type' column is normalized in this transformation.
         """
 
-        return (
-            self.dataframe
-                .withColumn("sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
-                .withColumn("name", F.trim(F.lower("name")))
-                .withColumn("type", F.coalesce(F.trim(F.lower("type")), F.lit("unknown")))
-                .withColumn("capacity", F.coalesce("capacity", F.lit(0)))
+        return (self.dataframe
+            .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
+            .withColumn("name", F.trim(F.lower("name")))
+            .withColumn("type", F.coalesce(F.trim(F.lower("type")), F.lit("unknown")))
+            .withColumn("capacity", F.coalesce("capacity", F.lit(0)))
         )
+    
+
+

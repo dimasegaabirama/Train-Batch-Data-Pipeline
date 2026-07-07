@@ -5,6 +5,7 @@ from src.core.logger import AppLogger
 from src.core.config import Config
 from src.core.session import Session
 
+from src.app.run_bootstrap import PipelineBootstrap
 from src.app.run_pipeline import PipelineOrchestrator
 from src.models.data_config import DateConfig
 
@@ -62,6 +63,12 @@ def build_parser():
         help="Pipeline end date (YYYY-MM-DD)"
     )
 
+    parser.add_argument(
+        "--run_bootstrap",
+        action="store_true",
+        help="Run Pipeline Bootstrap"
+    )
+
     return parser.parse_args()
 
 
@@ -73,41 +80,14 @@ def main():
     args = build_parser()
 
     stage = args.stage
-
-    # =========================
-    # Resolve Runtime Config
-    # =========================
     config_path = args.config or os.getenv("CONFIG_PATH")
     env_path = args.environment or os.getenv("ENV_PATH")
-    start_date = args.start_date or os.getenv("START_DATE")
-    end_date = args.end_date or os.getenv("END_DATE")
 
     if not config_path:
         raise EnvironmentError("CONFIG_PATH is not set.")
 
     if not env_path:
         raise EnvironmentError("ENV_PATH is not set.")
-
-    if not start_date:
-        raise EnvironmentError("START_DATE is not set.")
-
-    if not end_date:
-        raise EnvironmentError("END_DATE is not set.")
-
-    os.environ.update({
-        "CONFIG_PATH": config_path,
-        "ENV_PATH": env_path,
-        "START_DATE": start_date,
-        "END_DATE": end_date
-    })
-
-    # =========================
-    # Date Validation
-    # =========================
-    DateConfig(
-        start_date=start_date,
-        end_date=end_date
-    )
 
     # =========================
     # Initialize Dependencies
@@ -121,32 +101,58 @@ def main():
         config=config
     ).get_session(stage=stage)
 
+
+    # =========================
+    # Resolve Runtime Config
+    # =========================
+    run_bootstrap = args.run_bootstrap
+    if run_bootstrap:
+        return PipelineBootstrap(session=session, logger=logger).run_bootstrap()
+    
+    start_date = args.start_date or os.getenv("START_DATE")
+    end_date = args.end_date or os.getenv("END_DATE")
+
+    if not start_date:
+        raise EnvironmentError("START_DATE is not set.")
+
+    if not end_date:
+        raise EnvironmentError("END_DATE is not set.")
+
+    # =========================
+    # Date Validation
+    # =========================
+
+    DateConfig(
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    os.environ.update({
+        "CONFIG_PATH": config_path,
+        "ENV_PATH": env_path,
+        "START_DATE": start_date,
+        "END_DATE": end_date
+    })
+
     # =========================
     # Resolve Catalog and Table
     # =========================
-
     pipeline_cfg = config.get_pipeline_config()
     table_names = args.tables or pipeline_cfg.tablenames
-    
+
     if not table_names:
         raise ValueError(
-            "--tables is required unless --full_run is set."
+            "--tables is required."
         )
 
     # =========================
     # Initialize Pipeline
     # =========================
-    pipeline = PipelineOrchestrator(
+    return PipelineOrchestrator(
         logger=logger,
-        spark=session,
+        session=session,
         config=config
-    )
-
-    # =========================
-    # Execute Pipeline
-    # =========================
-
-    pipeline.run_all_tables(
+    ).run_all_tables(
         stage=stage,
         table_names=table_names
     )

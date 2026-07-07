@@ -1,49 +1,65 @@
 from logging import Logger
 
 from pyspark.sql import SparkSession
-from typing_extensions import Literal
 
-from src.core.config import Config
+from src.core import Config, SparkManager
+
 from src.models.spark_config import SparkLayerContext
 from src.models.data_config import StageType
 
 
+from typing import Optional
+from pyspark.sql import SparkSession
+
+
 class Session:
-    def __init__(self, logger: Logger, config: Config):
+    def __init__(self, logger: Logger, stage: StageType):
+        self.stage = stage
         self.logger = logger
-        self.config = config
-        self.spark_cfg = self.config.get_spark_config()
+        self._spark_manager = SparkManager()
+        self._config = self._spark_manager.get_config()
+        self._stage_config = self._spark_manager.get_stage_config(self.stage)
+        self._session: Optional[SparkSession] = None
 
-    def get_stage_config(self, stage: StageType) -> SparkLayerContext:
-        """Get Spark configuration for a specific stage."""
-        try:
-            return getattr(self.spark_cfg, stage)
-        except AttributeError as err:
-            raise ValueError(f"Invalid stage: {stage}") from err
+    def get_session(self) -> SparkSession:
+        if self._session is not None:
+            self.logger.info(f"[Create Session] Reusing existing session | Stage = {self.stage}")
+            return self._session
 
-    def get_session(self, stage: StageType) -> SparkSession:
-        """Create or retrieve a Spark session based on stage configuration."""
-        self.logger.info(f"[Create Session] Start | Stage = {stage}")
+        self.logger.info(f"[Create Session] Start | Stage = {self.stage}")
 
         try:
-            stage_cfg = self.get_stage_config(stage)
-
-            builder = SparkSession.builder.appName(stage_cfg.app_name).master(
-                self.spark_cfg.master
+            builder = (
+                SparkSession.builder
+                .appName(self._config.app_name)
+                .master(self._config.master)
             )
 
-            for key, value in stage_cfg.config.items():
-                builder = builder.config(key, value)
+            for key, value in self._stg_cfg.items():
+                builder = builder.config(key, str(value))  # spark config wajib string
 
-            spark = builder.getOrCreate()
-            spark.sparkContext.setLogLevel("ERROR")
+            self._session = builder.getOrCreate()
+            self._session.sparkContext.setLogLevel("ERROR")
 
-            self.logger.info(f"[Create Session] Success | Stage = {stage}")
-            return spark
+            self.logger.info(f"[Create Session] Success | Stage = {self.stage}")
+            return self._session
 
         except Exception:
-            self.logger.exception(f"[Create Session] Failed | Stage = {stage}")
+            self.logger.exception(f"[Create Session] Failed | Stage = {self.stage}")
             raise
+
+    def stop_session(self) -> None:
+        """Stop the active Spark session, if any."""
+        if self._session is not None:
+            self.logger.info(f"[Stop Session] Stage = {self.stage}")
+            self._session.stop()
+            self._session = None
+
+    def __enter__(self) -> SparkSession:
+        return self.get_session()
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.stop_session()
 
 
 if __name__ == "__main__":

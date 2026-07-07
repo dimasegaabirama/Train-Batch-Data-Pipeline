@@ -1,13 +1,12 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 
-from src.etl.transform.base_transform import BaseTransform
-from src.utils.data_cleaning_utils import normalize_string
+from src.etl.transform import BaseTransform
 
 
 class StationsTransform(BaseTransform):
-    def __init__(self, session, config, dataframe, **kwargs):
-        super().__init__(session, config, dataframe, **kwargs)
+    def __init__(self, logger, session, config, dataframe, **extra):
+        super().__init__(logger, session, config, dataframe, **extra)
 
     def transform(self) -> DataFrame:
         """
@@ -39,16 +38,9 @@ class StationsTransform(BaseTransform):
         - This transform is a prerequisite for `RoutesTransform`.
         """
 
-        # id,
-        # trim(lower(name)) as name,
-        # trim(lower(city)) as city,
-        # trim(lower(code)) as code,
-        # updated_at,
-        # created_at
-
         return (self.dataframe
                     .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
-                    .withColumn("name", F.trim(F.lower("name")))
-                    .withColumn("city", F.trim(F.lower("city")))
-                    .withColumn("code", F.trim(F.lower("code")))
+                    .withColumn("name", F.lower(F.trim("name")))
+                    .withColumn("city", F.lower(F.trim("city")))
+                    .withColumn("code", F.lower(F.trim("code")))
         )

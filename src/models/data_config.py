@@ -7,7 +7,7 @@ from typing_extensions import Dict, List, Literal, Optional
 # Stage Type
 # =========================
 
-StageType = Literal["mongo", "source", "bronze", "silver", "gold"]
+StageType = Literal["source", "bronze", "silver", "gold"]
 
 # =========================
 # Write Type
@@ -84,11 +84,12 @@ class FilterConfig(BaseModel):
 # Schema
 # =========================
 
-
 class SchemaContext(BaseModel):
     name: str
     description: str
     owner: str
+    upstream: StageType
+    downstream: StageType
     retention_days: PositiveInt
 
 
@@ -147,11 +148,11 @@ class StoragesConfig(BaseModel):
 
 
 class TableContext(BaseModel):
-    type: Literal["dim", "fact"]
+    type: Literal["scd1", "scd2", "fact"]
     partitioned_by: str
     write_mode: Dict[StageType, WriteType]
     schema: Dict[StageType, str]
-    query: str
+    query: List[str]
     depends_on: Optional[dict] = None
 
 
@@ -165,3 +166,5 @@ class TablesConfig(BaseModel):
 
 class TableNames(BaseModel):
     names: List[Literal["passengers", "routes", "stations", "trains", "tickets"]]
+
+

@@ -1,36 +1,32 @@
-import logging
-
 from src.app.bootstrap import *
-from src.core.config import Config
-from src.core.logger import AppLogger
-from src.core.session import Session
+from src.core import AppLogger, Config
+from pyspark.sql.session import SparkSession
 
+class PipelineBootstrap:
+    def __init__(self, session: SparkSession, logger: AppLogger):
+        self.session = session
+        self.logger = logger
 
-def main(session: Session, logger: logging.Logger):
+    def run_bootstrap(self):
 
-    logger.info("SETUP BRANCH...")
-    initialize_branch(session)
+        self.logger.info("SETUP BRANCH...")
+        initialize_branch(self.session)
 
-    logger.info("SETUP NAMESPACES...")
-    initialize_namespace(session)
+        self.logger.info("SETUP NAMESPACES...")
+        initialize_namespace(self.session)
 
-    logger.info("SETUP TABLES...")
-    initialize_table(session)
+        self.logger.info("SETUP TABLES...")
+        initialize_table(self.session)
 
-    logger.info("SETUP BASE TAG...")
-    initialize_tag(session)
+        self.logger.info("SETUP SEED...")
+        initialize_seed(self.session)
 
-    logger.info("SETUP SUCCESS")
+        self.logger.info("SETUP BASE TAG...")
+        initialize_tag(self.session)
+
+        self.logger.info("SETUP SUCCESS")
 
 
 if __name__ == "__main__":
-    config = Config()
-    logger = AppLogger.get_logger(type="stream")
+    pass
 
-    session = Session(logger, config).get_session("dev")
-
-    print(session.conf.get("spark.sql.catalog.nessie.uri"))
-    print(session.conf.get("spark.sql.catalog.nessie.ref"))
-    print(session.conf.get("spark.sql.catalog.nessie.warehouse"))
-
-    main(session, logger)
