@@ -1,4 +1,4 @@
-from src.core.config import Config
+from src.core.config.config import Config
 from src.models.pipeline_config import PipelineConfig
 
 

@@ -1,4 +1,4 @@
-from src.core.config import Config
+from src.core.config.config import Config
 from src.models.data_config import CatalogContext, CatalogsConfig
 
 from .pipeline import PipelineManager

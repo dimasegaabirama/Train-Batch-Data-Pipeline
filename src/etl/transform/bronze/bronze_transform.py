@@ -6,13 +6,6 @@ from src.core import DATE_COLUMNS
 
 class BronzeTransform(BaseTransform):
 
-    def __init__(self, logger, session, config, dataframe, **extra):
-        super().__init__(logger, session, config, dataframe, **extra)
-
-    @staticmethod
-    def requires():
-        return None
-
     def transform(self) -> DataFrame:
         """
         Transform the input DataFrame by normalizing columns and filtering rows.

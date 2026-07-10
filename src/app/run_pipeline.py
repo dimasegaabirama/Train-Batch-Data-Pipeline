@@ -3,7 +3,8 @@ from typing import List
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
-from src.core import Config, AppLogger, resolve_registry_class
+from src.etl.transform import BaseTransform
+from src.core import AppLogger, resolve_registry_class, TableManager, DateManager, FilterManager, SchemaManager
 from src.models.data_config import StageType
 from src.utils.nessie_utils import pipeline_branch
 
@@ -12,49 +13,43 @@ class PipelineOrchestrator:
     def __init__(
         self,
         logger: AppLogger,
-        session: SparkSession,
-        config: Config
+        session: SparkSession
     ):
         self.logger = logger
         self.session = session
-        self.config = config
 
-    def get_formated_query(self, table_name: str, **kwargs):
-        return [
-            query.format(**kwargs)
-            for query in self.config.get_query_table(table_name=table_name)
-        ]
-
-    def _resolve(
-        self,
-        stage: StageType,
-        table_name: str,
-        component_name: str,
-        required: bool = True,
-    ):
-        """Small helper to centralize registry resolution + logging."""
-        return resolve_registry_class(
-            stage=stage,
-            table_name=table_name,
-            component_name=component_name,
-            required=required,
-        )
+        self._table_manager = TableManager()
+        self._date_manager = DateManager()
+        self._filter_manager = FilterManager()
+        self._schema_manager = SchemaManager()
 
     # =========================
     # EXTRACT
     # =========================
     def extract(self, stage: StageType, table_name: str) -> DataFrame:
 
-        start_date = self.config.get_start_date()
-        end_date = self.config.get_end_date()
+        start_date = self._date_manager.get_start_date()
+        end_date = self._date_manager.get_end_date()
 
         # === Extractor ===
-        extractor = self._resolve(stage, table_name, "extract")
+        extractor = resolve_registry_class(
+            stage,
+            table_name,
+            "extract"
+        )
 
         # === Condition (filter) ===
-        condition_cls = self._resolve(stage, table_name, "filter", required=False)
+        condition_cls = resolve_registry_class(
+            stage, 
+            table_name, 
+            "filter", 
+            required=False
+        )
 
-        field = self.config.get_filter_field(stage=stage, table_name=table_name)
+        field = self._filter_manager.get_field(
+            stage,
+            table_name
+        )
         condition = (
             condition_cls(
                 stage=stage,
@@ -66,17 +61,12 @@ class PipelineOrchestrator:
             else None
         )
 
-        # === Table Schema ===
-        table_schema = self.config.get_schema_table(table_name=table_name, stage=stage)
-
         return extractor(
             stage=stage,
             logger=self.logger,
             session=self.session,
-            config=self.config,
             table_name=table_name,
-            condition=condition,
-            table_schema=table_schema
+            condition=condition
         ).extract()
 
     # =========================
@@ -86,17 +76,20 @@ class PipelineOrchestrator:
         self, stage: StageType, dataframe: DataFrame, table_name: str
     ) -> DataFrame:
 
-        lookup_table_name = self.config.get_table_deps(table_name)
+        lookup_tables = self._table_manager.get_table_deps(table_name)
 
         # === Transformer ===
-        transformer = self._resolve(stage, table_name, "transform")
+        transformer: BaseTransform = resolve_registry_class(
+            stage=stage,
+            table_name=table_name,
+            component_name="transform"
+        )
 
         return transformer(
             logger=self.logger,
             session=self.session,
-            config=self.config,
             dataframe=dataframe,
-            lookup_table_name=lookup_table_name
+            lookup_tables=lookup_tables
         ).transform()
 
     # =========================
@@ -106,44 +99,53 @@ class PipelineOrchestrator:
         self,
         stage: StageType,
         dataframe: DataFrame,
-        table_name: str,
-        table_view_name: str
+        table_name: str
     ) -> DataFrame:
 
         # === Stage Target ===
-        stage_target = self.config.get_schema_downstream(stage=stage)
+        stage_target = self._schema_manager.get_stage_downstream(stage=stage)
 
         # === Table Name ===
-        full_table_name = self.config.get_full_table_name(stage=stage, table_name=table_name)
+        full_table_name = self._table_manager.get_table_fullname(
+                            stage=stage, 
+                            table_name=table_name
+                        )
+        table_view_name = f"{table_name}_view"
 
         # === Partitioned By ===
-        partitioned_by = self.config.get_table_partitioned_by(table_name=table_name)
+        partitioned_by = self._table_manager.get_table_partitioned_by(
+                            table_name=table_name
+                        )
 
-        # === Query ===
-        queries = self.get_formated_query(
-            table_name=table_name,
-            full_table_name=full_table_name,
-            table_view=table_view_name,
-            partitioned_by=partitioned_by
-        )
+        # === Query Params ===
+        query_params = {
+            "full_table_name":  full_table_name,
+            "table_view":       table_view_name,
+            "partitioned_by":   partitioned_by
+        }
 
         # === Write Mode ===
-        write_mode = self.config.get_table_write_mode(table_name=table_name, stage=stage_target)
+        write_mode = self._table_manager.get_table_write_mode(
+                            table_name=table_name,
+                            stage=stage_target
+                        )
         if write_mode == "custom":
             dataframe.createOrReplaceTempView(table_view_name)
 
         # === Loader ===
-        loader = self._resolve(stage, table_name, "load")
+        loader = resolve_registry_class(
+            stage=stage,
+            table_name=table_name,
+            component_name="load"
+        )
 
         return loader(
             stage=stage_target,
             logger=self.logger,
             session=self.session,
-            config=self.config,
+            dataframe=dataframe,
             table_name=table_name,
-            write_mode=write_mode,
-            queries=queries,
-            dataframe=dataframe
+            query_params=query_params
         ).load()
 
     # =========================
@@ -153,9 +155,6 @@ class PipelineOrchestrator:
     def run_table(self, stage: StageType, table_name: str) -> None:
 
         self.logger.info(f"[{stage}] Start pipeline: {table_name}")
-
-        # === INITIALIZE ===
-        table_view_name = f"{table_name}_view"
 
         # === EXTRACT ===
         self.logger.info(f"[{stage}] Extract Table: {table_name}")
@@ -172,8 +171,7 @@ class PipelineOrchestrator:
         self.load(
             stage=stage,
             dataframe=transform_stage,
-            table_name=table_name,
-            table_view_name=table_view_name
+            table_name=table_name
         )
 
         self.logger.info(f"[{stage}] Finished: {table_name}")

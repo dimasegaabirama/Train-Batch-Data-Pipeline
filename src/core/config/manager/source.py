@@ -1,4 +1,4 @@
-from src.core.config import Config
+from src.core.config.config import Config
 from src.models.data_config import (
     SourceContext,
     SourcesConfig,
@@ -10,13 +10,13 @@ from .pipeline import PipelineManager
 class SourceManager:
     def __init__(self):
         self._config = Config.get_config()
+        self._pipeline_manager = PipelineManager()
 
     def get_config(self) -> SourcesConfig:
         return self._config.sources
 
     def get_type(self) -> str:
-        pipeline = PipelineManager()
-        return pipeline.get_config().source_type
+        return self._pipeline_manager.get_config().source_type
 
     def get_source_config(self, source_name: str) -> SourceContext:
         cfg = getattr(self.get_config(), source_name, None)

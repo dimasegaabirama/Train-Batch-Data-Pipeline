@@ -1,26 +1,15 @@
 from pyspark.sql.dataframe import DataFrame
 from .base_extract import BaseExtract
-
-SOURCE_TYPE = "mongo"
+from src.core import SourceManager
 
 class MongoExtract(BaseExtract):
 
-    def __init__(self, stage, logger, session, config, table_name, condition=None, **extra):
-        super().__init__(stage, logger, session, config, table_name, condition, **extra)
-
-    def get_mongo_database_name(self) -> str:
-        cfg = getattr(self.config.get_source_config(SOURCE_TYPE), "database", None)
-
-        if cfg is None:
-            raise ValueError(f"Database name from '{SOURCE_TYPE}' not found")
-
-        return cfg
+    SOURCE_TYPE = "mongo"
 
     def extract(self) -> DataFrame:
 
         collection = self.table_name
-        database = self.get_mongo_database_name()
-
+        database = self.source_config.database
         condition = self.condition
 
         try:

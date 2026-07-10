@@ -43,10 +43,9 @@ class Config:
         load_dotenv(".env.global")
         load_dotenv(os.getenv("ENV_PATH"))
 
-        config_path = cls._require(
-            os.getenv("CONFIG_PATH"),
-            "CONFIG_PATH environment variable is not set",
-        )
+        config_path = os.getenv("CONFIG_PATH")
+        if config_path is None:
+            raise ValueError("Config Path is not set!")
 
         with open(config_path) as f:
             raw = yaml.safe_load(f)
@@ -54,4 +53,5 @@ class Config:
         return BaseConfig(**replace_env(raw))
 
 if __name__ == "__main__":
-    print(Config.get_query_table("passengers"))
+    conf = Config().get_config()
+    print(conf)

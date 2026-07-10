@@ -7,10 +7,7 @@ from src.etl.transform import BaseTransform
 
 
 class TicketsTransform(BaseTransform):
-    def __init__(self, logger, session, config, dataframe, **extra):
-        super().__init__(logger, session, config, dataframe, **extra)
-        self.lookup_table_name = self.extra["lookup_table_name"]
-
+    
     def transform(self) -> DataFrame:
         """
         Clean, deduplicate, and enrich raw tickets into a fact table.
@@ -64,12 +61,12 @@ class TicketsTransform(BaseTransform):
             .filter(F.col("rn") == 1) 
         ).alias("td")
 
-        routes_dataframe = self.session.read.table(self.lookup_table_name["routes"])
-        trains_dataframe = self.session.read.table(self.lookup_table_name["trains"])
-        passengers_dataframe = self.session.read.table(self.lookup_table_name["passengers"]).alias("p")
-        class_dataframe = self.session.read.table(self.lookup_table_name["class"])
-        status_dataframe = self.session.read.table(self.lookup_table_name["status"])
-        payment_dataframe = self.session.read.table(self.lookup_table_name["payment"])
+        routes_dataframe = self.session.read.table(self.lookup_tables["routes"])
+        trains_dataframe = self.session.read.table(self.lookup_tables["trains"])
+        passengers_dataframe = self.session.read.table(self.lookup_tables["passengers"]).alias("p")
+        class_dataframe = self.session.read.table(self.lookup_tables["class"])
+        status_dataframe = self.session.read.table(self.lookup_tables["status"])
+        payment_dataframe = self.session.read.table(self.lookup_tables["payment"])
 
         routes_df = F.broadcast(routes_dataframe).alias("r")
         trains_df = F.broadcast(trains_dataframe).alias("tr")

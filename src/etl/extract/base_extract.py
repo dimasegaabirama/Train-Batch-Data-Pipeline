@@ -1,31 +1,40 @@
+from typing_extensions import Optional
 from abc import ABC, abstractmethod
-from logging import Logger
-from typing_extensions import Union, Optional
 from src.models.data_config import StageType
 
-from src.core import Config, Session, AppLogger
+from src.core import Session, AppLogger, TableManager, SourceManager
 
 
 class BaseExtract(ABC):
+
+    SOURCE_TYPE: Optional[str] = None
+
     def __init__(
         self,
         stage: StageType,
         logger: AppLogger,
         session: Session,
-        config: Config,
         table_name: str,
-        condition = None,
-        **extra
+        condition = None
     ):
         self.stage = stage
         self.logger = logger
         self.session = session
-        self.config = config
-        self.table_name = table_name
         self.condition = condition
-        self.table_schema = self.config.get_schema_table(table_name=table_name, stage=stage)
+        
+        self._table_manager = TableManager()
+        self._source_manager = SourceManager()
 
-        self.extra = extra
+        self.table_name = table_name
+        self.table_fullname = self._table_manager.get_table_fullname(table_name, stage)
+        self.table_schema = self._table_manager.get_table_schema(table_name, stage)
+
+        if self.SOURCE_TYPE:
+            self.source_config = self._source_manager.get_source_config(
+                self.SOURCE_TYPE
+            )
+        else:
+            self.source_config = None
 
 
     @abstractmethod

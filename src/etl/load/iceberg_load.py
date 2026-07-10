@@ -3,25 +3,22 @@ from .base_load import BaseLoad
 
 
 class IcebergLoad(BaseLoad):
-    def __init__(self, stage, logger, session, config, table_name, queries = None, **extra):
-        super().__init__(stage, logger, session, config, table_name, queries, **extra)
-        self.full_table_name = self.config.get_full_table_name(stage=stage, table_name=table_name)
 
     def load(self) -> None:
         self.logger.debug(
-            f"[IcebergLoad] Start writing to {self.full_table_name} with mode='{self.write_mode}'"
+            f"[IcebergLoad] Start writing to {self.table_fullname} with mode='{self.write_mode}'"
         )
 
         try:
             if self.write_mode == "custom":
-                if not self.query:
+                if not self.queries:
                     raise ValueError("Mode 'custom' requires a SQL query.")
-                
+  
                 for query in self.queries:
-                    self.session.sql(self.query)
+                    self.session.sql(query)
 
             else:
-                writer = self.dataframe.writeTo(self.full_table_name)
+                writer = self.dataframe.writeTo(self.table_fullname)
 
                 dispatch: Dict[str, Callable] = {
                     "append": writer.append,
@@ -35,10 +32,10 @@ class IcebergLoad(BaseLoad):
 
                 action()
 
-            self.logger.debug(f"[IcebergLoad] Successfully wrote to {self.full_table_name}")
+            self.logger.debug(f"[IcebergLoad] Successfully wrote to {self.table_fullname}")
 
         except Exception as e:
             self.logger.exception(
-                f"[IcebergLoad] Failed writing to {self.full_table_name} with mode='{self.write_mode}': {e}"
+                f"[IcebergLoad] Failed writing to {self.table_fullname} with mode='{self.write_mode}': {e}"
             )
             raise

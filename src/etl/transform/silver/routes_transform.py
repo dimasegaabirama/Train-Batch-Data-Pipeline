@@ -4,9 +4,6 @@ from src.etl.transform import BaseTransform
 
 
 class RoutesTransform(BaseTransform):
-    def __init__(self, logger, session, config, dataframe, **extra):
-        super().__init__(logger, session, config, dataframe, **extra)
-        self.lookup_table_name = self.extra["lookup_table_name"]
 
     def transform(self):
         """
@@ -55,8 +52,8 @@ class RoutesTransform(BaseTransform):
             .withColumn("duration_minutes", F.coalesce(F.col("duration_minutes"), F.lit(0)))
         )
 
-        stations_dataframe = self.session.read.table(self.lookup_table_name["stations"])
-        trains_dataframe = self.session.read.table(self.lookup_table_name["trains"])
+        stations_dataframe = self.session.read.table(self.lookup_tables["stations"])
+        trains_dataframe = self.session.read.table(self.lookup_tables["trains"])
 
         stations_df = F.broadcast(stations_dataframe)
         trains_df = F.broadcast(trains_dataframe)

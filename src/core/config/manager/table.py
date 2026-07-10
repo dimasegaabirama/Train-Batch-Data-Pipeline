@@ -1,16 +1,23 @@
 from typing_extensions import Dict, List, Union
 
-from src.core.config import Config
+from src.core.config.config import Config
+from .catalog import CatalogManager
+from .schema import SchemaManager
+
 from src.models.data_config import (
     StageType,
     TableContext,
     TablesConfig,
 )
 
+from src.utils.table_utils import create_table_fullname
+
 
 class TableManager:
     def __init__(self):
         self._config = Config()
+        self._catalog_manager = CatalogManager()
+        self._schema_manager = SchemaManager()
 
     def get_config(self) -> TablesConfig:
         return self._config.tables
@@ -19,7 +26,7 @@ class TableManager:
         return self._config.pipeline.tablenames
 
     def get_table_config(self, table_name: str) -> TableContext:
-        return getattr(self.get_all_config(), table_name)
+        return getattr(self.get_config(), table_name)
 
     def get_table_type(self, table_name: str) -> str:
         return self.get_table_config(table_name).type
@@ -37,6 +44,12 @@ class TableManager:
 
     def get_table_query(self, table_name: str) -> List[str]:
         return self.get_table_config(table_name).query
+    
+    def get_formated_query(self, table_name: str, **kwargs):
+        return [
+            query.format(**kwargs)
+            for query in self.get_table_query(table_name)
+        ]
 
     def get_table_schema(self, table_name: str, stage: StageType) -> str:
         cfg = self.get_table_config(table_name).schema.get(stage)
@@ -62,3 +75,10 @@ class TableManager:
             )
 
         return dependencies
+    
+    def get_table_fullname(self, table_name: str, stage: StageType) -> str:
+        return create_table_fullname(
+            self._catalog_manager.get_catalog_name(), 
+            self._schema_manager.get_stage_schema_name(stage), 
+            table_name
+        )

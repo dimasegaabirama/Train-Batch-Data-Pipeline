@@ -1,4 +1,4 @@
-from src.core.config import Config
+from src.core.config.config import Config
 from src.models.spark_config import SparkConfig, SparkLayerContext
 from src.models.data_config import StageType
 

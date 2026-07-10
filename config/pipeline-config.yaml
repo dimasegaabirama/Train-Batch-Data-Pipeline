@@ -563,7 +563,7 @@ tables:
   
     query: 
       - |
-        INSERT OVERWRITE TABLE {catalog}.{namespace}.{table_name}
+        INSERT OVERWRITE TABLE {full_table_name}
         PARTITION ({partitioned_by})
         SELECT *
         FROM {view}

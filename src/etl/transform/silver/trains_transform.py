@@ -6,9 +6,6 @@ from src.etl.transform import BaseTransform
 
 
 class TrainsTransform(BaseTransform):
-    def __init__(self, logger, session, config, dataframe, **extra):
-        super().__init__(logger, session, config, dataframe, **extra)
-        self.lookup_table_name = self.extra["lookup_table_name"]
 
     def transform(self) -> DataFrame:
         """

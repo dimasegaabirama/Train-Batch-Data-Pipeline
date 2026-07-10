@@ -3,19 +3,18 @@ from abc import ABC, abstractmethod
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
-from src.core import Config, AppLogger
+from src.core import AppLogger
 
 
 class BaseTransform(ABC):
     def __init__(
-        self, logger: AppLogger, session: SparkSession, config: Config, dataframe: DataFrame, **extra
+        self, logger: AppLogger, session: SparkSession, dataframe: DataFrame, lookup_tables = None
     ):
         self.logger = logger
         self.session = session
-        self.config = config
         self.dataframe = dataframe
 
-        self.extra = extra
+        self.lookup_tables = lookup_tables
 
         
     @abstractmethod
