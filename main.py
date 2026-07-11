@@ -1,12 +1,17 @@
 import os
 from argparse import ArgumentParser
 
-from src.core.logger import AppLogger
-from src.core.config import Config
-from src.core.session import Session
+from src.core import (
+    AppLogger, 
+    Session,
+    TableManager
+)
 
-from src.app.run_bootstrap import PipelineBootstrap
-from src.app.run_pipeline import PipelineOrchestrator
+from src.app import (
+    PipelineBootstrap, 
+    PipelineOrchestrator
+)
+
 from src.models.data_config import DateConfig
 
 
@@ -92,14 +97,12 @@ def main():
     # =========================
     # Initialize Dependencies
     # =========================
-    config = Config()
-
     logger = AppLogger.get_logger()
 
     session = Session(
         logger=logger,
-        config=config
-    ).get_session(stage=stage)
+        stage=stage
+    ).get_session()
 
 
     # =========================
@@ -137,8 +140,8 @@ def main():
     # =========================
     # Resolve Catalog and Table
     # =========================
-    pipeline_cfg = config.get_pipeline_config()
-    table_names = args.tables or pipeline_cfg.tablenames
+    pipeline_cfg = TableManager()
+    table_names = args.tables or pipeline_cfg.get_tablenames()
 
     if not table_names:
         raise ValueError(
@@ -150,8 +153,7 @@ def main():
     # =========================
     return PipelineOrchestrator(
         logger=logger,
-        session=session,
-        config=config
+        session=session
     ).run_all_tables(
         stage=stage,
         table_names=table_names

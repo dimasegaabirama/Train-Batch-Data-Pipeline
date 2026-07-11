@@ -2,6 +2,7 @@ from functools import wraps
 from logging import Logger
 
 from pyspark.sql.session import SparkSession
+from src.core.config import CatalogManager
 
 
 def pipeline_branch(func):
@@ -18,7 +19,7 @@ def pipeline_branch(func):
         self = args[0]
         logger: Logger = self.logger
         session: SparkSession = self.session
-        catalog: str = self.config.get_catalog_name()
+        catalog: str = CatalogManager().get_catalog_name()
         branch_name: str = kwargs["stage"]
 
         logger.info(f"[NESSIE] Starting stage = {branch_name}")

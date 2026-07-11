@@ -11,13 +11,13 @@ class FilterManager:
         self._config = Config.get_config()
 
     def get_config(self) -> FilterConfig:
-        return self.get_config().filters
+        return self._config.filters
 
     def get_stage_config(self, stage: StageType) -> "FilterContext | None":
         return getattr(self.get_config(), stage, None)
 
     def get_field(self, stage: StageType, table_name: str) -> "str | None":
-        cfg = self.get_filter_config(stage)
+        cfg = self.get_stage_config(stage)
         if cfg is None:
             return None
 

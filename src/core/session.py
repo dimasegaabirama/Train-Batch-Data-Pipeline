@@ -22,6 +22,7 @@ class Session:
         self._session: Optional[SparkSession] = None
 
     def get_session(self) -> SparkSession:
+
         if self._session is not None:
             self.logger.info(f"[Create Session] Reusing existing session | Stage = {self.stage}")
             return self._session
@@ -31,12 +32,12 @@ class Session:
         try:
             builder = (
                 SparkSession.builder
-                .appName(self._config.app_name)
+                .appName(self._stage_config.app_name)
                 .master(self._config.master)
             )
 
-            for key, value in self._stg_cfg.items():
-                builder = builder.config(key, str(value))  # spark config wajib string
+            for key, value in self._stage_config.config.items():
+                builder = builder.config(key, str(value))
 
             self._session = builder.getOrCreate()
             self._session.sparkContext.setLogLevel("ERROR")

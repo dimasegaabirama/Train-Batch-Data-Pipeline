@@ -11,7 +11,7 @@ class SparkManager:
         return self._config.spark
     
     def get_stage_config(self, stage: StageType) -> SparkLayerContext:
-        cfg = getattr(self.spark_cfg, stage)
+        cfg = getattr(self.get_config(), stage)
         if cfg is None:
             raise ValueError(f"Spark config for stage '{stage}' not found")
         return cfg
