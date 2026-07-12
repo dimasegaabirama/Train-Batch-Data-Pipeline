@@ -1,15 +1,10 @@
 from logging import Logger
-
-from pyspark.sql import SparkSession
-
-from src.core import Config, SparkManager
-
-from src.models.spark_config import SparkLayerContext
-from src.models.data_config import StageType
-
-
 from typing import Optional
+
 from pyspark.sql import SparkSession
+
+from src.core import SparkManager
+from src.models.data_config import StageType
 
 
 class Session:
@@ -24,16 +19,16 @@ class Session:
     def get_session(self) -> SparkSession:
 
         if self._session is not None:
-            self.logger.info(f"[Create Session] Reusing existing session | Stage = {self.stage}")
+            self.logger.info(
+                f"[Create Session] Reusing existing session | Stage = {self.stage}"
+            )
             return self._session
 
         self.logger.info(f"[Create Session] Start | Stage = {self.stage}")
 
         try:
-            builder = (
-                SparkSession.builder
-                .appName(self._stage_config.app_name)
-                .master(self._config.master)
+            builder = SparkSession.builder.appName(self._stage_config.app_name).master(
+                self._config.master
             )
 
             for key, value in self._stage_config.config.items():

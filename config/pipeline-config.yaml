@@ -574,7 +574,7 @@ tables:
         INSERT OVERWRITE TABLE {full_table_name}
         PARTITION ({partitioned_by})
         SELECT *
-        FROM {view}
+        FROM {table_view}
 
 
     depends_on:

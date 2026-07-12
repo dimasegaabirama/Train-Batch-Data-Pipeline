@@ -1,5 +1,5 @@
 from src.app.bootstrap import *
-from src.core import AppLogger, Config
+from src.core import AppLogger
 from pyspark.sql.session import SparkSession
 
 class PipelineBootstrap:

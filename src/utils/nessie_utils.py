@@ -19,10 +19,14 @@ def pipeline_branch(func):
         self = args[0]
         logger: Logger = self.logger
         session: SparkSession = self.session
+        
+        stage: str = kwargs["stage"]
         catalog: str = CatalogManager().get_catalog_name()
-        branch_name: str = kwargs["stage"]
+        table_name: str = kwargs["table_name"]
 
-        logger.info(f"[NESSIE] Starting stage = {branch_name}")
+        branch_name = f"{stage}_{table_name}"
+
+        logger.info(f"[NESSIE] Starting stage = {stage}, table = {table_name}")
         logger.info(f"[NESSIE] Creating temp branch '{branch_name}' from main")
 
         try:

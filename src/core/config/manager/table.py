@@ -1,16 +1,15 @@
 from typing_extensions import Dict, List, Union
 
 from src.core.config.config import Config
-from .catalog import CatalogManager
-from .schema import SchemaManager
-
 from src.models.data_config import (
     StageType,
     TableContext,
     TablesConfig,
 )
-
 from src.utils.table_utils import create_table_fullname
+
+from .catalog import CatalogManager
+from .schema import SchemaManager
 
 
 class TableManager:
@@ -44,12 +43,9 @@ class TableManager:
 
     def get_table_query(self, table_name: str) -> List[str]:
         return self.get_table_config(table_name).query
-    
+
     def get_formated_query(self, table_name: str, **kwargs):
-        return [
-            query.format(**kwargs)
-            for query in self.get_table_query(table_name)
-        ]
+        return [query.format(**kwargs) for query in self.get_table_query(table_name)]
 
     def get_table_schema(self, table_name: str, stage: StageType) -> str:
         cfg = self.get_table_config(table_name).schema.get(stage)
@@ -75,10 +71,10 @@ class TableManager:
             )
 
         return dependencies
-    
+
     def get_table_fullname(self, table_name: str, stage: StageType) -> str:
         return create_table_fullname(
-            self._catalog_manager.get_catalog_name(), 
-            self._schema_manager.get_stage_schema_name(stage), 
-            table_name
+            self._catalog_manager.get_catalog_name(),
+            self._schema_manager.get_stage_schema_name(stage),
+            table_name,
         )

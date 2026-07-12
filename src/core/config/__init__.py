@@ -1,3 +1,4 @@
+from src.core.config.config import Config
 from src.core.config.manager import (
     CatalogManager,
     DateManager,
@@ -7,7 +8,5 @@ from src.core.config.manager import (
     SourceManager,
     SparkManager,
     StorageManager,
-    TableManager
+    TableManager,
 )
-
-from src.core.config.config import Config

@@ -52,6 +52,7 @@ class Config:
 
         return BaseConfig(**replace_env(raw))
 
+
 if __name__ == "__main__":
     conf = Config().get_config()
-    print(conf)
+    print(conf.tables.tickets.query)

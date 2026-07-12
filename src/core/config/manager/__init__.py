@@ -1,13 +1,13 @@
 __all__ = [
-    "CatalogManager", 
-    "DateManager", 
-    "FilterManager", 
-    "PipelineManager", 
-    "SchemaManager", 
+    "CatalogManager",
+    "DateManager",
+    "FilterManager",
+    "PipelineManager",
+    "SchemaManager",
     "SourceManager",
     "SparkManager",
     "StorageManager",
-    "TableManager"       
+    "TableManager",
 ]
 
 from .catalog import CatalogManager

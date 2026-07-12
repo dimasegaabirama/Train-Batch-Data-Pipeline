@@ -3,18 +3,20 @@ from typing import List
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
+from src.core import (
+    AppLogger,
+    DateManager,
+    FilterManager,
+    TableManager,
+    resolve_registry_class,
+)
 from src.etl.transform import BaseTransform
-from src.core import AppLogger, resolve_registry_class, TableManager, DateManager, FilterManager, SchemaManager
 from src.models.data_config import StageType
 from src.utils.nessie_utils import pipeline_branch
 
 
 class PipelineOrchestrator:
-    def __init__(
-        self,
-        logger: AppLogger,
-        session: SparkSession
-    ):
+    def __init__(self, logger: AppLogger, session: SparkSession):
         self.logger = logger
         self.session = session
 
@@ -31,30 +33,16 @@ class PipelineOrchestrator:
         end_date = self._date_manager.get_end_date()
 
         # === Extractor ===
-        extractor = resolve_registry_class(
-            stage,
-            table_name,
-            "extract"
-        )
+        extractor = resolve_registry_class(stage, table_name, "extract")
 
         # === Condition (filter) ===
         condition_cls = resolve_registry_class(
-            stage, 
-            table_name, 
-            "filter", 
-            required=False
+            stage, table_name, "filter", required=False
         )
 
-        field = self._filter_manager.get_field(
-            stage,
-            table_name
-        )
+        field = self._filter_manager.get_field(stage, table_name)
         condition = (
-            condition_cls(
-                field=field,
-                start_date=start_date,
-                end_date=end_date
-            )
+            condition_cls(field=field, start_date=start_date, end_date=end_date)
             if condition_cls is not None
             else None
         )
@@ -64,7 +52,7 @@ class PipelineOrchestrator:
             logger=self.logger,
             session=self.session,
             table_name=table_name,
-            condition=condition
+            condition=condition,
         ).extract()
 
     # =========================
@@ -75,73 +63,60 @@ class PipelineOrchestrator:
     ) -> DataFrame:
 
         lookup_tables = self._table_manager.get_table_deps(table_name)
+        self.logger.debug(f"Lookup Tables : {lookup_tables}")
 
         # === Transformer ===
         transformer: BaseTransform = resolve_registry_class(
-            stage=stage,
-            table_name=table_name,
-            component_name="transform"
+            stage=stage, table_name=table_name, component_name="transform"
         )
+        self.logger.debug(f"Transformer : {transformer}")
 
         return transformer(
             logger=self.logger,
             session=self.session,
             dataframe=dataframe,
-            lookup_tables=lookup_tables
+            lookup_tables=lookup_tables,
         ).transform()
 
     # =========================
     # LOAD
     # =========================
     def load(
-        self,
-        stage: StageType,
-        dataframe: DataFrame,
-        table_name: str
+        self, stage: StageType, dataframe: DataFrame, table_name: str
     ) -> DataFrame:
-
-        # === Stage Target ===
-        self.logger.debug(f"stage_target :, {stage}")
 
         # === Table Name ===
         full_table_name = self._table_manager.get_table_fullname(
-                            stage=stage, 
-                            table_name=table_name
-                        )
-        self.logger.debug(f"full table name :, {full_table_name}")
-
+            stage=stage, table_name=table_name
+        )
         table_view_name = f"{table_name}_view"
-        self.logger.debug(f"table view name :, {table_view_name}")
 
         # === Partitioned By ===
         partitioned_by = self._table_manager.get_table_partitioned_by(
-                            table_name=table_name
-                        )
-        self.logger.debug(f"partitioned_by :, {partitioned_by}")
+            table_name=table_name
+        )
 
         # === Query Params ===
         query_params = {
-            "full_table_name":  full_table_name,
-            "table_view":       table_view_name,
-            "partitioned_by":   partitioned_by
+            "full_table_name": full_table_name,
+            "table_view": table_view_name,
+            "partitioned_by": partitioned_by,
         }
         self.logger.debug(f"query_params :, {query_params}")
 
         # === Write Mode ===
         write_mode = self._table_manager.get_table_write_mode(
-                            table_name=table_name,
-                            stage=stage
-                        )
+            table_name=table_name, stage=stage
+        )
         self.logger.debug(f"write_mode :, {write_mode}")
         if write_mode == "custom":
             dataframe.createOrReplaceTempView(table_view_name)
 
         # === Loader ===
         loader = resolve_registry_class(
-            stage=stage,
-            table_name=table_name,
-            component_name="load"
+            stage=stage, table_name=table_name, component_name="load"
         )
+        self.logger.debug(f"Loader: {loader}")
 
         return loader(
             stage=stage,
@@ -149,7 +124,7 @@ class PipelineOrchestrator:
             session=self.session,
             dataframe=dataframe,
             table_name=table_name,
-            query_params=query_params
+            query_params=query_params,
         ).load()
 
     # =========================
@@ -157,7 +132,7 @@ class PipelineOrchestrator:
     # =========================
     @pipeline_branch
     def run_table(self, stage: StageType, table_name: str) -> None:
-
+        
         self.logger.info(f"[{stage}] Start pipeline: {table_name}")
 
         # === EXTRACT ===
@@ -174,11 +149,7 @@ class PipelineOrchestrator:
 
         # === LOAD ===
         self.logger.info(f"[{stage}] Load Table: {table_name}")
-        self.load(
-            stage=stage,
-            dataframe=transform_stage,
-            table_name=table_name
-        )
+        self.load(stage=stage, dataframe=transform_stage, table_name=table_name)
 
         self.logger.info(f"[{stage}] Finished: {table_name}")
 

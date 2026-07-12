@@ -7,6 +7,7 @@ Batch data pipeline untuk mengolah data operasional perkeretaapian (penumpang, s
 - [Arsitektur](#arsitektur)
 - [Tech Stack](#tech-stack)
 - [Medallion Architecture](#medallion-architecture)
+- [Nessie Branching Strategy](#nessie-branching-strategy)
 - [Data Model](#data-model)
 - [Struktur Konfigurasi Tabel](#struktur-konfigurasi-tabel)
 - [Struktur Project](#struktur-project)
@@ -52,6 +53,22 @@ Pipeline mengikuti pola 3 layer:
 - **Bronze** — hasil extract dari source dengan casting tipe data yang sudah sesuai (contoh: `updated_at` menjadi `TIMESTAMP`), tanpa transformasi bisnis. Umumnya menggunakan write mode `overwrite_partitions`.
 - **Silver** — data yang sudah dibersihkan, dinormalisasi, dan diberi surrogate key (`sk_id`), termasuk penerapan logika **SCD (Slowly Changing Dimension)** sesuai kebutuhan tiap tabel. Write mode bersifat `custom` (merge/update logic spesifik).
 - **Gold** *(disiapkan dalam konfigurasi, siap dikembangkan sesuai kebutuhan reporting/analytics)*.
+
+## Nessie Branching Strategy
+
+Pipeline menerapkan strategi branching **per-stage per-table** pada Nessie, dengan konvensi nama: <stage>_<table_name>
+
+Contoh: `bronze_tickets`, `silver_passengers`
+
+**Alasan:** jika satu tabel gagal diproses, kita tidak perlu mengulang seluruh tabel di stage tersebut — cukup retry tabel yang gagal saja.
+
+**Alur:**
+1. Branch `<stage>_<table_name>` dibuat/di-reset dari `main` sebelum tabel diproses.
+2. ETL dijalankan di branch tersebut.
+3. **Sukses** → merge ke `main`.
+4. **Gagal** → branch di-*drop*, `main` tetap konsisten, tabel lain tidak terdampak.
+
+Mekanisme ini di-handle di `src/utils/nessie_utils.py` sebagai wrapper pada fungsi `run_table` (`src/app/run_pipeline.py`).
 
 ### Tipe SCD per Tabel
 

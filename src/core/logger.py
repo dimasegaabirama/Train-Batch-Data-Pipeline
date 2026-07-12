@@ -1,4 +1,5 @@
 import logging
+import os
 from functools import wraps
 from time import time
 
@@ -36,6 +37,7 @@ class AppLogger:
         cls,
         name: str = __name__,
         type: Literal["file", "stream", "both"] = "stream",
+        level: Optional[str] = None,
         log_file: Optional[str] = None,
         force_update: bool = False,
     ) -> logging.Logger:
@@ -56,7 +58,9 @@ class AppLogger:
             raise ValueError("log_file wajib diisi jika type='file' atau 'both'")
 
         logger = logging.getLogger(name)
-        logger.setLevel(logging.DEBUG)
+        log_level = os.getenv("LOG_LEVEL", "INFO").upper() or level
+
+        logger.setLevel(getattr(logging, log_level, logging.INFO))
         logger.propagate = False
         logger.handlers.clear()
 

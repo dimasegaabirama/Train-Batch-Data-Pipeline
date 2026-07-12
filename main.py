@@ -97,7 +97,7 @@ def main():
     # =========================
     # Initialize Dependencies
     # =========================
-    logger = AppLogger.get_logger()
+    logger = AppLogger.get_logger(level="DEBUG")
 
     session = Session(
         logger=logger,
