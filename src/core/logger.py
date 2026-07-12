@@ -56,7 +56,7 @@ class AppLogger:
             raise ValueError("log_file wajib diisi jika type='file' atau 'both'")
 
         logger = logging.getLogger(name)
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
         logger.propagate = False
         logger.handlers.clear()
 

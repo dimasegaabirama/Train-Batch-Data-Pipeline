@@ -2,7 +2,7 @@ from typing_extensions import Optional
 from abc import ABC, abstractmethod
 from src.models.data_config import StageType
 
-from src.core import Session, AppLogger, TableManager, SourceManager
+from src.core import Session, AppLogger, TableManager, SourceManager, SchemaManager
 
 
 class BaseExtract(ABC):
@@ -17,17 +17,21 @@ class BaseExtract(ABC):
         table_name: str,
         condition = None
     ):
+        self._table_manager = TableManager()
+        self._source_manager = SourceManager()
+        self._schema_manager = SchemaManager()
+
         self.stage = stage
+        self.upstream_stage = self._schema_manager.get_stage_upstream(self.stage)
+        self.downstream_stage = self._schema_manager.get_stage_downstream(self.stage)
+        
         self.logger = logger
         self.session = session
         self.condition = condition
-        
-        self._table_manager = TableManager()
-        self._source_manager = SourceManager()
 
         self.table_name = table_name
-        self.table_fullname = self._table_manager.get_table_fullname(table_name, stage)
-        self.table_schema = self._table_manager.get_table_schema(table_name, stage)
+        self.table_fullname = self._table_manager.get_table_fullname(table_name, self.stage)
+        self.table_schema = self._table_manager.get_table_schema(table_name, self.upstream_stage)
 
         if self.SOURCE_TYPE:
             self.source_config = self._source_manager.get_source_config(

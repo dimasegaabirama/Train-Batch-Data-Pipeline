@@ -20,10 +20,10 @@ class SchemaManager:
         return cfg
 
     def get_stage_schema_name(self, stage: StageType) -> str:
-        return self.get_schema_config(stage).name
+        return self.get_stage_config(stage).name
 
     def get_stage_upstream(self, stage: StageType) -> StageType:
-        return self.get_schema_config(stage).upstream
+        return self.get_stage_config(stage).upstream
 
     def get_stage_downstream(self, stage: StageType) -> StageType:
-        return self.get_schema_config(stage).downstream
+        return self.get_stage_config(stage).downstream

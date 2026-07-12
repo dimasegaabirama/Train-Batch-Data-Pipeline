@@ -10,7 +10,7 @@ class IcebergExtract(BaseExtract):
 
             df = self.session.read
 
-            if self.schema:
+            if self.table_schema:
                 self.logger.debug(f"[Extract Iceberg] Applying schema registry '{self.table_fullname}'")
                 df = df.schema(self.table_schema)
 

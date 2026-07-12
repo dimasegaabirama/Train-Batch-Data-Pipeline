@@ -10,6 +10,7 @@ class IcebergLoad(BaseLoad):
         )
 
         try:
+            self.logger.debug(f"queries : {self.queries}")
             if self.write_mode == "custom":
                 if not self.queries:
                     raise ValueError("Mode 'custom' requires a SQL query.")

@@ -15,7 +15,7 @@ from src.utils.table_utils import create_table_fullname
 
 class TableManager:
     def __init__(self):
-        self._config = Config()
+        self._config = Config.get_config()
         self._catalog_manager = CatalogManager()
         self._schema_manager = SchemaManager()
 

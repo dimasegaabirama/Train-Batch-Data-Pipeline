@@ -21,7 +21,6 @@ class PipelineOrchestrator:
         self._table_manager = TableManager()
         self._date_manager = DateManager()
         self._filter_manager = FilterManager()
-        self._schema_manager = SchemaManager()
 
     # =========================
     # EXTRACT
@@ -52,10 +51,9 @@ class PipelineOrchestrator:
         )
         condition = (
             condition_cls(
-                stage=stage,
                 field=field,
                 start_date=start_date,
-                end_date=end_date,
+                end_date=end_date
             )
             if condition_cls is not None
             else None
@@ -103,19 +101,23 @@ class PipelineOrchestrator:
     ) -> DataFrame:
 
         # === Stage Target ===
-        stage_target = self._schema_manager.get_stage_downstream(stage=stage)
+        self.logger.debug(f"stage_target :, {stage}")
 
         # === Table Name ===
         full_table_name = self._table_manager.get_table_fullname(
                             stage=stage, 
                             table_name=table_name
                         )
+        self.logger.debug(f"full table name :, {full_table_name}")
+
         table_view_name = f"{table_name}_view"
+        self.logger.debug(f"table view name :, {table_view_name}")
 
         # === Partitioned By ===
         partitioned_by = self._table_manager.get_table_partitioned_by(
                             table_name=table_name
                         )
+        self.logger.debug(f"partitioned_by :, {partitioned_by}")
 
         # === Query Params ===
         query_params = {
@@ -123,12 +125,14 @@ class PipelineOrchestrator:
             "table_view":       table_view_name,
             "partitioned_by":   partitioned_by
         }
+        self.logger.debug(f"query_params :, {query_params}")
 
         # === Write Mode ===
         write_mode = self._table_manager.get_table_write_mode(
                             table_name=table_name,
-                            stage=stage_target
+                            stage=stage
                         )
+        self.logger.debug(f"write_mode :, {write_mode}")
         if write_mode == "custom":
             dataframe.createOrReplaceTempView(table_view_name)
 
@@ -140,7 +144,7 @@ class PipelineOrchestrator:
         )
 
         return loader(
-            stage=stage_target,
+            stage=stage,
             logger=self.logger,
             session=self.session,
             dataframe=dataframe,
@@ -159,12 +163,14 @@ class PipelineOrchestrator:
         # === EXTRACT ===
         self.logger.info(f"[{stage}] Extract Table: {table_name}")
         extract_stage = self.extract(stage=stage, table_name=table_name)
+        self.logger.debug(f"Extract Table {table_name}: {extract_stage.show()}")
 
         # === TRANSFORM ===
         self.logger.info(f"[{stage}] Transform Table: {table_name}")
         transform_stage = self.transform(
             stage=stage, dataframe=extract_stage, table_name=table_name
         )
+        self.logger.debug(f"Transform Table {table_name}: {transform_stage.show()}")
 
         # === LOAD ===
         self.logger.info(f"[{stage}] Load Table: {table_name}")

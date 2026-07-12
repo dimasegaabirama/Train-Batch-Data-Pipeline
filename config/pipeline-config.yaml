@@ -67,8 +67,8 @@ spark:
     spark.driver.host: "spark-submit"
     spark.driver.port: 4040
 
-    spark.driver.memory: "2g"
-    spark.executor.memory: "1g"
+    spark.driver.memory: "1g"
+    spark.executor.memory: "512m"
     spark.executor.cores: 2
     spark.executor.instances: 4
 
@@ -118,6 +118,14 @@ spark:
 # SCHEMAS / NAMESPACES
 # =====================================================
 schemas:
+  source:
+    name: source
+    description: Raw data
+    owner: data_engineering_team
+    upstream: source
+    downstream: bronze
+    retention_days: 30
+
   bronze:
     name: bronze
     description: Raw ingested data from sources
