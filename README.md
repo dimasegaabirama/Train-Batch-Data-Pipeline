@@ -56,7 +56,7 @@ Pipeline mengikuti pola 3 layer:
 
 ## Nessie Branching Strategy
 
-Pipeline menerapkan strategi branching **per-stage per-table** pada Nessie, dengan konvensi nama: <stage>_<table_name>
+Pipeline menerapkan strategi branching **per-stage per-table** pada Nessie, dengan konvensi nama: `<stage>_<table_name>`
 
 Contoh: `bronze_tickets`, `silver_passengers`
 

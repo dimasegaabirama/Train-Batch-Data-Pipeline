@@ -94,6 +94,7 @@ class SchemaContext(BaseModel):
 
 
 class SchemasConfig(BaseModel):
+    source: SchemaContext
     bronze: SchemaContext
     silver: SchemaContext
     gold: SchemaContext

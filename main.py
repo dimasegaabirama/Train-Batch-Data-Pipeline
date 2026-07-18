@@ -50,7 +50,8 @@ def build_parser():
         type=str,
         help=(
             "List of table names to process "
-            "(example: --tables users tickets routes)"
+            "(example: --tables users tickets routes). "
+            "If not provided, all tables will be processed."
         )
     )
 

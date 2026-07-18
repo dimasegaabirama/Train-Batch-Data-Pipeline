@@ -8,15 +8,9 @@ class IcebergExtract(BaseExtract):
                 f"[Extract Iceberg] Reading table {self.table_fullname} from Iceberg..."
             )
 
-            df = self.session.read
+            df = self.session.read.table(self.table_fullname)
 
-            if self.table_schema:
-                self.logger.debug(f"[Extract Iceberg] Applying schema registry '{self.table_fullname}'")
-                df = df.schema(self.table_schema)
-
-            df = df.table(self.table_fullname)
-
-            if self.condition:
+            if self.condition is not None:
                 self.logger.debug(f"[Extract Iceberg] Applying condition on '{self.table_fullname}'")
                 df = df.where(self.condition)
 

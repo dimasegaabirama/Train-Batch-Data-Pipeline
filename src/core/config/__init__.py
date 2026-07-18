@@ -1,5 +1,5 @@
-from src.core.config.config import Config
-from src.core.config.manager import (
+from .config import Config
+from .manager import (
     CatalogManager,
     DateManager,
     FilterManager,

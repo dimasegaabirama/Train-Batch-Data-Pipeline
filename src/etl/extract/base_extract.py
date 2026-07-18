@@ -2,6 +2,7 @@ from typing_extensions import Optional
 from abc import ABC, abstractmethod
 from src.models.data_config import StageType
 
+from pyspark.sql.session import SparkSession
 from src.core import Session, AppLogger, TableManager, SourceManager, SchemaManager
 
 
@@ -13,7 +14,7 @@ class BaseExtract(ABC):
         self,
         stage: StageType,
         logger: AppLogger,
-        session: Session,
+        session: SparkSession,
         table_name: str,
         condition = None
     ):
@@ -30,7 +31,7 @@ class BaseExtract(ABC):
         self.condition = condition
 
         self.table_name = table_name
-        self.table_fullname = self._table_manager.get_table_fullname(table_name, self.stage)
+        self.table_fullname = self._table_manager.get_table_fullname(table_name, self.upstream_stage)
         self.table_schema = self._table_manager.get_table_schema(table_name, self.upstream_stage)
 
         if self.SOURCE_TYPE:

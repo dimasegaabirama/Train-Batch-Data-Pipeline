@@ -132,20 +132,20 @@ class PipelineOrchestrator:
     # =========================
     @pipeline_branch
     def run_table(self, stage: StageType, table_name: str) -> None:
-        
+
         self.logger.info(f"[{stage}] Start pipeline: {table_name}")
 
         # === EXTRACT ===
         self.logger.info(f"[{stage}] Extract Table: {table_name}")
         extract_stage = self.extract(stage=stage, table_name=table_name)
-        self.logger.debug(f"Extract Table {table_name}: {extract_stage.show()}")
+        self.logger.debug(f"Extract Table {table_name}: {extract_stage.printSchema()}")
 
         # === TRANSFORM ===
         self.logger.info(f"[{stage}] Transform Table: {table_name}")
         transform_stage = self.transform(
             stage=stage, dataframe=extract_stage, table_name=table_name
         )
-        self.logger.debug(f"Transform Table {table_name}: {transform_stage.show()}")
+        self.logger.debug(f"Transform Table {table_name}: {transform_stage.printSchema()}")
 
         # === LOAD ===
         self.logger.info(f"[{stage}] Load Table: {table_name}")

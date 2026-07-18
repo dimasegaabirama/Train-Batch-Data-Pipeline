@@ -2,13 +2,13 @@ from typing_extensions import Literal
 
 from src.etl.extract import IcebergExtract, MongoExtract
 from src.etl.load import IcebergLoad
-from src.etl.transform.bronze import BronzeTransform
-from src.etl.transform.silver import (
+from src.etl.transform import (
+    BronzeTransform,
     PassengersTransform,
     RoutesTransform,
     StationsTransform,
     TicketsTransform,
-    TrainsTransform,
+    TrainsTransform
 )
 from src.utils.filter_utils import (
     build_iceberg_incremental_filter,
