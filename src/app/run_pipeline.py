@@ -100,7 +100,7 @@ class PipelineOrchestrator:
         query_params = {
             "full_table_name": full_table_name,
             "table_view": table_view_name,
-            "partitioned_by": partitioned_by,
+            "partitioned_by": partitioned_by
         }
         self.logger.debug(f"query_params :, {query_params}")
 
@@ -110,6 +110,7 @@ class PipelineOrchestrator:
         )
         self.logger.debug(f"write_mode :, {write_mode}")
         if write_mode == "custom":
+            self.logger.debug(f"Write Mode : Custom, Create Temp Table View: {table_view_name}!!")
             dataframe.createOrReplaceTempView(table_view_name)
 
         # === Loader ===
@@ -138,14 +139,14 @@ class PipelineOrchestrator:
         # === EXTRACT ===
         self.logger.info(f"[{stage}] Extract Table: {table_name}")
         extract_stage = self.extract(stage=stage, table_name=table_name)
-        self.logger.debug(f"Extract Table {table_name}: {extract_stage.printSchema()}")
+        self.logger.debug(f"Extract Table {table_name}: {extract_stage.show()}")
 
         # === TRANSFORM ===
         self.logger.info(f"[{stage}] Transform Table: {table_name}")
         transform_stage = self.transform(
             stage=stage, dataframe=extract_stage, table_name=table_name
         )
-        self.logger.debug(f"Transform Table {table_name}: {transform_stage.printSchema()}")
+        self.logger.debug(f"Transform Table {table_name}: {transform_stage.show()}")
 
         # === LOAD ===
         self.logger.info(f"[{stage}] Load Table: {table_name}")

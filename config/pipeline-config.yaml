@@ -62,7 +62,6 @@ spark:
   master: "${SPARK_MASTER}"
 
   common_config: &spark_common
-
     spark.driver.bindAddress: "0.0.0.0"
     spark.driver.host: "spark-submit"
     spark.driver.port: 4040
@@ -87,6 +86,7 @@ spark:
     spark.mongodb.read.partitionerOptions.numberOfPartitions: 10
 
     spark.sql.catalog.nessie.warehouse: "${WAREHOUSE_LOCATION_DEV}"
+    spark.sql.sources.partitionOverwriteMode: dynamic
 
   dev:
     app_name: "Development"
@@ -572,13 +572,15 @@ tables:
     query: 
       - |
         INSERT OVERWRITE TABLE {full_table_name}
-        PARTITION ({partitioned_by})
         SELECT *
         FROM {table_view}
 
 
     depends_on:
       stations:
+        catalog: nessie
+        schema: silver
+      routes:
         catalog: nessie
         schema: silver
       trains:

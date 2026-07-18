@@ -37,7 +37,7 @@ class AppLogger:
         cls,
         name: str = __name__,
         type: Literal["file", "stream", "both"] = "stream",
-        level: Optional[str] = None,
+        level: str = "INFO",
         log_file: Optional[str] = None,
         force_update: bool = False,
     ) -> logging.Logger:
@@ -58,9 +58,9 @@ class AppLogger:
             raise ValueError("log_file wajib diisi jika type='file' atau 'both'")
 
         logger = logging.getLogger(name)
-        log_level = os.getenv("LOG_LEVEL", "INFO").upper() or level
+        log_level = level
 
-        logger.setLevel(getattr(logging, log_level, logging.INFO))
+        logger.setLevel(getattr(logging, log_level))
         logger.propagate = False
         logger.handlers.clear()
 
