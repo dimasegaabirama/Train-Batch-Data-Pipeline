@@ -4,6 +4,10 @@ from src.data_quality import BaseTest
 
 
 class TestTrains(BaseTest):
+
+    stage = "silver"
+    table_name = "trains"
+
     def test_completeness(self):
         check = (
             Check(self.session, CheckLevel.Error, "Completeness Check")
@@ -18,26 +22,85 @@ class TestTrains(BaseTest):
 
         self.run_tests(check)
 
+    def test_numeric(self):
+        check = (
+            Check(self.session, CheckLevel.Error, "Numeric Validation")
+            .hasMin(
+                "id",
+                lambda x: x > 0,
+                "ID must be greater than 0",
+            )
+            .hasMin(
+                "capacity",
+                lambda x: x > 0,
+                "Capacity must be greater than 0",
+            )
+            .hasMax(
+                "capacity",
+                lambda x: x <= 2000,
+                "Capacity looks unrealistic",
+            )
+        )
+
+        self.run_tests(check)
+
     def test_string(self):
         check = (
-            Check(self.session, CheckLevel.Warning, "String Format Check")
-            .isContainedIn(
-                "gender",
-                ["male", "female", "unknown"],
-                "Gender must be male/female/unknown",
-            )
-            .containsEmail("email", "Email format invalid")
+            Check(self.session, CheckLevel.Warning, "String Validation")
             .hasMinLength(
-                "phone", lambda x: x >= 10, "Phone must be at least 10 digits"
+                "name",
+                lambda x: x >= 3,
+                "Name must be at least 3 characters",
             )
-            .hasMaxLength("phone", lambda x: x <= 12, "Phone must be at most 12 digits")
+            .hasMaxLength(
+                "name",
+                lambda x: x <= 100,
+                "Name must be at most 100 characters",
+            )
+            .isContainedIn(
+                "type",
+                [
+                    "economy",
+                    "business",
+                    "executive",
+                    "unknown"
+                ],
+                "Invalid train type",
+            )
+        )
+
+        self.run_tests(check)
+
+    def test_date(self):
+        check = (
+            Check(self.session, CheckLevel.Error, "Date Validation")
+            .satisfies(
+                "end_date IS NULL OR end_date >= start_date",
+                "date_validation",
+                lambda x: x == 1.0,
+            )
+        )
+
+        self.run_tests(check)
+
+    def test_dataset(self):
+        check = (
+            Check(self.session, CheckLevel.Error, "Dataset Validation")
+            .hasSize(
+                lambda x: x > 0,
+                "Dataset must not be empty",
+            )
         )
 
         self.run_tests(check)
 
     def test_uniqueness(self):
-        check = Check(self.session, CheckLevel.Error, "Uniqueness Check").isUnique(
-            "sk_id", "SK_ID must be unique"
+        check = (
+            Check(self.session, CheckLevel.Error, "Uniqueness Check")
+            .isUnique(
+                "sk_id",
+                "SK_ID must be unique",
+            )
         )
 
         self.run_tests(check)
