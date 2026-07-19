@@ -1,5 +1,6 @@
 import os
 from argparse import ArgumentParser
+from typing_extensions import List, Dict, Tuple
 
 from src.core import (
     AppLogger, 
@@ -13,6 +14,12 @@ from src.app import (
 )
 
 from src.models.data_config import DateConfig
+
+
+def check_is_not_set(values: List[Tuple[str, str]]):
+    for value, name in values:
+        if not value:
+            raise RuntimeError(f"{name} is not set !!")
 
 
 def build_parser():
@@ -86,41 +93,18 @@ def main():
     args = build_parser()
 
     stage = args.stage
+
     config_path = args.config or os.getenv("CONFIG_PATH")
     env_path = args.environment or os.getenv("ENV_PATH")
-
-    if not config_path:
-        raise EnvironmentError("CONFIG_PATH is not set.")
-
-    if not env_path:
-        raise EnvironmentError("ENV_PATH is not set.")
-
-    # =========================
-    # Initialize Dependencies
-    # =========================
-    logger = AppLogger.get_logger(level="DEBUG")
-
-    session = Session(
-        logger=logger,
-        stage=stage
-    ).get_session()
-
-
-    # =========================
-    # Resolve Runtime Config
-    # =========================
-    run_bootstrap = args.run_bootstrap
-    if run_bootstrap:
-        return PipelineBootstrap(session=session, logger=logger).run_bootstrap()
-    
     start_date = args.start_date or os.getenv("START_DATE")
     end_date = args.end_date or os.getenv("END_DATE")
 
-    if not start_date:
-        raise EnvironmentError("START_DATE is not set.")
-
-    if not end_date:
-        raise EnvironmentError("END_DATE is not set.")
+    check_is_not_set([
+        (config_path, "CONFIG_PATH"),
+        (env_path, "ENV_PATH"),
+        (start_date, "START_DATE"),
+        (end_date, "END_DATE")
+    ])
 
     # =========================
     # Date Validation
@@ -130,6 +114,9 @@ def main():
         start_date=start_date,
         end_date=end_date
     )
+
+    for key in ("CONFIG_PATH", "ENV_PATH", "START_DATE", "END_DATE"):
+        os.environ.pop(key, None)
 
     os.environ.update({
         "CONFIG_PATH": config_path,
@@ -148,6 +135,23 @@ def main():
         raise ValueError(
             "--tables is required."
         )
+
+    # =========================
+    # Initialize Dependencies
+    # =========================
+    logger = AppLogger.get_logger(level="DEBUG")
+
+    session = Session(
+        logger=logger,
+        stage=stage
+    ).get_session()
+
+    # =========================
+    # Resolve Runtime Config
+    # =========================
+    run_bootstrap = args.run_bootstrap
+    if run_bootstrap:
+        return PipelineBootstrap(session=session, logger=logger).run_bootstrap()
 
     # =========================
     # Initialize Pipeline

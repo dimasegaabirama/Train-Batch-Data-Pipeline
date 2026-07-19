@@ -1,6 +1,6 @@
 from typing_extensions import Callable, Dict
 from .base_load import BaseLoad
-
+from src.utils.text_utils import clean_multiple_line
 
 class IcebergLoad(BaseLoad):
 
@@ -11,12 +11,11 @@ class IcebergLoad(BaseLoad):
 
         try:
             if self.write_mode == "custom":
-                self.logger.debug(f"queries : {self.queries}")
                 if not self.queries:
                     raise ValueError("Mode 'custom' requires a SQL query.")
   
                 for query in self.queries:
-                    self.logger.info(f"Using Queries : {query}")
+                    self.logger.debug(f"Using Query : {clean_multiple_line(query)}")
                     self.session.sql(query)
 
             else:

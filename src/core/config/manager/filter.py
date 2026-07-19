@@ -16,6 +16,7 @@ class FilterManager:
     def get_stage_config(self, stage: StageType) -> "FilterContext | None":
         return getattr(self.get_config(), stage, None)
 
+
     def get_field(self, stage: StageType, table_name: str) -> "str | None":
         cfg = self.get_stage_config(stage)
         if cfg is None:

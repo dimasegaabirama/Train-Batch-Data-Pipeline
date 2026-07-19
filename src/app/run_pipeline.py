@@ -34,25 +34,31 @@ class PipelineOrchestrator:
 
         # === Extractor ===
         extractor = resolve_registry_class(stage, table_name, "extract")
+        self.logger.debug(f"Extractor: {extractor}")
 
         # === Condition (filter) ===
         condition_cls = resolve_registry_class(
             stage, table_name, "filter", required=False
         )
+        self.logger.debug(f"Condition Class: {condition_cls}")
 
         field = self._filter_manager.get_field(stage, table_name)
+        self.logger.debug(f"Field: {field}")
+
+
         condition = (
             condition_cls(field=field, start_date=start_date, end_date=end_date)
             if condition_cls is not None
             else None
         )
+        self.logger.debug(f"Condition: {condition}")
 
         return extractor(
             stage=stage,
             logger=self.logger,
             session=self.session,
             table_name=table_name,
-            condition=condition,
+            condition=condition
         ).extract()
 
     # =========================
