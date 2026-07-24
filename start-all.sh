@@ -114,7 +114,7 @@ compose_up spark ./docker/spark/docker-compose.yaml spark-master
 wait_for "Spark Master" 10
 
 log "Starting Spark Workers & Jupyter..."
-compose_up spark ./docker/spark/docker-compose.yaml spark-worker-1 spark-worker-2 spark-submit
+compose_up spark ./docker/spark/docker-compose.yaml spark-worker-1 spark-worker-2 spark-jupyter
 
 # ─────────────────────────────────────────
 # AIRFLOW (optional)

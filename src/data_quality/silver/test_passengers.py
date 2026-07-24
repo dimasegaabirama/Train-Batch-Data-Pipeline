@@ -28,9 +28,9 @@ class TestPassengers(BaseTest):
         check = (
             Check(self.session, CheckLevel.Warning, "String Validation")
             .isContainedIn(
-                "gender",
-                ["male", "female", "unknown"],
-                "Gender must be male/female/unknown",
+                column = "gender",
+                allowed_values = ["male", "female", "unknown"],
+                hint = "Gender must be male/female/unknown",
             )
             .hasMinLength(
                 "name",

@@ -33,7 +33,6 @@ class TicketsTransform(BaseTransform):
         tickets_dataframe = (
             self.dataframe
             .withColumn("ticket_id", F.lower(F.trim(F.col("ticket_id"))))
-            .withColumn("departure_date", F.col("departure_date").cast(TimestampType()))
             .withColumn("price", F.coalesce("price", F.lit(0.0)))
             .withColumn("discount", F.coalesce("discount", F.lit(0.0)))
             .withColumn("final_price", F.round(F.col("price") * (1 - F.col("discount")), 2))

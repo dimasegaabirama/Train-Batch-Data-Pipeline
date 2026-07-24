@@ -45,7 +45,6 @@ class PipelineOrchestrator:
         field = self._filter_manager.get_field(stage, table_name)
         self.logger.debug(f"Field: {field}")
 
-
         condition = (
             condition_cls(field=field, start_date=start_date, end_date=end_date)
             if condition_cls is not None
@@ -58,7 +57,7 @@ class PipelineOrchestrator:
             logger=self.logger,
             session=self.session,
             table_name=table_name,
-            condition=condition
+            condition=condition,
         ).extract()
 
     # =========================
@@ -106,7 +105,7 @@ class PipelineOrchestrator:
         query_params = {
             "full_table_name": full_table_name,
             "table_view": table_view_name,
-            "partitioned_by": partitioned_by
+            "partitioned_by": partitioned_by,
         }
         self.logger.debug(f"query_params :, {query_params}")
 
@@ -116,7 +115,9 @@ class PipelineOrchestrator:
         )
         self.logger.debug(f"write_mode :, {write_mode}")
         if write_mode == "custom":
-            self.logger.debug(f"Write Mode : Custom, Create Temp Table View: {table_view_name}!!")
+            self.logger.debug(
+                f"Write Mode : Custom, Create Temp Table View: {table_view_name}!!"
+            )
             dataframe.createOrReplaceTempView(table_view_name)
 
         # === Loader ===
@@ -144,19 +145,30 @@ class PipelineOrchestrator:
 
         # === EXTRACT ===
         self.logger.info(f"[{stage}] Extract Table: {table_name}")
-        extract_stage = self.extract(stage=stage, table_name=table_name)
-        self.logger.debug(f"Extract Table {table_name}: {extract_stage.show()}")
+        extract_stage = self.extract(
+                                stage=stage, 
+                                table_name=table_name
+                            )
+        self.logger.debug(f"Extract Table {table_name}: {extract_stage.printSchema()}")
 
         # === TRANSFORM ===
         self.logger.info(f"[{stage}] Transform Table: {table_name}")
         transform_stage = self.transform(
-            stage=stage, dataframe=extract_stage, table_name=table_name
+                                stage=stage, 
+                                dataframe=extract_stage, 
+                                table_name=table_name
+                            )
+        self.logger.debug(
+            f"Transform Table {table_name}: {transform_stage.printSchema()}"
         )
-        self.logger.debug(f"Transform Table {table_name}: {transform_stage.show()}")
 
         # === LOAD ===
         self.logger.info(f"[{stage}] Load Table: {table_name}")
-        self.load(stage=stage, dataframe=transform_stage, table_name=table_name)
+        load_stage = self.load(
+                                stage=stage, 
+                                dataframe=transform_stage, 
+                                table_name=table_name
+                            )
 
         self.logger.info(f"[{stage}] Finished: {table_name}")
 

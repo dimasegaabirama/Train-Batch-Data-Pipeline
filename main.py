@@ -141,28 +141,26 @@ def main():
     # =========================
     logger = AppLogger.get_logger(level="DEBUG")
 
-    session = Session(
-        logger=logger,
-        stage=stage
-    ).get_session()
+    with Session(logger=logger, stage=stage) as session:
+        logger.info(f"Pipeline Runner | Stage = {stage} | Tables = {table_names}")
 
-    # =========================
-    # Resolve Runtime Config
-    # =========================
-    run_bootstrap = args.run_bootstrap
-    if run_bootstrap:
-        return PipelineBootstrap(session=session, logger=logger).run_bootstrap()
+        # =========================
+        # Resolve Runtime Config
+        # =========================
+        run_bootstrap = args.run_bootstrap
+        if run_bootstrap:
+            return PipelineBootstrap(session=session, logger=logger).run_bootstrap()
 
-    # =========================
-    # Initialize Pipeline
-    # =========================
-    return PipelineOrchestrator(
-        logger=logger,
-        session=session
-    ).run_all_tables(
-        stage=stage,
-        table_names=table_names
-    )
+        # =========================
+        # Initialize Pipeline
+        # =========================
+        return PipelineOrchestrator(
+            logger=logger,
+            session=session
+        ).run_all_tables(
+            stage=stage,
+            table_names=table_names
+        )
 
 
 if __name__ == "__main__":

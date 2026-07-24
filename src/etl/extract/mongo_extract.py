@@ -24,8 +24,8 @@ class MongoExtract(BaseExtract):
             )
 
             if condition:
-                self.logger.debug(f"[Extract Mongo] Applying pipeline on '{collection}'")
-                reader = reader.option("pipeline", condition)
+                self.logger.debug(f"[Extract Mongo] Applying aggregation pipeline on '{collection}'")
+                reader = reader.option("aggregation.pipeline", condition)
 
             if self.table_schema:
                 self.logger.debug("[Extract Mongo] Applying schema registry")

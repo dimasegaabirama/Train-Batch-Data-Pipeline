@@ -58,14 +58,14 @@ class TestTrains(BaseTest):
                 "Name must be at most 100 characters",
             )
             .isContainedIn(
-                "type",
-                [
+                column = "type",
+                allowed_values = [
                     "economy",
                     "business",
                     "executive",
                     "unknown"
                 ],
-                "Invalid train type",
+                hint = "Invalid train type"
             )
         )
 

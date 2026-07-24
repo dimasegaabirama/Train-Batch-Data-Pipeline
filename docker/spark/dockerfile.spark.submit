@@ -1,25 +1,42 @@
-FROM bde2020/spark-base:3.2.1-hadoop3.2
+# BUILDER
+
+FROM bde2020/spark-base:3.2.1-hadoop3.2 AS builder
 
 RUN apk add --no-cache \
-    bash \
-    curl \
-    nano
+    build-base \
+    gcc \
+    g++ \
+    gfortran \
+    musl-dev \
+    linux-headers \
+    python3-dev \
+    openblas-dev \
+    cmake \
+    pkgconfig \
+    curl
 
 ENV JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
 
-# install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH=/root/.local/bin:$PATH
 
 WORKDIR /app
-
 COPY . .
-
 RUN uv sync
+
+
+# MAIN
+
+FROM bde2020/spark-base:3.2.1-hadoop3.2
+
+RUN apk add --no-cache bash curl nano libgfortran openblas
+
+ENV JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
+WORKDIR /app
+COPY --from=builder /app /app
 
 ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
 ENV PYSPARK_PYTHON=/app/.venv/bin/python
 ENV PYSPARK_DRIVER_PYTHON=/app/.venv/bin/python
 
