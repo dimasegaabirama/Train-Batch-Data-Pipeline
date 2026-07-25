@@ -38,9 +38,9 @@ flowchart LR
 
 ## Table Schema Flow
 
-The diagram below shows how each table moves from **Source (MongoDB) → Bronze → Silver**, plus the dependencies between Silver tables (dashed lines).
+The diagram below shows how each table moves from **Source (MongoDB) → Bronze → Silver**. Right after each load step, data passes through a **DQ check (PyDeequ)** gate before it's allowed to merge into `main` or be used by a downstream table — dashed lines show the `depends_on` relationships, which only point out of a table *after* it has passed its DQ check.
 
-`class`, `status`, and `payment` are small **static lookup dimensions** — they're created directly in the Silver layer (no Source/Bronze step) since they hold fixed reference values, not data synced from MongoDB. `routes` depends on `stations` and `trains`, while `tickets` (fact table) depends on nearly every dimension and must run last in the Airflow DAG.
+`class`, `status`, and `payment` are small **static lookup dimensions** — created directly in the Silver layer (no Source/Bronze step) since they hold fixed reference values, not data synced from MongoDB. They still go through a DQ check before being used by `tickets`.
 
 ```mermaid
 flowchart LR
@@ -58,6 +58,13 @@ flowchart LR
         B_route["routes"]
         B_tick["tickets"]
     end
+    subgraph DQ1["DQ check (PyDeequ)"]
+        DQB_pass{{"DQ"}}
+        DQB_stat{{"DQ"}}
+        DQB_train{{"DQ"}}
+        DQB_route{{"DQ"}}
+        DQB_tick{{"DQ"}}
+    end
     subgraph Silver["Silver layer"]
         SV_pass["passengers (scd2)"]
         SV_stat["stations (scd1)"]
@@ -68,30 +75,47 @@ flowchart LR
         SV_status["status (scd1, static)"]
         SV_payment["payment (scd1, static)"]
     end
+    subgraph DQ2["DQ check (PyDeequ)"]
+        DQS_pass{{"DQ"}}
+        DQS_stat{{"DQ"}}
+        DQS_train{{"DQ"}}
+        DQS_route{{"DQ"}}
+        DQS_tick{{"DQ"}}
+        DQS_class{{"DQ"}}
+        DQS_status{{"DQ"}}
+        DQS_payment{{"DQ"}}
+    end
 
-    S_pass --> B_pass --> SV_pass
-    S_stat --> B_stat --> SV_stat
-    S_train --> B_train --> SV_train
-    S_route --> B_route --> SV_route
-    S_tick --> B_tick --> SV_tick
+    S_pass --> B_pass --> DQB_pass --> SV_pass --> DQS_pass
+    S_stat --> B_stat --> DQB_stat --> SV_stat --> DQS_stat
+    S_train --> B_train --> DQB_train --> SV_train --> DQS_train
+    S_route --> B_route --> DQB_route --> SV_route --> DQS_route
+    S_tick --> B_tick --> DQB_tick --> SV_tick --> DQS_tick
 
-    SV_stat -. depends_on .-> SV_route
-    SV_train -. depends_on .-> SV_route
+    SV_class --> DQS_class
+    SV_status --> DQS_status
+    SV_payment --> DQS_payment
 
-    SV_stat -. depends_on .-> SV_tick
-    SV_route -. depends_on .-> SV_tick
-    SV_train -. depends_on .-> SV_tick
-    SV_pass -. depends_on .-> SV_tick
-    SV_class -. depends_on .-> SV_tick
-    SV_status -. depends_on .-> SV_tick
-    SV_payment -. depends_on .-> SV_tick
+    DQS_stat -. depends_on .-> SV_route
+    DQS_train -. depends_on .-> SV_route
+
+    DQS_stat -. depends_on .-> SV_tick
+    DQS_route -. depends_on .-> SV_tick
+    DQS_train -. depends_on .-> SV_tick
+    DQS_pass -. depends_on .-> SV_tick
+    DQS_class -. depends_on .-> SV_tick
+    DQS_status -. depends_on .-> SV_tick
+    DQS_payment -. depends_on .-> SV_tick
+
+    classDef dq fill:#FAEEDA,stroke:#854F0B,color:#412402;
+    class DQB_pass,DQB_stat,DQB_train,DQB_route,DQB_tick,DQS_pass,DQS_stat,DQS_train,DQS_route,DQS_tick,DQS_class,DQS_status,DQS_payment dq;
 ```
 
 **Recommended Airflow execution order:**
-1. `stations`, `trains`, `class`, `status`, `payment` — no dependencies, can run in parallel.
+1. `stations`, `trains`, `class`, `status`, `payment` — no dependencies, can run (load + DQ) in parallel.
 2. `passengers` — also independent, can run in parallel with step 1.
-3. `routes` — runs after `stations` and `trains` are done in Silver.
-4. `tickets` — runs last, after `stations`, `routes`, `trains`, `passengers`, `class`, `status`, and `payment` are all done in Silver.
+3. `routes` — runs after `stations` and `trains` have passed their Silver DQ check.
+4. `tickets` — runs last, after `stations`, `routes`, `trains`, `passengers`, `class`, `status`, and `payment` have all passed their Silver DQ check.
 
 ## Tech Stack
 
@@ -99,6 +123,7 @@ flowchart LR
 |---|---|
 | Data Source | MongoDB |
 | Processing Engine | Apache Spark |
+| Data Quality | PyDeequ |
 | Table/Warehouse Catalog | Nessie REST Catalog (Apache Iceberg) |
 | Storage | HDFS |
 | Orchestrator | Apache Airflow |
@@ -112,21 +137,46 @@ The pipeline follows a 3-layer pattern:
 - **Silver** — cleaned, normalized data with surrogate keys (`sk_id`), including **SCD (Slowly Changing Dimension)** logic per table. Write mode is `custom` (table-specific merge/update logic). Also hosts static lookup dimensions (`class`, `status`, `payment`) that aren't sourced from MongoDB.
 - **Gold** *(configured but not yet built out — ready for reporting/analytics needs)*.
 
+Every layer transition (Bronze and Silver) is gated by a **DQ check** — see [Data Quality Checks](#data-quality-checks-pydeequ) below.
+
 ## Nessie Branching Strategy
 
 The pipeline uses a **per-stage, per-table** branching strategy in Nessie, with the naming convention: `<stage>_<table_name>`
 
 Example: `bronze_tickets`, `silver_passengers`
 
-**Why:** if one table fails to process, we only need to retry that table — not the entire stage.
+**Why:** if one table fails to process or fails its DQ check, we only need to retry that table/stage — not the entire pipeline.
 
-**Flow:**
-1. Branch `<stage>_<table_name>` is created/reset from `main` before the table is processed.
-2. The ETL runs on that branch.
-3. **Success** → merge into `main`.
-4. **Failure** → branch is dropped, `main` stays consistent, other tables are unaffected.
+**Flow per stage (Bronze or Silver):**
+1. Branch `<stage>_<table_name>` is created/reset from `main`.
+2. The load task runs on that branch (Spark).
+3. The DQ check task runs on that branch (PyDeequ) — separate Airflow task/image from the load task.
+4. **DQ passed** → merge branch into `main`.
+5. **DQ failed** → branch is dropped, `main` stays consistent, other tables are unaffected, task fails and alerts.
 
 This is handled in `src/utils/nessie_utils.py` as a wrapper around the `run_table` function (`src/app/run_pipeline.py`).
+
+### Data Quality Checks (PyDeequ)
+
+DQ checks run as their **own Airflow task**, using their **own image** — separate from the Spark load task. This keeps load and validation independently retryable and keeps the load image lighter (no need to bundle DQ libraries into the load container).
+
+```mermaid
+flowchart LR
+    A["create_branch"] --> B["load_bronze (Spark)"]
+    B --> C{"test_bronze (PyDeequ)"}
+    C -->|pass| D["merge_bronze_to_main"]
+    C -->|fail| E["drop_branch + alert"]
+    D --> F["load_silver (Spark)"]
+    F --> G{"test_silver (PyDeequ)"}
+    G -->|pass| H["merge_silver_to_main"]
+    G -->|fail| E
+```
+
+This pattern (**create branch → load → DQ check → merge/drop**) repeats independently for the Bronze stage and the Silver stage of every table.
+
+**What each DQ stage typically checks:**
+- **Bronze DQ** — technical checks: schema/type correctness, null checks on required fields, no duplicate `id`, row count sanity vs. source.
+- **Silver DQ** — business checks: SCD consistency (e.g. only one `is_active = true` per `id`), foreign keys resolve to valid dimension rows, referential completeness before a dependent table (like `tickets`) is allowed to run.
 
 ### SCD Type per Table
 

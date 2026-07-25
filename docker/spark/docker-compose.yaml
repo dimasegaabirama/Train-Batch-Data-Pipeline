@@ -63,6 +63,25 @@ services:
       - data_eng_net
       - spark_net
 
+  spark-test:
+    build:
+      context: .
+      dockerfile: ./docker/spark/dockerfile.spark.test
+    image: spark-test:3.2.1-hadoop3.2
+    container_name: spark-test
+    hostname: spark-test
+    volumes:
+      - .env.global:/app/.env.global
+    environment:
+      CONFIG_PATH: /app/config/pipeline-config.yaml
+      ENV_PATH: /app/.env.global
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    networks:
+      - data_eng_net
+      - spark_net
+
   spark-jupyter:
     build:
       dockerfile: ./docker/spark/dockerfile.jupyter.notebook
