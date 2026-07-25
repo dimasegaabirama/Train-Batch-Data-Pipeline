@@ -491,7 +491,7 @@ tables:
     partitioned_by: created_at
     write_mode:
       bronze: overwrite_partitions
-      silver: overwrite_partitions
+      silver: custom
       gold: custom
     schema: 
       source: |
@@ -568,6 +568,61 @@ tables:
         has_child         BOOLEAN,
         has_promo         BOOLEAN,
         is_weekend        BOOLEAN
+
+    query: 
+      - |      
+        MERGE INTO {full_table_name} t
+        USING {table_view} s
+        ON t.ticket_id = s.ticket_id
+
+        WHEN MATCHED AND (
+            t.route_sk_id <> s.route_sk_id
+            OR t.passenger_sk_id <> s.passenger_sk_id
+            OR t.train_sk_id <> s.train_sk_id
+            OR t.class_id <> s.class_id
+            OR t.payment_id <> s.payment_id
+            OR t.active_status_id <> s.active_status_id
+            OR t.day_of_week <> s.day_of_week
+            OR t.booking_lead_days <> s.booking_lead_days
+            OR t.departure_date <> s.departure_date
+            OR t.paid_at <> s.paid_at
+            OR t.cancelled_at <> s.cancelled_at
+            OR t.refunded_at <> s.refunded_at
+            OR t.created_at <> s.created_at
+            OR t.price <> s.price
+            OR t.discount <> s.discount
+            OR t.final_price <> s.final_price
+            OR t.family_flag <> s.family_flag
+            OR t.has_child <> s.has_child
+            OR t.has_promo <> s.has_promo
+            OR t.is_weekend <> s.is_weekend
+        )
+        THEN UPDATE SET 
+            t.route_sk_id = s.route_sk_id
+            t.passenger_sk_id = s.passenger_sk_id
+            t.train_sk_id = s.train_sk_id
+            t.class_id = s.class_id
+            t.payment_id = s.payment_id
+            t.active_status_id = s.active_status_id
+            t.day_of_week = s.day_of_week
+            t.booking_lead_days = s.booking_lead_days
+            t.departure_date = s.departure_date
+            t.paid_at = s.paid_at
+            t.cancelled_at = s.cancelled_at
+            t.refunded_at = s.refunded_at
+            t.created_at = s.created_at
+            t.price = s.price
+            t.discount = s.discount
+            t.final_price = s.final_price
+            t.family_flag = s.family_flag
+            t.has_child = s.has_child
+            t.has_promo = s.has_promo
+            t.is_weekend = s.is_weekend
+
+        WHEN NOT MATCHED THEN 
+            INSERT (ticket_id, route_sk_id, passenger_sk_id, train_sk_id, class_id, payment_id, active_status_id, day_of_week, booking_lead_days, departure_date, paid_at, cancelled_at, refunded_at, created_at, price, discount, final_price, family_flag, has_child, has_promo, is_weekend)
+            VALUES(s.ticket_id, s.route_sk_id, s.passenger_sk_id, s.train_sk_id, s.class_id, s.payment_id, s.active_status_id, s.day_of_week, s.booking_lead_days, s.departure_date, s.paid_at, s.cancelled_at, s.refunded_at, s.created_at, s.price, s.discount, s.final_price, s.family_flag, s.has_child, s.has_promo, s.is_weekend)
+        
 
 
     depends_on:

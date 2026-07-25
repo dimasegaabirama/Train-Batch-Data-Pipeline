@@ -1,23 +1,24 @@
 # Train Batch Pipeline
 
-Batch data pipeline untuk mengolah data operasional perkeretaapian (penumpang, stasiun, kereta, rute, dan tiket) dari sumber operasional ke data warehouse dengan pendekatan **Medallion Architecture** (Bronze → Silver → Gold).
+Batch data pipeline for processing train operational data (passengers, stations, trains, routes, and tickets) from operational sources into a data warehouse, using a **Medallion Architecture** (Bronze → Silver → Gold).
 
-## Daftar Isi
+## Table of Contents
 
-- [Arsitektur](#arsitektur)
+- [Architecture](#architecture)
+- [Table Schema Flow](#table-schema-flow)
 - [Tech Stack](#tech-stack)
 - [Medallion Architecture](#medallion-architecture)
 - [Nessie Branching Strategy](#nessie-branching-strategy)
 - [Data Model](#data-model)
-- [Struktur Konfigurasi Tabel](#struktur-konfigurasi-tabel)
-- [Struktur Project](#struktur-project)
-- [Instalasi & Setup](#instalasi--setup)
-- [Menjalankan Pipeline](#menjalankan-pipeline)
-- [Kontribusi](#kontribusi)
+- [Table Configuration Structure](#table-configuration-structure)
+- [Project Structure](#project-structure)
+- [Installation & Setup](#installation--setup)
+- [Running the Pipeline](#running-the-pipeline)
+- [Contributing](#contributing)
 
-## Arsitektur
+## Architecture
 
-Pipeline ini berjalan secara batch dengan alur sebagai berikut:
+The pipeline runs in batch mode with the following flow:
 
 ```mermaid
 flowchart LR
@@ -28,16 +29,73 @@ flowchart LR
     E -.->|Schedule & Trigger| C
 ```
 
-**Alur singkat:**
-1. **MongoDB** menyimpan data operasional mentah (source system).
-2. **Airflow** menjadwalkan dan men-trigger job secara berkala (batch).
-3. **Spark** melakukan extract dari MongoDB, transformasi, dan load data ke tiap layer (Bronze, Silver, Gold).
-4. **Nessie REST Catalog** berperan sebagai warehouse/table catalog management (Iceberg-based) untuk versioning dan governance tabel.
-5. **HDFS** menjadi lapisan penyimpanan fisik data (data lake).
+**Summary:**
+1. **MongoDB** stores raw operational data (source system).
+2. **Airflow** schedules and triggers jobs on a batch cadence.
+3. **Spark** extracts data from MongoDB, transforms it, and loads it into each layer (Bronze, Silver, Gold).
+4. **Nessie REST Catalog** manages the warehouse/table catalog (Iceberg-based) for table versioning and governance.
+5. **HDFS** is the physical storage layer (data lake).
+
+## Table Schema Flow
+
+The diagram below shows how each table moves from **Source (MongoDB) → Bronze → Silver**, plus the dependencies between Silver tables (dashed lines).
+
+`class`, `status`, and `payment` are small **static lookup dimensions** — they're created directly in the Silver layer (no Source/Bronze step) since they hold fixed reference values, not data synced from MongoDB. `routes` depends on `stations` and `trains`, while `tickets` (fact table) depends on nearly every dimension and must run last in the Airflow DAG.
+
+```mermaid
+flowchart LR
+    subgraph Source["MongoDB Source"]
+        S_pass["passengers"]
+        S_stat["stations"]
+        S_train["trains"]
+        S_route["routes"]
+        S_tick["tickets"]
+    end
+    subgraph Bronze["Bronze layer"]
+        B_pass["passengers"]
+        B_stat["stations"]
+        B_train["trains"]
+        B_route["routes"]
+        B_tick["tickets"]
+    end
+    subgraph Silver["Silver layer"]
+        SV_pass["passengers (scd2)"]
+        SV_stat["stations (scd1)"]
+        SV_train["trains (scd2)"]
+        SV_route["routes (scd1)"]
+        SV_tick["tickets (fact)"]
+        SV_class["class (scd1, static)"]
+        SV_status["status (scd1, static)"]
+        SV_payment["payment (scd1, static)"]
+    end
+
+    S_pass --> B_pass --> SV_pass
+    S_stat --> B_stat --> SV_stat
+    S_train --> B_train --> SV_train
+    S_route --> B_route --> SV_route
+    S_tick --> B_tick --> SV_tick
+
+    SV_stat -. depends_on .-> SV_route
+    SV_train -. depends_on .-> SV_route
+
+    SV_stat -. depends_on .-> SV_tick
+    SV_route -. depends_on .-> SV_tick
+    SV_train -. depends_on .-> SV_tick
+    SV_pass -. depends_on .-> SV_tick
+    SV_class -. depends_on .-> SV_tick
+    SV_status -. depends_on .-> SV_tick
+    SV_payment -. depends_on .-> SV_tick
+```
+
+**Recommended Airflow execution order:**
+1. `stations`, `trains`, `class`, `status`, `payment` — no dependencies, can run in parallel.
+2. `passengers` — also independent, can run in parallel with step 1.
+3. `routes` — runs after `stations` and `trains` are done in Silver.
+4. `tickets` — runs last, after `stations`, `routes`, `trains`, `passengers`, `class`, `status`, and `payment` are all done in Silver.
 
 ## Tech Stack
 
-| Komponen | Teknologi |
+| Component | Technology |
 |---|---|
 | Data Source | MongoDB |
 | Processing Engine | Apache Spark |
@@ -47,143 +105,120 @@ flowchart LR
 
 ## Medallion Architecture
 
-Pipeline mengikuti pola 3 layer:
+The pipeline follows a 3-layer pattern:
 
-- **Source** — representasi mentah dari struktur data di MongoDB (biasanya field masih dalam bentuk string/loose-typed, contoh: `_id`, `updated_at STRING`).
-- **Bronze** — hasil extract dari source dengan casting tipe data yang sudah sesuai (contoh: `updated_at` menjadi `TIMESTAMP`), tanpa transformasi bisnis. Umumnya menggunakan write mode `overwrite_partitions`.
-- **Silver** — data yang sudah dibersihkan, dinormalisasi, dan diberi surrogate key (`sk_id`), termasuk penerapan logika **SCD (Slowly Changing Dimension)** sesuai kebutuhan tiap tabel. Write mode bersifat `custom` (merge/update logic spesifik).
-- **Gold** *(disiapkan dalam konfigurasi, siap dikembangkan sesuai kebutuhan reporting/analytics)*.
+- **Source** — raw representation of the MongoDB data structure (fields are typically loose-typed strings, e.g. `_id`, `updated_at STRING`).
+- **Bronze** — extracted from source with proper type casting (e.g. `updated_at` becomes `TIMESTAMP`), no business transformation. Usually uses `overwrite_partitions` write mode.
+- **Silver** — cleaned, normalized data with surrogate keys (`sk_id`), including **SCD (Slowly Changing Dimension)** logic per table. Write mode is `custom` (table-specific merge/update logic). Also hosts static lookup dimensions (`class`, `status`, `payment`) that aren't sourced from MongoDB.
+- **Gold** *(configured but not yet built out — ready for reporting/analytics needs)*.
 
 ## Nessie Branching Strategy
 
-Pipeline menerapkan strategi branching **per-stage per-table** pada Nessie, dengan konvensi nama: `<stage>_<table_name>`
+The pipeline uses a **per-stage, per-table** branching strategy in Nessie, with the naming convention: `<stage>_<table_name>`
 
-Contoh: `bronze_tickets`, `silver_passengers`
+Example: `bronze_tickets`, `silver_passengers`
 
-**Alasan:** jika satu tabel gagal diproses, kita tidak perlu mengulang seluruh tabel di stage tersebut — cukup retry tabel yang gagal saja.
+**Why:** if one table fails to process, we only need to retry that table — not the entire stage.
 
-**Alur:**
-1. Branch `<stage>_<table_name>` dibuat/di-reset dari `main` sebelum tabel diproses.
-2. ETL dijalankan di branch tersebut.
-3. **Sukses** → merge ke `main`.
-4. **Gagal** → branch di-*drop*, `main` tetap konsisten, tabel lain tidak terdampak.
+**Flow:**
+1. Branch `<stage>_<table_name>` is created/reset from `main` before the table is processed.
+2. The ETL runs on that branch.
+3. **Success** → merge into `main`.
+4. **Failure** → branch is dropped, `main` stays consistent, other tables are unaffected.
 
-Mekanisme ini di-handle di `src/utils/nessie_utils.py` sebagai wrapper pada fungsi `run_table` (`src/app/run_pipeline.py`).
+This is handled in `src/utils/nessie_utils.py` as a wrapper around the `run_table` function (`src/app/run_pipeline.py`).
 
-### Tipe SCD per Tabel
+### SCD Type per Table
 
-| Tabel | Tipe | Keterangan |
+| Table | Type | Notes |
 |---|---|---|
-| `passengers` | SCD2 | History perubahan data penumpang disimpan dengan `is_active`, `start_date`, `end_date` |
-| `stations` | SCD1 | Perubahan data menimpa record lama, dengan flag `is_deleted` untuk soft delete |
-| `trains` | SCD2 | Sama seperti `passengers`, history disimpan |
-| `routes` | SCD1 | Bergantung pada `stations` dan `trains` (lihat `depends_on`), dengan soft delete |
-| `tickets` | Fact | Tabel fakta transaksi tiket, partisi berdasarkan `created_at`, full overwrite tiap load |
+| `passengers` | SCD2 | Change history tracked via `is_active`, `start_date`, `end_date` |
+| `stations` | SCD1 | Changes overwrite the old record, with an `is_deleted` flag for soft delete |
+| `trains` | SCD2 | Same pattern as `passengers`, history is tracked |
+| `routes` | SCD1 | Depends on `stations` and `trains` (see `depends_on`), soft delete |
+| `class` | SCD1 | Static lookup dimension for ticket class (`id`, `class_name`) |
+| `status` | SCD1 | Static lookup dimension for ticket status (`id`, `status`) |
+| `payment` | SCD1 | Static lookup dimension for payment method (`id`, `method`) |
+| `tickets` | Fact | Ticket transaction fact table, partitioned by `created_at`, full overwrite per load |
 
 ## Data Model
 
 ### 1. `passengers` (SCD2)
-Menyimpan data master penumpang beserta history perubahan (nama, gender, telepon, email).
+Master passenger data with change history (name, gender, phone, email).
 
 ### 2. `stations` (SCD1)
-Menyimpan data master stasiun kereta (nama, kota, kode stasiun).
+Master station data (name, city, station code).
 
 ### 3. `trains` (SCD2)
-Menyimpan data master kereta beserta history perubahan (nama, tipe, kapasitas).
+Master train data with change history (name, type, capacity).
 
 ### 4. `routes` (SCD1)
-Menyimpan data rute perjalanan (stasiun asal, tujuan, kereta, jarak, durasi). Bergantung pada tabel `stations` dan `trains` di layer silver.
+Route data (origin/destination station, train, distance, duration). Depends on the `stations` and `trains` Silver tables.
 
-### 5. `tickets` (Fact)
-Tabel fakta transaksi tiket yang menghubungkan `passengers`, `trains`, dan `routes`, lengkap dengan informasi pembayaran, diskon, dan status tiket.
+### 5. `class` (SCD1 — static)
+Lookup dimension for ticket class, e.g. economy, business, executive. Columns: `id`, `class_name`. Ordered by `id`.
 
-> Detail schema lengkap tiap layer (source/bronze/silver) beserta query transformasi/merge tersedia di file konfigurasi tabel (lihat bagian berikutnya).
+### 6. `status` (SCD1 — static)
+Lookup dimension for ticket status, e.g. paid, cancelled, refunded. Columns: `id`, `status`. Ordered by `id`.
 
-## Struktur Konfigurasi Tabel
+### 7. `payment` (SCD1 — static)
+Lookup dimension for payment method, e.g. credit card, e-wallet, bank transfer. Columns: `id`, `method`. Ordered by `id`.
 
-Definisi setiap tabel (schema per layer, partisi, write mode, query transformasi, dan dependency antar tabel) diatur secara deklaratif dalam file konfigurasi YAML, contoh:
+### 8. `tickets` (Fact)
+Ticket transaction fact table linking `passengers`, `trains`, `routes`, `class`, `status`, and `payment`, along with payment info, discounts, and ticket status.
+
+> Full schema details per layer (source/bronze/silver) plus transformation/merge queries are available in the table config file (see next section).
+
+## Table Configuration Structure
+
+Each table's definition (schema per layer, partitioning, write mode, transformation queries, and dependencies) is declared in a YAML config file, for example:
 
 ```yaml
 tables:
-  <nama_tabel>:
+  <table_name>:
     type: scd1 | scd2 | fact
-    partitioned_by: <kolom_partisi>
+    partitioned_by: <partition_column>
     write_mode:
       bronze: overwrite_partitions
       silver: custom
       gold: custom
     schema:
-      source: <ddl source>
-      bronze: <ddl bronze>
-      silver: <ddl silver>
+      source: <source ddl>
+      bronze: <bronze ddl>
+      silver: <silver ddl>
     query:
-      - <query transformasi/merge 1>
-      - <query transformasi/merge 2>
+      - <transform/merge query 1>
+      - <transform/merge query 2>
     depends_on:
-      <tabel_lain>:
+      <other_table>:
         catalog: nessie
         schema: silver
 ```
 
-Pendekatan config-driven ini memungkinkan pipeline generik yang membaca definisi tabel dari YAML, lalu menjalankan proses extract-load-transform secara otomatis tanpa hardcode logic per tabel di kode Spark job.
+Static lookup dimensions (`class`, `status`, `payment`) are created directly with plain DDL, e.g.:
 
-> 📌 File konfigurasi lengkap: `config/tables.yaml` *(sesuaikan path dengan struktur project Anda)*
-
-## Struktur Project
-
-> ⚠️ Bagian ini masih berupa contoh umum — beri tahu saya struktur folder Anda yang sebenarnya (atau upload repo/screenshot struktur folder) agar bisa disesuaikan.
-
-```
-train-batch-pipeline/
-├── dags/                   # Airflow DAGs
-├── jobs/                   # Spark job scripts
-│   ├── bronze/
-│   ├── silver/
-│   └── gold/
-├── config/
-│   └── tables.yaml         # Konfigurasi tabel (schema, SCD, query)
-├── requirements.txt
-├── docker-compose.yaml     # (jika pakai container untuk local dev)
-└── README.md
+```python
+"""
+CREATE TABLE IF NOT EXISTS nessie.silver.status(
+    id INT,
+    status STRING
+)
+USING ICEBERG
+""",
+"""
+ALTER TABLE nessie.silver.status
+WRITE ORDERED BY id
+""",
 ```
 
-## Instalasi & Setup
+This config-driven approach enables a generic pipeline that reads table definitions from YAML and runs extract-load-transform automatically, without hardcoding logic per table in the Spark job code.
 
-> ⚠️ Bagian ini perlu dilengkapi — silakan share requirements.txt / environment variables / cara setup cluster Spark & Nessie yang Anda pakai.
+> 📌 Full config file: `config/tables.yaml` *(adjust the path to match your project structure)*
 
-Contoh umum:
+## Contributing
 
-```bash
-# Clone repository
-git clone <repo-url>
-cd train-batch-pipeline
+Pull requests and issues are welcome. Please run schema tests/validation before submitting changes to `config/tables.yaml`.
 
-# Install dependencies
-pip install -r requirements.txt
+## License
 
-# Setup environment variables
-cp .env.example .env
-# isi kredensial MongoDB, endpoint Nessie, HDFS namenode, dll
-```
-
-## Menjalankan Pipeline
-
-> ⚠️ Sesuaikan dengan cara trigger DAG di Airflow Anda.
-
-Contoh umum:
-
-```bash
-# Trigger DAG secara manual via Airflow CLI
-airflow dags trigger train_batch_pipeline
-
-# Atau melalui Airflow Webserver UI
-# http://localhost:8080
-```
-
-## Kontribusi
-
-Pull request dan issue sangat diterima. Pastikan menjalankan test/validasi schema sebelum submit perubahan pada `config/tables.yaml`.
-
-## Lisensi
-
-*(Tambahkan lisensi project di sini, misal MIT License)*
+*(Add project license here, e.g. MIT License)*

@@ -1,8 +1,9 @@
-from typing_extensions import Optional
+from typing_extensions import Optional, Union
 from abc import ABC, abstractmethod
 from src.models.data_config import StageType
 
 from pyspark.sql.session import SparkSession
+from pyspark.sql.column import Column
 from src.core import Session, AppLogger, TableManager, SourceManager, SchemaManager
 
 
@@ -16,7 +17,7 @@ class BaseExtract(ABC):
         logger: AppLogger,
         session: SparkSession,
         table_name: str,
-        condition = None
+        condition: Optional[Union[str, Column]] = None
     ):
         self._table_manager = TableManager()
         self._source_manager = SourceManager()
