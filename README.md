@@ -37,10 +37,9 @@ flowchart LR
 5. **HDFS** is the physical storage layer (data lake).
 
 ## Table Schema Flow
+The diagram below shows how each table moves from **Source (MongoDB) → Bronze → Silver**, plus the dependencies between Silver tables (dashed lines).
 
-The diagram below shows how each table moves from **Source (MongoDB) → Bronze → Silver**. Right after each load step, data passes through a **DQ check (PyDeequ)** gate before it's allowed to merge into `main` or be used by a downstream table — dashed lines show the `depends_on` relationships, which only point out of a table *after* it has passed its DQ check.
-
-`class`, `status`, and `payment` are small **static lookup dimensions** — created directly in the Silver layer (no Source/Bronze step) since they hold fixed reference values, not data synced from MongoDB. They still go through a DQ check before being used by `tickets`.
+`class`, `status`, and `payment` are small **static lookup dimensions** — they're created directly in the Silver layer (no Source/Bronze step) since they hold fixed reference values, not data synced from MongoDB. `routes` depends on `stations` and `trains`, while `tickets` (fact table) depends on nearly every dimension and must run last in the Airflow DAG.
 
 ```mermaid
 flowchart LR
@@ -58,13 +57,6 @@ flowchart LR
         B_route["routes"]
         B_tick["tickets"]
     end
-    subgraph DQ1["DQ check (PyDeequ)"]
-        DQB_pass{{"DQ"}}
-        DQB_stat{{"DQ"}}
-        DQB_train{{"DQ"}}
-        DQB_route{{"DQ"}}
-        DQB_tick{{"DQ"}}
-    end
     subgraph Silver["Silver layer"]
         SV_pass["passengers (scd2)"]
         SV_stat["stations (scd1)"]
@@ -75,47 +67,24 @@ flowchart LR
         SV_status["status (scd1, static)"]
         SV_payment["payment (scd1, static)"]
     end
-    subgraph DQ2["DQ check (PyDeequ)"]
-        DQS_pass{{"DQ"}}
-        DQS_stat{{"DQ"}}
-        DQS_train{{"DQ"}}
-        DQS_route{{"DQ"}}
-        DQS_tick{{"DQ"}}
-        DQS_class{{"DQ"}}
-        DQS_status{{"DQ"}}
-        DQS_payment{{"DQ"}}
-    end
 
-    S_pass --> B_pass --> DQB_pass --> SV_pass --> DQS_pass
-    S_stat --> B_stat --> DQB_stat --> SV_stat --> DQS_stat
-    S_train --> B_train --> DQB_train --> SV_train --> DQS_train
-    S_route --> B_route --> DQB_route --> SV_route --> DQS_route
-    S_tick --> B_tick --> DQB_tick --> SV_tick --> DQS_tick
+    S_pass --> B_pass --> SV_pass
+    S_stat --> B_stat --> SV_stat
+    S_train --> B_train --> SV_train
+    S_route --> B_route --> SV_route
+    S_tick --> B_tick --> SV_tick
 
-    SV_class --> DQS_class
-    SV_status --> DQS_status
-    SV_payment --> DQS_payment
+    SV_stat -. depends_on .-> SV_route
+    SV_train -. depends_on .-> SV_route
 
-    DQS_stat -. depends_on .-> SV_route
-    DQS_train -. depends_on .-> SV_route
-
-    DQS_stat -. depends_on .-> SV_tick
-    DQS_route -. depends_on .-> SV_tick
-    DQS_train -. depends_on .-> SV_tick
-    DQS_pass -. depends_on .-> SV_tick
-    DQS_class -. depends_on .-> SV_tick
-    DQS_status -. depends_on .-> SV_tick
-    DQS_payment -. depends_on .-> SV_tick
-
-    classDef dq fill:#FAEEDA,stroke:#854F0B,color:#412402;
-    class DQB_pass,DQB_stat,DQB_train,DQB_route,DQB_tick,DQS_pass,DQS_stat,DQS_train,DQS_route,DQS_tick,DQS_class,DQS_status,DQS_payment dq;
+    SV_stat -. depends_on .-> SV_tick
+    SV_route -. depends_on .-> SV_tick
+    SV_train -. depends_on .-> SV_tick
+    SV_pass -. depends_on .-> SV_tick
+    SV_class -. depends_on .-> SV_tick
+    SV_status -. depends_on .-> SV_tick
+    SV_payment -. depends_on .-> SV_tick
 ```
-
-**Recommended Airflow execution order:**
-1. `stations`, `trains`, `class`, `status`, `payment` — no dependencies, can run (load + DQ) in parallel.
-2. `passengers` — also independent, can run in parallel with step 1.
-3. `routes` — runs after `stations` and `trains` have passed their Silver DQ check.
-4. `tickets` — runs last, after `stations`, `routes`, `trains`, `passengers`, `class`, `status`, and `payment` have all passed their Silver DQ check.
 
 ## Tech Stack
 
