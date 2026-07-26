@@ -1,9 +1,9 @@
+from logging import Logger
 from src.app.bootstrap import *
-from src.core import AppLogger
 from pyspark.sql.session import SparkSession
 
 class PipelineBootstrap:
-    def __init__(self, session: SparkSession, logger: AppLogger):
+    def __init__(self, session: SparkSession, logger: Logger):
         self.session = session
         self.logger = logger
 

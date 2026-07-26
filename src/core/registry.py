@@ -26,8 +26,14 @@ _FILTER_REGISTRY = {
 
 
 _DATA_QUALITY_REGISTRY = {
-    "bronze": {"default": build_mongo_incremental_filter},
-    "silver": {"default": build_iceberg_incremental_filter},
+    "bronze": {"default": "test_bronze.py"},
+    "silver": {
+        "passengers": "test_passengers.py",
+        "trains": "test_trains.py",
+        "stations": "test_stations.py",
+        "routes": "test_routes.py",
+        "tickets": "test_tickets.py"
+    }
 }
 
 
@@ -45,7 +51,7 @@ _TRANSFORMER_REGISTRY = {
         "trains": TrainsTransform,
         "stations": StationsTransform,
         "routes": RoutesTransform,
-        "tickets": TicketsTransform,
+        "tickets": TicketsTransform
     },
     "gold": {},
 }
@@ -62,7 +68,8 @@ _REGISTRY_MAP = {
     "extract": _EXTRACT_REGISTRY,
     "transform": _TRANSFORMER_REGISTRY,
     "load": _LOAD_REGISTRY,
-    "filter": _FILTER_REGISTRY
+    "filter": _FILTER_REGISTRY,
+    "data_quality": _DATA_QUALITY_REGISTRY
 }
 
 

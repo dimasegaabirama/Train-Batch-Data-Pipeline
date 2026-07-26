@@ -41,19 +41,19 @@ class PipelineOrchestrator:
                 "Running Data Quality Tests for Stage: %s | Table: %s", stage, table_name
             )
 
-            test_cls = resolve_registry_class(
+            test_filename = resolve_registry_class(
                 stage=stage,
                 table_name=table_name,
                 component_name="data_quality",
                 required=False,
             )
 
-            if test_cls is None:
+            if test_filename is None:
                 return
 
-            dq_path = Path(__file__).parent / "data_quality" / stage
+            dq_path = Path(__file__).parent / "data_quality" / stage / test_filename
 
-            self.logger.debug("Using Data Quality Test Class: %s", test_cls)
+            self.logger.debug("Using Data Quality Test Class: %s", test_filename)
             self.logger.debug("Data Quality Test Path: %s", dq_path)
 
             return pytest.main(["-q", "--tb=short", str(dq_path)])

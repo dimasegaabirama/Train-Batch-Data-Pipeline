@@ -174,31 +174,32 @@ def main():
     # =========================
     # Initialize Dependencies
     # =========================
-    logger = AppLogger
+    logger = AppLogger("Train_Batch_Pipeline", log_level="INFO")
 
-    with AppLogger.log_context("Pipeline Execution", ):
-    with Session(logger=logger, stage=stage) as session:
+    with logger.log_context("Running Train Batch Pipeline", stage, start_date, end_date) as logger:
 
-        # =========================
-        # Resolve Runtime Config
-        # =========================
-        run_bootstrap = args.run_bootstrap
-        data_quality = args.data_quality
+        with Session(stage=stage, logger=logger) as session:
 
-        if run_bootstrap:
-            return PipelineBootstrap(session=session, logger=logger).run_bootstrap()
+            # =========================
+            # Resolve Runtime Config
+            # =========================
+            run_bootstrap = args.run_bootstrap
+            data_quality = args.data_quality
 
-        # =========================
-        # Initialize Pipeline
-        # =========================
-        return PipelineOrchestrator(
-            logger=logger,
-            session=session,
-            quality_check=data_quality
-        ).run_all_tables(
-            stage=stage,
-            table_names=table_names
-        )
+            if run_bootstrap:
+                return PipelineBootstrap(session=session, logger=logger).run_bootstrap()
+
+            # =========================
+            # Initialize Pipeline
+            # =========================
+            return PipelineOrchestrator(
+                logger=logger,
+                session=session,
+                quality_check=data_quality
+            ).run_all_tables(
+                stage=stage,
+                table_names=table_names
+            )
 
 
 if __name__ == "__main__":

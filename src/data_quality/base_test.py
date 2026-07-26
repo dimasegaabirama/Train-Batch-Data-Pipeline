@@ -8,17 +8,10 @@ from pydeequ.verification import VerificationResult, VerificationSuite
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import _parse_datatype_string
 
-from src.core import (
-    AppLogger,
-    SchemaManager,
-    Session,
-    SourceManager,
-    TableManager
-)
+from src.core import SchemaManager, Session, SourceManager, TableManager
 
 
 class BaseTest(ABC):
-
     def __init__(self, logger: Logger):
         self.logger = logger
         self._table_manager = TableManager()
@@ -50,24 +43,15 @@ class BaseTest(ABC):
             )
         )
 
-        expected = {
-            f.name.lower(): str(f.dataType)
-            for f in expected_schema.fields
-        }
+        expected = {f.name.lower(): str(f.dataType) for f in expected_schema.fields}
 
-        actual = {
-            f.name.lower(): str(f.dataType)
-            for f in self.dataframe.schema.fields
-        }
+        actual = {f.name.lower(): str(f.dataType) for f in self.dataframe.schema.fields}
 
         assert expected == actual
 
     def run_tests(self, check: Check):
         check_result = (
-            VerificationSuite(self.session)
-            .onData(self.dataframe)
-            .addCheck(check)
-            .run()
+            VerificationSuite(self.session).onData(self.dataframe).addCheck(check).run()
         )
 
         result = json.loads(
