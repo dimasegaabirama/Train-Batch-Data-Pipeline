@@ -1,66 +1,47 @@
 import logging
-import os
-from functools import wraps
+from contextlib import contextmanager
 from time import time
 
-from typing_extensions import Literal, Optional
-
-from src.models.data_config import StageType
+from typing_extensions import Literal, Optional, Dict
 
 
 class AppLogger:
-    """
-    Singleton logger factory.
 
-    Usage:
-        logger = AppLogger.get_logger(name="pipeline", type="stream")
-    """
+    _instances: Dict[str, "AppLogger"] = {}
 
-    _instance: "AppLogger | None" = None
-    _logger: "logging.Logger | None" = None
+    def __new__(cls, name: str, *args, **kwargs) -> "AppLogger":
+        if name not in cls._instances:
+            cls._instances[name] = super().__new__(cls)
+        return cls._instances[name]
 
-    # -------------------------
-    # Singleton
-    # -------------------------
+    def __init__(
+        self,
+        name,
+        type: Literal["file", "stream", "both"] = "stream",
+        level: str = "INFO",
+        log_file: Optional[str] = None,
+    ):
 
-    def __new__(cls, *args, **kwargs) -> "AppLogger":
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
+        if hasattr(self, "_logger"):
+            return
+
+        self.name = name
+        self.type = type
+        self.level = level
+        self.log_file = log_file
+        self._logger: Optional[logging.Logger] = None
+        self._build_logger()
 
     # -------------------------
     # Factory
     # -------------------------
 
-    @classmethod
-    def get_logger(
-        cls,
-        name: str = __name__,
-        type: Literal["file", "stream", "both"] = "stream",
-        level: str = "INFO",
-        log_file: Optional[str] = None,
-        force_update: bool = False,
-    ) -> logging.Logger:
-        """
-        Return (and cache) a configured logger instance.
-
-        Parameters
-        ----------
-        name         : logger name, defaults to module name
-        type         : output target — 'stream', 'file', or 'both'
-        log_file     : required when type is 'file' or 'both'
-        force_update : rebuild the logger even if one already exists
-        """
-        if cls._logger is not None and not force_update:
-            return cls._logger
-
-        if type in ("file", "both") and not log_file:
+    def _build_logger(self) -> logging.Logger:
+        if self.type in ("file", "both") and not self.log_file:
             raise ValueError("log_file wajib diisi jika type='file' atau 'both'")
 
-        logger = logging.getLogger(name)
-        log_level = level
-
-        logger.setLevel(getattr(logging, log_level))
+        logger = logging.getLogger(self.name)
+        logger.setLevel(getattr(logging, self.level))
         logger.propagate = False
         logger.handlers.clear()
 
@@ -70,50 +51,41 @@ class AppLogger:
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
-        if type in ("stream", "both"):
+        if self.type in ("stream", "both"):
             stream_handler = logging.StreamHandler()
             stream_handler.setFormatter(formatter)
             logger.addHandler(stream_handler)
 
-        if type in ("file", "both"):
-            file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
+        if self.type in ("file", "both"):
+            file_handler = logging.FileHandler(self.log_file, mode="a", encoding="utf-8")
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
 
-        cls._logger = logger
-        return cls._logger
+        self._logger = logger
+        return self._logger
+
+    def get_logger(self) -> logging.Logger:
+        return self._logger
 
     # -------------------------
-    # Decorator
+    # Context manager
     # -------------------------
 
-    @staticmethod
-    def log_stage(stage: "StageType | None" = None):
-        def decorator(func):
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                logger: Optional[logging.Logger] = kwargs.get("logger") or (
-                    getattr(args[0], "logger", None) if args else None
-                )
+    @contextmanager
+    def log_context(self, message: str, *args):
+        start_time = time()
+        logger = self.get_logger()
 
-                label = stage or func.__name__
+        detail = ", ".join(map(str, args))
+        header = f"{message}: {detail}" if detail else message
 
-                try:
-                    start = time()
-                    if logger:
-                        logger.info(f"Start stage: {label}")
-
-                    result = func(*args, **kwargs)
-
-                    if logger:
-                        logger.info(f"End stage: {label}, time: {time() - start:.2f}s")
-                    return result
-
-                except Exception as e:
-                    if logger:
-                        logger.exception(f"Error in stage '{label}': {e}")
-                    raise
-
-            return wrapper
-
-        return decorator
+        try:
+            logger.info(header)
+            yield logger
+            logger.info(f"{message}: Completed successfully")
+        except Exception as e:
+            logger.error(f"{message}: {e}")
+            raise
+        finally:
+            elapsed_time = time() - start_time
+            logger.info(f"{message}: Ended (Elapsed time: {elapsed_time:.2f} seconds)")

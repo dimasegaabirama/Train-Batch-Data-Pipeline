@@ -38,9 +38,9 @@ include = ["src*"]
 exclude = ["airflow*", "docker*", "*.egg-info", ""]
 
 
-
 [tool.ruff]
 target-version = "py37"
+
 
 [tool.ruff.lint]
 select = [

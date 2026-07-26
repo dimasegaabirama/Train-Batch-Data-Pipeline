@@ -22,6 +22,48 @@ def check_is_not_set(values: List[Tuple[str, str]]):
             raise RuntimeError(f"{name} is not set !!")
 
 
+def validate_dates(start_date: str, end_date: str):
+    valid_date = DateConfig(
+        start_date=start_date,
+        end_date=end_date
+    )
+    return None
+
+
+def validate_path(path: str, name: str):
+    if not os.path.exists(path):
+        raise RuntimeError(f"{name} path does not exist: {path}")
+    return None
+
+
+def set_env_vars(config_path: str, env_path: str, start_date: str, end_date: str):
+    for key in ("CONFIG_PATH", "ENV_PATH", "START_DATE", "END_DATE"):
+        os.environ.pop(key, None)
+
+    os.environ.update({
+        "CONFIG_PATH": config_path,
+        "ENV_PATH": env_path,
+        "START_DATE": start_date,
+        "END_DATE": end_date
+    })
+
+
+def get_arg_or_env(args, arg, env_var):
+    return getattr(args, arg) or os.getenv(env_var)
+
+
+def get_arg_or_config(args, config_manager, arg, config_key):
+    value = getattr(args, arg)
+
+    if value is None:
+        value = getattr(config_manager, config_key)()
+
+    if value is None:
+        raise ValueError(f"-{arg} is required.")
+
+    return value
+
+
 def build_parser():
 
     parser = ArgumentParser(
@@ -82,6 +124,12 @@ def build_parser():
         help="Run Pipeline Bootstrap"
     )
 
+    parser.add_argument(
+        "--data_quality",
+        action="store_true",
+        help="Run Data Quality Checks"
+    )
+
     return parser.parse_args()
 
 
@@ -94,10 +142,10 @@ def main():
 
     stage = args.stage
 
-    config_path = args.config or os.getenv("CONFIG_PATH")
-    env_path = args.environment or os.getenv("ENV_PATH")
-    start_date = args.start_date or os.getenv("START_DATE")
-    end_date = args.end_date or os.getenv("END_DATE")
+    config_path = get_arg_or_env(args, "config", "CONFIG_PATH")
+    env_path = get_arg_or_env(args, "environment", "ENV_PATH")
+    start_date = get_arg_or_env(args, "start_date", "START_DATE")
+    end_date = get_arg_or_env(args, "end_date", "END_DATE")
 
     check_is_not_set([
         (config_path, "CONFIG_PATH"),
@@ -107,47 +155,36 @@ def main():
     ])
 
     # =========================
-    # Date Validation
+    # Validation Format
     # =========================
+    validate_dates(start_date, end_date)
+    validate_path(config_path, "CONFIG_PATH")
+    validate_path(env_path, "ENV_PATH")
 
-    DateConfig(
-        start_date=start_date,
-        end_date=end_date
-    )
-
-    for key in ("CONFIG_PATH", "ENV_PATH", "START_DATE", "END_DATE"):
-        os.environ.pop(key, None)
-
-    os.environ.update({
-        "CONFIG_PATH": config_path,
-        "ENV_PATH": env_path,
-        "START_DATE": start_date,
-        "END_DATE": end_date
-    })
+    # =========================
+    # Set Environment Variables
+    # =========================
+    set_env_vars(config_path, env_path, start_date, end_date)
 
     # =========================
     # Resolve Catalog and Table
     # =========================
-    pipeline_cfg = TableManager()
-    table_names = args.tables or pipeline_cfg.get_tablenames()
-
-    if not table_names:
-        raise ValueError(
-            "--tables is required."
-        )
+    table_names = get_arg_or_config(args, TableManager(), "tables", "get_tablenames")
 
     # =========================
     # Initialize Dependencies
     # =========================
-    logger = AppLogger.get_logger(level="DEBUG")
+    logger = AppLogger
 
+    with AppLogger.log_context("Pipeline Execution", ):
     with Session(logger=logger, stage=stage) as session:
-        logger.info(f"Pipeline Runner | Stage = {stage} | Tables = {table_names}")
 
         # =========================
         # Resolve Runtime Config
         # =========================
         run_bootstrap = args.run_bootstrap
+        data_quality = args.data_quality
+
         if run_bootstrap:
             return PipelineBootstrap(session=session, logger=logger).run_bootstrap()
 
@@ -156,7 +193,8 @@ def main():
         # =========================
         return PipelineOrchestrator(
             logger=logger,
-            session=session
+            session=session,
+            quality_check=data_quality
         ).run_all_tables(
             stage=stage,
             table_names=table_names

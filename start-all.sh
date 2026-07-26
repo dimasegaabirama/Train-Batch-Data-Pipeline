@@ -101,7 +101,7 @@ fi
 # ─────────────────────────────────────────
 log "Starting MongoDB..."
 compose_up mongo ./docker/mongo/docker-compose.yaml mongo-db
-wait_for "MongoDB" 60
+wait_for "MongoDB" 50
 
 log "Starting Mongo Express..."
 compose_up mongo ./docker/mongo/docker-compose.yaml mongo-express
@@ -114,7 +114,7 @@ compose_up spark ./docker/spark/docker-compose.yaml spark-master
 wait_for "Spark Master" 10
 
 log "Starting Spark Workers & Jupyter..."
-compose_up spark ./docker/spark/docker-compose.yaml spark-worker-1 spark-worker-2 spark-jupyter
+compose_up spark ./docker/spark/docker-compose.yaml spark-worker-1 spark-worker-2 spark-submit
 
 # ─────────────────────────────────────────
 # AIRFLOW (optional)

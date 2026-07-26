@@ -28,17 +28,21 @@ class BronzeTransform(BaseTransform):
         DataFrame
             Transformed DataFrame with normalized columns and filtered rows.
         """
-    
-        df = self.dataframe.withColumnRenamed("_id", "id")
 
-        for column in DATE_COLUMNS:
-            if column in df.columns:
-                df = df.withColumn(
-                    column,
-                    F.to_timestamp(column)
-                )
+        try:
+            df = self.dataframe.withColumnRenamed("_id", "id")
 
-        return df
+            for column in DATE_COLUMNS:
+                if column in df.columns:
+                    df = df.withColumn(
+                        column,
+                        F.to_timestamp(column)
+                    )
+
+            return df
+        
+        except Exception as e:
+            raise ValueError(f"Error during bronze transformation: {e}")
 
 
 if __name__ == "__main__":

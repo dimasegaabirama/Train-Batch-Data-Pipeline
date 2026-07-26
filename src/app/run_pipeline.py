@@ -1,4 +1,8 @@
+import pytest
+
+from logging import Logger
 from typing import List
+from pathlib import Path
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
@@ -10,51 +14,90 @@ from src.core import (
     TableManager,
     resolve_registry_class,
 )
+
+from src.etl.extract import BaseExtract
 from src.etl.transform import BaseTransform
+from src.etl.load import BaseLoad
+
 from src.models.data_config import StageType
 from src.utils.nessie_utils import pipeline_branch
 
 
 class PipelineOrchestrator:
-    def __init__(self, logger: AppLogger, session: SparkSession):
+    def __init__(
+        self, logger: Logger, session: SparkSession, quality_check: bool = False
+    ):
         self.logger = logger
         self.session = session
+        self.quality_check = quality_check
 
         self._table_manager = TableManager()
         self._date_manager = DateManager()
         self._filter_manager = FilterManager()
+
+    def _run_tests(self, stage: StageType, table_name: str):
+        try:
+            self.logger.info(
+                "Running Data Quality Tests for Stage: %s | Table: %s", stage, table_name
+            )
+
+            test_cls = resolve_registry_class(
+                stage=stage,
+                table_name=table_name,
+                component_name="data_quality",
+                required=False,
+            )
+
+            if test_cls is None:
+                return
+
+            dq_path = Path(__file__).parent / "data_quality" / stage
+
+            self.logger.debug("Using Data Quality Test Class: %s", test_cls)
+            self.logger.debug("Data Quality Test Path: %s", dq_path)
+
+            return pytest.main(["-q", "--tb=short", str(dq_path)])
+
+        except Exception as e:
+            raise RuntimeError(
+                f"Data Quality Tests Failed for Stage: {stage} | Error: {e}"
+            )
 
     # =========================
     # EXTRACT
     # =========================
     def extract(self, stage: StageType, table_name: str) -> DataFrame:
 
+        self.logger.info(
+            "Extracting data for table: %s | Stage: %s | Start Date: %s | End Date: %s",
+            table_name,
+            stage,
+            start_date,
+            end_date,
+        )
+
         start_date = self._date_manager.get_start_date()
         end_date = self._date_manager.get_end_date()
 
-        # === Extractor ===
-        extractor = resolve_registry_class(stage, table_name, "extract")
-        self.logger.debug(f"Extractor: {extractor}")
+        extractor: BaseExtract = resolve_registry_class(stage, table_name, "extract")
 
-        # === Condition (filter) ===
         condition_cls = resolve_registry_class(
             stage, table_name, "filter", required=False
         )
-        self.logger.debug(f"Condition Class: {condition_cls}")
 
         field = self._filter_manager.get_field(stage, table_name)
-        self.logger.debug(f"Field: {field}")
-
         condition = (
             condition_cls(field=field, start_date=start_date, end_date=end_date)
             if condition_cls is not None
             else None
         )
-        self.logger.debug(f"Condition: {condition}")
+
+        self.logger.debug("Using extractor: %s", extractor)
+        self.logger.debug("Using condition: %s", condition)
+        self.logger.debug("Using field: %s", field)
 
         return extractor(
             stage=stage,
-            logger=self.logger,
             session=self.session,
             table_name=table_name,
             condition=condition,
@@ -67,17 +110,20 @@ class PipelineOrchestrator:
         self, stage: StageType, dataframe: DataFrame, table_name: str
     ) -> DataFrame:
 
-        lookup_tables = self._table_manager.get_table_deps(table_name)
-        self.logger.debug(f"Lookup Tables : {lookup_tables}")
+        self.logger.info(
+            "Transforming data for table: %s | Stage: %s", table_name, stage
+        )
 
-        # === Transformer ===
+        lookup_tables = self._table_manager.get_table_deps(table_name)
+
         transformer: BaseTransform = resolve_registry_class(
             stage=stage, table_name=table_name, component_name="transform"
         )
-        self.logger.debug(f"Transformer : {transformer}")
+
+        self.logger.debug("Using transformer: %s", transformer)
+        self.logger.debug("Using lookup tables: %s", lookup_tables)
 
         return transformer(
-            logger=self.logger,
             session=self.session,
             dataframe=dataframe,
             lookup_tables=lookup_tables,
@@ -90,45 +136,39 @@ class PipelineOrchestrator:
         self, stage: StageType, dataframe: DataFrame, table_name: str
     ) -> DataFrame:
 
-        # === Table Name ===
+        self.logger.info("Loading data for table: %s | Stage: %s", table_name, stage)
+
         full_table_name = self._table_manager.get_table_fullname(
             stage=stage, table_name=table_name
         )
         table_view_name = f"{table_name}_view"
-
-        # === Partitioned By ===
         partitioned_by = self._table_manager.get_table_partitioned_by(
             table_name=table_name
         )
 
-        # === Query Params ===
         query_params = {
             "full_table_name": full_table_name,
             "table_view": table_view_name,
             "partitioned_by": partitioned_by,
         }
-        self.logger.debug(f"query_params :, {query_params}")
 
-        # === Write Mode ===
         write_mode = self._table_manager.get_table_write_mode(
             table_name=table_name, stage=stage
         )
-        self.logger.debug(f"write_mode :, {write_mode}")
+
         if write_mode == "custom":
-            self.logger.debug(
-                f"Write Mode : Custom, Create Temp Table View: {table_view_name}!!"
-            )
             dataframe.createOrReplaceTempView(table_view_name)
 
-        # === Loader ===
-        loader = resolve_registry_class(
+        loader: BaseLoad = resolve_registry_class(
             stage=stage, table_name=table_name, component_name="load"
         )
-        self.logger.debug(f"Loader: {loader}")
+
+        self.logger.debug("Using loader: %s", loader)
+        self.logger.debug("Using query params: %s", query_params)
+        self.logger.debug("Using write mode: %s", write_mode)
 
         return loader(
             stage=stage,
-            logger=self.logger,
             session=self.session,
             dataframe=dataframe,
             table_name=table_name,
@@ -141,36 +181,15 @@ class PipelineOrchestrator:
     @pipeline_branch
     def run_table(self, stage: StageType, table_name: str) -> None:
 
-        self.logger.info(f"[{stage}] Start pipeline: {table_name}")
-
-        # === EXTRACT ===
-        self.logger.info(f"[{stage}] Extract Table: {table_name}")
-        extract_stage = self.extract(
-                                stage=stage, 
-                                table_name=table_name
-                            )
-        self.logger.debug(f"Extract Table {table_name}: {extract_stage.printSchema()}")
-
-        # === TRANSFORM ===
-        self.logger.info(f"[{stage}] Transform Table: {table_name}")
+        extract_stage = self.extract(stage=stage, table_name=table_name)
         transform_stage = self.transform(
-                                stage=stage, 
-                                dataframe=extract_stage, 
-                                table_name=table_name
-                            )
-        self.logger.debug(
-            f"Transform Table {table_name}: {transform_stage.printSchema()}"
+            stage=stage, dataframe=extract_stage, table_name=table_name
         )
 
-        # === LOAD ===
-        self.logger.info(f"[{stage}] Load Table: {table_name}")
-        load_stage = self.load(
-                                stage=stage, 
-                                dataframe=transform_stage, 
-                                table_name=table_name
-                            )
+        if self.quality_check:
+            self._run_tests(stage=stage, table_name=table_name)
 
-        self.logger.info(f"[{stage}] Finished: {table_name}")
+        self.load(stage=stage, dataframe=transform_stage, table_name=table_name)
 
     def run_all_tables(self, stage: StageType, table_names: List[str]) -> None:
         for table_name in table_names:

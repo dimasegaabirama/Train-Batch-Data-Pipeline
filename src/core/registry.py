@@ -1,3 +1,4 @@
+import pytest
 from typing_extensions import Literal
 
 from src.etl.extract import IcebergExtract, MongoExtract
@@ -10,6 +11,7 @@ from src.etl.transform import (
     TicketsTransform,
     TrainsTransform
 )
+
 from src.utils.filter_utils import (
     build_iceberg_incremental_filter,
     build_mongo_incremental_filter,
@@ -18,6 +20,12 @@ from src.utils.filter_utils import (
 Component = Literal["extract", "transform", "load", "filter"]
 
 _FILTER_REGISTRY = {
+    "bronze": {"default": build_mongo_incremental_filter},
+    "silver": {"default": build_iceberg_incremental_filter},
+}
+
+
+_DATA_QUALITY_REGISTRY = {
     "bronze": {"default": build_mongo_incremental_filter},
     "silver": {"default": build_iceberg_incremental_filter},
 }
@@ -54,7 +62,7 @@ _REGISTRY_MAP = {
     "extract": _EXTRACT_REGISTRY,
     "transform": _TRANSFORMER_REGISTRY,
     "load": _LOAD_REGISTRY,
-    "filter": _FILTER_REGISTRY,
+    "filter": _FILTER_REGISTRY
 }
 
 

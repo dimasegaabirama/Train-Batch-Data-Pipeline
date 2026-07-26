@@ -8,9 +8,8 @@ from src.models.data_config import StageType
 
 class BaseLoad(ABC):
 
-    def __init__(self, stage: StageType, logger: AppLogger, session: Session, table_name: str, dataframe: DataFrame, query_params: Dict[str, str], **kwargs):
+    def __init__(self, stage: StageType, session: Session, table_name: str, dataframe: DataFrame, query_params: Dict[str, str], **kwargs):
         self.stage = stage
-        self.logger = logger
         self.session = session
         self.dataframe = dataframe
         

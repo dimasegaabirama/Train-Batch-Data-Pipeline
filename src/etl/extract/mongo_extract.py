@@ -14,10 +14,6 @@ class MongoExtract(BaseExtract):
         condition = self.condition
 
         try:
-            self.logger.debug(
-                f"[Extract Mongo] Reading collection '{collection}' from MongoDB"
-            )
-
             reader = (
                 self.session.read.format("mongodb")
                 .option("database", database)
@@ -25,21 +21,16 @@ class MongoExtract(BaseExtract):
             )
 
             if condition:
-                self.logger.debug(f"[Extract Mongo] Applying aggregation pipeline on '{collection}'")
                 reader = reader.option("aggregation.pipeline", condition)
 
             if self.table_schema:
-                self.logger.debug("[Extract Mongo] Applying schema registry")
                 reader = reader.schema(self.table_schema)
 
             df = reader.load()
 
-            self.logger.debug(f"[Extract Mongo] Successfully read '{collection}'")
-
             return df
 
         except Exception as e:
-            self.logger.exception(f"[Extract Mongo] Failed to read '{collection}': {e}")
             raise
 
 

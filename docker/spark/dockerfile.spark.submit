@@ -22,7 +22,7 @@ ENV PATH=/root/.local/bin:$PATH
 
 WORKDIR /app
 COPY . .
-RUN uv sync
+RUN uv sync --extra dq
 
 
 # MAIN

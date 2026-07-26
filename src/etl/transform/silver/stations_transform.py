@@ -36,9 +36,13 @@ class StationsTransform(BaseTransform):
         - This transform is a prerequisite for `RoutesTransform`.
         """
 
-        return (self.dataframe
-                    .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
-                    .withColumn("name", F.lower(F.trim("name")))
-                    .withColumn("city", F.lower(F.trim("city")))
-                    .withColumn("code", F.lower(F.trim("code")))
-        )
+        try:
+            self.dataframe = (self.dataframe
+                .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
+                .withColumn("name", F.trim(F.lower("name")))
+                .withColumn("city", F.coalesce(F.trim(F.lower("city")), F.lit("unknown")))
+                .withColumn("code", F.trim(F.lower("code")))
+            )
+            return self.dataframe.dropDuplicates("sk_id")
+        except Exception as e:
+            raise ValueError(f"Error during stations transformation: {e}")

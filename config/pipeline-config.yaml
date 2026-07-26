@@ -8,7 +8,7 @@ run_date:
 # PIPELINE
 # =====================================================
 pipeline:
-  name: sales_delta_pipeline
+  name: train_batch_pipeline
   source_type: mongo
   catalog_type: nessie
   stages:
@@ -622,9 +622,7 @@ tables:
         WHEN NOT MATCHED THEN 
             INSERT (ticket_id, route_sk_id, passenger_sk_id, train_sk_id, class_id, payment_id, active_status_id, day_of_week, booking_lead_days, departure_date, paid_at, cancelled_at, refunded_at, created_at, price, discount, final_price, family_flag, has_child, has_promo, is_weekend)
             VALUES(s.ticket_id, s.route_sk_id, s.passenger_sk_id, s.train_sk_id, s.class_id, s.payment_id, s.active_status_id, s.day_of_week, s.booking_lead_days, s.departure_date, s.paid_at, s.cancelled_at, s.refunded_at, s.created_at, s.price, s.discount, s.final_price, s.family_flag, s.has_child, s.has_promo, s.is_weekend)
-        
-
-
+      
     depends_on:
       stations:
         catalog: nessie

@@ -3,7 +3,7 @@ from pydeequ.checks import Check, CheckLevel
 from pydeequ.verification import VerificationResult, VerificationSuite
 
 from src.core import DATE_COLUMNS
-from src.data_quality import BaseTest
+from src.data_quality.base_test import BaseTest
 
 
 class TestBronze(BaseTest):

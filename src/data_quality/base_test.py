@@ -1,5 +1,6 @@
 import json
 from abc import ABC
+from logging import Logger
 
 import pytest
 from pydeequ.checks import Check
@@ -12,19 +13,17 @@ from src.core import (
     SchemaManager,
     Session,
     SourceManager,
-    TableManager,
+    TableManager
 )
 
 
 class BaseTest(ABC):
 
-    stage = None
-    table_name = None
-    logger = AppLogger.get_logger()
-
-    _table_manager = TableManager()
-    _source_manager = SourceManager()
-    _schema_manager = SchemaManager()
+    def __init__(self, logger: Logger):
+        self.logger = logger
+        self._table_manager = TableManager()
+        self._source_manager = SourceManager()
+        self._schema_manager = SchemaManager()
 
     @pytest.fixture(scope="package")
     def session(self):

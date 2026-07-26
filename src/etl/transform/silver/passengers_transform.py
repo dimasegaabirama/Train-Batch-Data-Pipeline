@@ -21,9 +21,13 @@ class PassengersTransform(BaseTransform):
             Transformed DataFrame with normalized 'city' and no duplicates.
         """
 
-        return (self.dataframe
-                    .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
-                    .withColumn("name", F.trim(F.lower("name")))
-                    .withColumn("gender", F.coalesce(F.trim(F.lower("gender")), F.lit("unknown")))
-                    .withColumn("email", F.trim(F.lower("email")))
-        )
+        try:
+            self.dataframe = (self.dataframe
+                .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
+                .withColumn("name", F.trim(F.lower("name")))
+                .withColumn("gender", F.coalesce(F.trim(F.lower("gender")), F.lit("unknown")))
+                .withColumn("email", F.trim(F.lower("email")))
+            )
+            return self.dataframe.dropDuplicates()
+        except Exception as e:
+            raise ValueError(f"Error during passengers transformation: {e}")

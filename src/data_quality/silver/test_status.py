@@ -4,10 +4,7 @@ from src.data_quality import BaseTest
 
 
 class TestStatus(BaseTest):
-
-    stage = "silver"
-    table_name = "status"
-
+    
     def test_completeness(self):
         check = (
             Check(self.session, CheckLevel.Error, "Completeness Check")

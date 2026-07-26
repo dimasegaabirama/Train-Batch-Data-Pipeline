@@ -8,9 +8,8 @@ from src.core import AppLogger
 
 class BaseTransform(ABC):
     def __init__(
-        self, logger: AppLogger, session: SparkSession, dataframe: DataFrame, lookup_tables = None
+        self, session: SparkSession, dataframe: DataFrame, lookup_tables = None
     ):
-        self.logger = logger
         self.session = session
         self.dataframe = dataframe
 

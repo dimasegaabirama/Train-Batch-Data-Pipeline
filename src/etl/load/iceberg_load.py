@@ -5,17 +5,12 @@ from src.utils.text_utils import clean_multiple_line
 class IcebergLoad(BaseLoad):
 
     def load(self) -> None:
-        self.logger.debug(
-            f"[IcebergLoad] Start writing to {self.table_fullname} with mode='{self.write_mode}'"
-        )
-
         try:
             if self.write_mode == "custom":
                 if not self.queries:
                     raise ValueError("Mode 'custom' requires a SQL query.")
   
                 for query in self.queries:
-                    self.logger.debug(f"Using Query : {clean_multiple_line(query)}")
                     self.session.sql(query)
 
             else:
@@ -33,10 +28,5 @@ class IcebergLoad(BaseLoad):
 
                 action()
 
-            self.logger.debug(f"[IcebergLoad] Successfully wrote to {self.table_fullname}")
-
         except Exception as e:
-            self.logger.exception(
-                f"[IcebergLoad] Failed writing to {self.table_fullname} with mode='{self.write_mode}': {e}"
-            )
             raise

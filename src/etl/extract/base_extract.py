@@ -14,7 +14,6 @@ class BaseExtract(ABC):
     def __init__(
         self,
         stage: StageType,
-        logger: AppLogger,
         session: SparkSession,
         table_name: str,
         condition: Optional[Union[str, Column]] = None
@@ -27,7 +26,6 @@ class BaseExtract(ABC):
         self.upstream_stage = self._schema_manager.get_stage_upstream(self.stage)
         self.downstream_stage = self._schema_manager.get_stage_downstream(self.stage)
         
-        self.logger = logger
         self.session = session
         self.condition = condition
 

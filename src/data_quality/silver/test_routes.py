@@ -4,10 +4,7 @@ from src.data_quality import BaseTest
 
 
 class TestRoutes(BaseTest):
-
-    stage = "silver"
-    table_name = "routes"
-
+    
     def test_completeness(self):
         check = (
             Check(self.session, CheckLevel.Error, "Completeness Check")
