@@ -18,3 +18,8 @@ class DateManager:
 
     def get_end_date(self) -> datetime:
         return self.get_date().end_date
+
+if __name__ == "__main__":
+    date_manager = DateManager()
+    print("Start Date:", date_manager.get_start_date())
+    print("End Date:", date_manager.get_end_date())

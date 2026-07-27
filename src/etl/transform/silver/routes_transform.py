@@ -81,6 +81,6 @@ class RoutesTransform(BaseTransform):
                 )
             )
 
-            return df_joined.dropDuplicates("sk_id")
+            return df_joined.dropDuplicates(["sk_id"])
         except Exception as e:
-            raise ValueError(f"Error during routes transformation: {e}")
+            raise RuntimeError(f"Error during routes transformation: {e}") from e

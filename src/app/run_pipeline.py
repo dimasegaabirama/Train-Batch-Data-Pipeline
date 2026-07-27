@@ -68,16 +68,14 @@ class PipelineOrchestrator:
     # =========================
     def extract(self, stage: StageType, table_name: str) -> DataFrame:
 
-        self.logger.info(
-            "Extracting data for table: %s | Stage: %s | Start Date: %s | End Date: %s",
-            table_name,
-            stage,
-            start_date,
-            end_date,
-        )
-
         start_date = self._date_manager.get_start_date()
         end_date = self._date_manager.get_end_date()
+
+        self.logger.info(
+            "[EXTRACT] Extracting data for table: %s | Stage: %s",
+            table_name,
+            stage
+        )
 
         extractor: BaseExtract = resolve_registry_class(stage, table_name, "extract")
 
@@ -111,7 +109,7 @@ class PipelineOrchestrator:
     ) -> DataFrame:
 
         self.logger.info(
-            "Transforming data for table: %s | Stage: %s", table_name, stage
+            "[TRANSFORM] Transforming data for table: %s | Stage: %s", table_name, stage
         )
 
         lookup_tables = self._table_manager.get_table_deps(table_name)
@@ -136,7 +134,7 @@ class PipelineOrchestrator:
         self, stage: StageType, dataframe: DataFrame, table_name: str
     ) -> DataFrame:
 
-        self.logger.info("Loading data for table: %s | Stage: %s", table_name, stage)
+        self.logger.info("[LOAD] Loading data for table: %s | Stage: %s", table_name, stage)
 
         full_table_name = self._table_manager.get_table_fullname(
             stage=stage, table_name=table_name
@@ -155,7 +153,6 @@ class PipelineOrchestrator:
         write_mode = self._table_manager.get_table_write_mode(
             table_name=table_name, stage=stage
         )
-
         if write_mode == "custom":
             dataframe.createOrReplaceTempView(table_view_name)
 
@@ -189,7 +186,7 @@ class PipelineOrchestrator:
         if self.quality_check:
             self._run_tests(stage=stage, table_name=table_name)
 
-        self.load(stage=stage, dataframe=transform_stage, table_name=table_name)
+        load_stage = self.load(stage=stage, dataframe=transform_stage, table_name=table_name)
 
     def run_all_tables(self, stage: StageType, table_names: List[str]) -> None:
         for table_name in table_names:

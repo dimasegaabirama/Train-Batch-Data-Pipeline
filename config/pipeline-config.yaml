@@ -74,7 +74,7 @@ spark:
     spark.serializer: "org.apache.spark.serializer.KryoSerializer"
     spark.jars.packages: org.mongodb:mongodb-driver-sync:4.11.1,org.mongodb.spark:mongo-spark-connector_2.12:10.5.0,org.apache.iceberg:iceberg-spark-runtime-3.2_2.12:1.4.3,org.projectnessie.nessie-integrations:nessie-spark-extensions-3.2_2.12:0.67.0
     spark.sql.extensions: org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions,org.projectnessie.spark.extensions.NessieSparkSessionExtensions
-    
+
     spark.sql.catalog.nessie: org.apache.iceberg.spark.SparkCatalog
     spark.sql.catalog.nessie.catalog-impl: org.apache.iceberg.nessie.NessieCatalog
     spark.sql.catalog.nessie.uri: "${NESSIE_URL}"
@@ -303,14 +303,15 @@ tables:
         )
 
       - |
-        UPDATE {full_table_name} t
+        UPDATE {full_table_name} st
         SET is_deleted = true
-        WHERE NOT EXISTS (
+        WHERE is_deleted = false
+          AND NOT EXISTS (
             SELECT 1
             FROM {table_view} s
-            WHERE s.id = t.id
-        )
-
+            WHERE s.id = st.id
+          )
+        
   trains:
     type: scd2
     partitioned_by: updated_at
@@ -470,13 +471,14 @@ tables:
         )
 
       - |
-        UPDATE {full_table_name} r
+        UPDATE {full_table_name} st
         SET is_deleted = true
-        WHERE NOT EXISTS (
+        WHERE is_deleted = false
+          AND NOT EXISTS (
             SELECT 1
             FROM {table_view} s
-            WHERE s.id = r.id
-        )
+            WHERE s.id = st.id
+          )
 
     depends_on:
       stations:
@@ -598,25 +600,25 @@ tables:
             OR t.is_weekend <> s.is_weekend
         )
         THEN UPDATE SET 
-            t.route_sk_id = s.route_sk_id
-            t.passenger_sk_id = s.passenger_sk_id
-            t.train_sk_id = s.train_sk_id
-            t.class_id = s.class_id
-            t.payment_id = s.payment_id
-            t.active_status_id = s.active_status_id
-            t.day_of_week = s.day_of_week
-            t.booking_lead_days = s.booking_lead_days
-            t.departure_date = s.departure_date
-            t.paid_at = s.paid_at
-            t.cancelled_at = s.cancelled_at
-            t.refunded_at = s.refunded_at
-            t.created_at = s.created_at
-            t.price = s.price
-            t.discount = s.discount
-            t.final_price = s.final_price
-            t.family_flag = s.family_flag
-            t.has_child = s.has_child
-            t.has_promo = s.has_promo
+            t.route_sk_id = s.route_sk_id,
+            t.passenger_sk_id = s.passenger_sk_id,
+            t.train_sk_id = s.train_sk_id,
+            t.class_id = s.class_id,
+            t.payment_id = s.payment_id,
+            t.active_status_id = s.active_status_id,
+            t.day_of_week = s.day_of_week,
+            t.booking_lead_days = s.booking_lead_days,
+            t.departure_date = s.departure_date,
+            t.paid_at = s.paid_at,
+            t.cancelled_at = s.cancelled_at,
+            t.refunded_at = s.refunded_at,
+            t.created_at = s.created_at,
+            t.price = s.price,
+            t.discount = s.discount,
+            t.final_price = s.final_price,
+            t.family_flag = s.family_flag,
+            t.has_child = s.has_child,
+            t.has_promo = s.has_promo,
             t.is_weekend = s.is_weekend
 
         WHEN NOT MATCHED THEN 

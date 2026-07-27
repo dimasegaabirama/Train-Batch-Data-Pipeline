@@ -42,7 +42,7 @@ class BronzeTransform(BaseTransform):
             return df
         
         except Exception as e:
-            raise ValueError(f"Error during bronze transformation: {e}")
+            raise RuntimeError(f"Error during bronze transformation: {e}") from e
 
 
 if __name__ == "__main__":

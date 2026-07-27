@@ -21,7 +21,7 @@ services:
 
   nessie-rest-catalog:
     container_name: nessie-rest-catalog
-    image: ghcr.io/projectnessie/nessie:0.44.0
+    image: ghcr.io/projectnessie/nessie:0.67.0
     environment:
       NESSIE_VERSION_STORE_TYPE: TRANSACTIONAL
       NESSIE_VERSION_STORE_PERSIST_JDBC_DATASOURCE: postgres

@@ -1,5 +1,4 @@
 # BUILDER
-
 FROM bde2020/spark-base:3.2.1-hadoop3.2 AS builder
 
 RUN apk add --no-cache \
@@ -15,10 +14,9 @@ RUN apk add --no-cache \
     pkgconfig \
     curl
 
-ENV JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
+COPY --from=ghcr.io/astral-sh/uv:0.5.16 /uv /usr/local/bin/uv
 
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH=/root/.local/bin:$PATH
+ENV JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
 
 WORKDIR /app
 COPY . .

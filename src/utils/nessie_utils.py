@@ -3,6 +3,7 @@ from logging import Logger
 
 from pyspark.sql.session import SparkSession
 from src.core.config import CatalogManager
+from py4j.protocol import Py4JJavaError
 
 
 def pipeline_branch(func):
@@ -30,21 +31,20 @@ def pipeline_branch(func):
         logger.info(f"[NESSIE] Creating temp branch '{branch_name}' from main")
 
         try:
-            session.sql(f"CREATE BRANCH {branch_name} IN {catalog} FROM main")
-            session.sql(f"USE REFERENCE {branch_name} IN {catalog}")
+            session.sql(f"CREATE BRANCH {branch_name} IN {catalog} FROM main").show()
+            session.sql(f"USE REFERENCE {branch_name} IN {catalog}").show()
 
             func(*args, **kwargs)
 
             logger.info(f"[NESSIE] Merging '{branch_name}' back to main")
-            session.sql(f"MERGE BRANCH {branch_name} INTO main IN {catalog}")
+            session.sql(f"MERGE BRANCH {branch_name} INTO main IN {catalog}").show()
             logger.info(f"[NESSIE] Stage = {branch_name} finished successfully")
 
-        except Exception as e:
-            logger.error(
-                f"[NESSIE] Pipeline failed on branch '{branch_name}': {e}",
-                exc_info=True,
-            )
-            raise
+        except Py4JJavaError as e:
+            if "No hashes to merge" in str(e.java_exception):
+                logger.info(f"Branch {branch_name} has no new commits, skipping merge.")
+            else:
+                raise
 
         finally:
             try:
@@ -53,7 +53,7 @@ def pipeline_branch(func):
                 pass
 
             try:
-                logger.info(f"[NESSIE] Dropping temp branch '{branch_name}'")
+                logger.info(f"[NESSIE] Dropping temp branch '{branch_name}' \n")
                 session.sql(f"DROP BRANCH {branch_name} IN {catalog}")
             except Exception as e:
                 logger.warning(

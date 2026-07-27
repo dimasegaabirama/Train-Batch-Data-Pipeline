@@ -29,4 +29,4 @@ class IcebergLoad(BaseLoad):
                 action()
 
         except Exception as e:
-            raise
+            raise RuntimeError(f"Failed to load data for table '{self.table_fullname}': {e}") from e

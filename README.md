@@ -131,14 +131,16 @@ DQ checks run as their **own Airflow task**, using their **own image** — separ
 
 ```mermaid
 flowchart LR
-    A["create_branch"] --> B["load_bronze (Spark)"]
+    A["create_branch"] --> B["transform_bronze (Spark)"]
     B --> C{"test_bronze (PyDeequ)"}
-    C -->|pass| D["merge_bronze_to_main"]
-    C -->|fail| E["drop_branch + alert"]
-    D --> F["load_silver (Spark)"]
-    F --> G{"test_silver (PyDeequ)"}
-    G -->|pass| H["merge_silver_to_main"]
-    G -->|fail| E
+    C -->|pass| D["load_bronze"]
+    D --> E["merge_bronze_to_main"]
+    C -->|fail| F["drop_branch + alert"]
+    E --> G["transform_silver (Spark)"]
+    G --> H{"test_silver (PyDeequ)"}
+    H -->|pass| I["load_silver"]
+    I --> J["merge_silver_to_main"]
+    H -->|fail| F
 ```
 
 This pattern (**create branch → load → DQ check → merge/drop**) repeats independently for the Bronze stage and the Silver stage of every table.

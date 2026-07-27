@@ -7,9 +7,6 @@ __pycache__/
 .Python
  
 # ── Environment & Secrets ─────────────────────────────────────────
-.env
-.env.*
-*.env
 .env.global
 .env.local
 .env.production

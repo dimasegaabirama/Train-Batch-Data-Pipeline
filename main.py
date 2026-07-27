@@ -49,7 +49,8 @@ def set_env_vars(config_path: str, env_path: str, start_date: str, end_date: str
 
 
 def get_arg_or_env(args, arg, env_var):
-    return getattr(args, arg) or os.getenv(env_var)
+    result = getattr(args, arg) or os.getenv(env_var)
+    return result
 
 
 def get_arg_or_config(args, config_manager, arg, config_key):
@@ -147,34 +148,10 @@ def main():
     start_date = get_arg_or_env(args, "start_date", "START_DATE")
     end_date = get_arg_or_env(args, "end_date", "END_DATE")
 
-    check_is_not_set([
-        (config_path, "CONFIG_PATH"),
-        (env_path, "ENV_PATH"),
-        (start_date, "START_DATE"),
-        (end_date, "END_DATE")
-    ])
-
-    # =========================
-    # Validation Format
-    # =========================
-    validate_dates(start_date, end_date)
-    validate_path(config_path, "CONFIG_PATH")
-    validate_path(env_path, "ENV_PATH")
-
-    # =========================
-    # Set Environment Variables
-    # =========================
-    set_env_vars(config_path, env_path, start_date, end_date)
-
-    # =========================
-    # Resolve Catalog and Table
-    # =========================
-    table_names = get_arg_or_config(args, TableManager(), "tables", "get_tablenames")
-
     # =========================
     # Initialize Dependencies
     # =========================
-    logger = AppLogger("Train_Batch_Pipeline", log_level="INFO")
+    logger = AppLogger("Train_Batch_Pipeline", level="INFO")
 
     with logger.log_context("Running Train Batch Pipeline", stage, start_date, end_date) as logger:
 
@@ -188,6 +165,31 @@ def main():
 
             if run_bootstrap:
                 return PipelineBootstrap(session=session, logger=logger).run_bootstrap()
+
+
+            check_is_not_set([
+                (config_path, "CONFIG_PATH"),
+                (env_path, "ENV_PATH"),
+                (start_date, "START_DATE"),
+                (end_date, "END_DATE")
+            ])
+
+            # =========================
+            # Validation Format
+            # =========================
+            validate_dates(start_date, end_date)
+            validate_path(config_path, "CONFIG_PATH")
+            validate_path(env_path, "ENV_PATH")
+
+            # =========================
+            # Set Environment Variables
+            # =========================
+            set_env_vars(config_path, env_path, start_date, end_date)
+
+            # =========================
+            # Resolve Catalog and Table
+            # =========================
+            table_names = get_arg_or_config(args, TableManager(), "tables", "get_tablenames")
 
             # =========================
             # Initialize Pipeline

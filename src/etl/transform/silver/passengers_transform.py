@@ -22,12 +22,11 @@ class PassengersTransform(BaseTransform):
         """
 
         try:
-            self.dataframe = (self.dataframe
+            return (self.dataframe
                 .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
                 .withColumn("name", F.trim(F.lower("name")))
                 .withColumn("gender", F.coalesce(F.trim(F.lower("gender")), F.lit("unknown")))
                 .withColumn("email", F.trim(F.lower("email")))
-            )
-            return self.dataframe.dropDuplicates()
+            ).dropDuplicates(["sk_id"])
         except Exception as e:
-            raise ValueError(f"Error during passengers transformation: {e}")
+            raise RuntimeError(f"Error during passengers transformation: {e}") from e

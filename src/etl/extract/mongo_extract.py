@@ -31,7 +31,7 @@ class MongoExtract(BaseExtract):
             return df
 
         except Exception as e:
-            raise
+            raise RuntimeError(f"Failed to extract data for table '{self.table_name}': {e}") from e
 
 
 if __name__ == "__main__":

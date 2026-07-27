@@ -84,7 +84,7 @@ class AppLogger:
             yield logger
             logger.info(f"{message}: Completed successfully")
         except Exception as e:
-            logger.error(f"{message}: {e}")
+            logger.error(f"{message}: Failed with error")
             raise
         finally:
             elapsed_time = time() - start_time

@@ -12,4 +12,4 @@ class IcebergExtract(BaseExtract):
             return df
 
         except Exception as e:
-            raise
+            raise RuntimeError(f"Failed to extract data for table '{self.table_fullname}': {e}") from e

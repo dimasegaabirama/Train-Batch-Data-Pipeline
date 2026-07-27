@@ -36,14 +36,13 @@ class TrainsTransform(BaseTransform):
         """
 
         try:
-            self.dataframe = (self.dataframe
+            return (self.dataframe
                 .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
                 .withColumn("name", F.trim(F.lower("name")))
                 .withColumn("type", F.coalesce(F.trim(F.lower("type")), F.lit("unknown")))
                 .withColumn("capacity", F.coalesce("capacity", F.lit(0)))
-            )
-            return self.dataframe.dropDuplicates("sk_id")
+            ).dropDuplicates(["sk_id"])
         except Exception as e:
-            raise ValueError(f"Error during trains transformation: {e}")
+            raise RuntimeError(f"Error during trains transformation: {e}") from e
 
 
