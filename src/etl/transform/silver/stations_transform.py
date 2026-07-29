@@ -37,9 +37,10 @@ class StationsTransform(BaseTransform):
         """
 
         try:
-            routes_dataframe = (
+            stations_dataframe = (
                 self.dataframe
                     .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
+                    .withColumn("id", F.col("id").cast("int"))
                     .withColumn("name", F.trim(F.lower("name")))
                     .withColumn("city", F.coalesce(F.trim(F.lower("city")), F.lit("unknown")))
                     .withColumn("code", F.trim(F.lower("code")))
@@ -52,6 +53,6 @@ class StationsTransform(BaseTransform):
                     )
             )
 
-            return routes_dataframe.dropDuplicates(["sk_id"])
+            return stations_dataframe.dropDuplicates(["sk_id"])
         except Exception as e:
             raise RuntimeError(f"Error during stations transformation: {e}") from e

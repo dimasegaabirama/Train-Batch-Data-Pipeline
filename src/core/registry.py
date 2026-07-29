@@ -40,7 +40,7 @@ _DATA_QUALITY_REGISTRY = {
 _EXTRACT_REGISTRY = {
     "bronze": {"default": MongoExtract},
     "silver": {"default": IcebergExtract},
-    "gold": {"default": IcebergExtract},
+    "gold": {"default": IcebergExtract}
 }
 
 

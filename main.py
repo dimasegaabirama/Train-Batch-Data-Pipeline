@@ -148,6 +148,30 @@ def main():
     start_date = get_arg_or_env(args, "start_date", "START_DATE")
     end_date = get_arg_or_env(args, "end_date", "END_DATE")
 
+    check_is_not_set([
+        (config_path, "CONFIG_PATH"),
+        (env_path, "ENV_PATH"),
+        (start_date, "START_DATE"),
+        (end_date, "END_DATE")
+    ])
+
+    # =========================
+    # Validation Format
+    # =========================
+    validate_dates(start_date, end_date)
+    validate_path(config_path, "CONFIG_PATH")
+    validate_path(env_path, "ENV_PATH")
+
+    # =========================
+    # Set Environment Variables
+    # =========================
+    set_env_vars(config_path, env_path, start_date, end_date)
+
+    # =========================
+    # Resolve Catalog and Table
+    # =========================
+    table_names = get_arg_or_config(args, TableManager(), "tables", "get_tablenames")
+
     # =========================
     # Initialize Dependencies
     # =========================
@@ -165,31 +189,6 @@ def main():
 
             if run_bootstrap:
                 return PipelineBootstrap(session=session, logger=logger).run_bootstrap()
-
-
-            check_is_not_set([
-                (config_path, "CONFIG_PATH"),
-                (env_path, "ENV_PATH"),
-                (start_date, "START_DATE"),
-                (end_date, "END_DATE")
-            ])
-
-            # =========================
-            # Validation Format
-            # =========================
-            validate_dates(start_date, end_date)
-            validate_path(config_path, "CONFIG_PATH")
-            validate_path(env_path, "ENV_PATH")
-
-            # =========================
-            # Set Environment Variables
-            # =========================
-            set_env_vars(config_path, env_path, start_date, end_date)
-
-            # =========================
-            # Resolve Catalog and Table
-            # =========================
-            table_names = get_arg_or_config(args, TableManager(), "tables", "get_tablenames")
 
             # =========================
             # Initialize Pipeline
