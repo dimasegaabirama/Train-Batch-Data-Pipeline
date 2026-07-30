@@ -1,6 +1,7 @@
 import json
 from abc import ABC
 from logging import Logger
+from src.core.logger import AppLogger
 
 import pytest
 from pydeequ.checks import Check
@@ -12,19 +13,24 @@ from src.core import SchemaManager, Session, SourceManager, TableManager
 
 
 class BaseTest(ABC):
-    def __init__(self, logger: Logger):
-        self.logger = logger
-        self._table_manager = TableManager()
-        self._source_manager = SourceManager()
-        self._schema_manager = SchemaManager()
+
+    stage: str = None
+    table_name: str = None
+
+    _table_manager = TableManager()
+    _source_manager = SourceManager()
+    _schema_manager = SchemaManager()
 
     @pytest.fixture(scope="package")
     def session(self):
-        session = Session(self.logger, self.stage).get_session()
-        yield session
-        session.stop()
 
-    @pytest.fixture(scope="class", autouse=True)
+        logger = AppLogger("BaseTest")
+
+        with logger.log_context("Running Train Batch Pipeline", self.stage) as logger:
+            with Session(stage=self.stage, logger=logger) as session:
+                yield session
+
+    @pytest.fixture(scope="package", autouse=True)
     def setup(self, session: SparkSession):
         self.session = session
 

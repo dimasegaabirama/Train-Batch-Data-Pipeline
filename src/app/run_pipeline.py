@@ -51,7 +51,7 @@ class PipelineOrchestrator:
             if test_filename is None:
                 return
 
-            dq_path = Path(__file__).parent / "data_quality" / stage / test_filename
+            dq_path = Path(__file__).parents[1] / "data_quality" / stage / test_filename
 
             self.logger.debug("Using Data Quality Test Class: %s", test_filename)
             self.logger.debug("Data Quality Test Path: %s", dq_path)

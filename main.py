@@ -16,9 +16,9 @@ from src.app import (
 from src.models.data_config import DateConfig
 
 
-def check_is_not_set(values: List[Tuple[str, str]]):
-    for value, name in values:
-        if not value:
+def check_is_not_set(values: List[Tuple[str, str, bool]]):
+    for value, name, required in values:
+        if not value and required:
             raise RuntimeError(f"{name} is not set !!")
 
 
@@ -148,11 +148,22 @@ def main():
     start_date = get_arg_or_env(args, "start_date", "START_DATE")
     end_date = get_arg_or_env(args, "end_date", "END_DATE")
 
+    run_bootstrap = args.run_bootstrap
+    data_quality = args.data_quality
+
+    # =========================
+    # Run Behavior
+    # =========================
+
+    if run_bootstrap:
+        required_start_date = False
+        required_end_date = False
+
     check_is_not_set([
-        (config_path, "CONFIG_PATH"),
-        (env_path, "ENV_PATH"),
-        (start_date, "START_DATE"),
-        (end_date, "END_DATE")
+        (config_path, "CONFIG_PATH", True),
+        (env_path, "ENV_PATH", True),
+        (start_date, "START_DATE", required_start_date),
+        (end_date, "END_DATE", required_end_date)
     ])
 
     # =========================
@@ -181,18 +192,9 @@ def main():
 
         with Session(stage=stage, logger=logger) as session:
 
-            # =========================
-            # Resolve Runtime Config
-            # =========================
-            run_bootstrap = args.run_bootstrap
-            data_quality = args.data_quality
-
             if run_bootstrap:
                 return PipelineBootstrap(session=session, logger=logger).run_bootstrap()
 
-            # =========================
-            # Initialize Pipeline
-            # =========================
             return PipelineOrchestrator(
                 logger=logger,
                 session=session,

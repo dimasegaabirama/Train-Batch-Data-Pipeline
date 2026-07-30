@@ -5,6 +5,9 @@ from src.data_quality import BaseTest
 
 class TestStations(BaseTest):
 
+    stage = "silver"
+    table_name = "stations"
+
     def test_completeness(self):
         check = (
             Check(self.session, CheckLevel.Error, "Completeness Check")
