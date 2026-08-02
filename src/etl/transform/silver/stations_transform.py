@@ -1,6 +1,7 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 
+from core.constant import CHECKPOINT_DIR
 from src.etl.transform import BaseTransform
 
 
@@ -37,20 +38,26 @@ class StationsTransform(BaseTransform):
         """
 
         try:
+            self.session.sparkContext.setCheckpointDir(CHECKPOINT_DIR)
+
             stations_dataframe = (
                 self.dataframe
-                    .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
+                    .withColumn("sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
                     .withColumn("id", F.col("id").cast("int"))
                     .withColumn("name", F.trim(F.lower("name")))
                     .withColumn("city", F.coalesce(F.trim(F.lower("city")), F.lit("unknown")))
                     .withColumn("code", F.trim(F.lower("code")))
-                    .select(
-                        F.col("sk_id"), 
-                        F.col("id"), 
-                        F.col("name"), 
-                        F.col("city"), 
-                        F.col("code")
-                    )
+            )
+
+            # FIX BUG CATALYST-40548: Use localCheckpoint to avoid nested schema pruning issues
+            stations_dataframe = stations_dataframe.localCheckpoint(eager=True)
+
+            stations_dataframe = stations_dataframe.select(
+                F.col("sk_id"),
+                F.col("id"),
+                F.col("name"),
+                F.col("city"),
+                F.col("code"),
             )
 
             return stations_dataframe.dropDuplicates(["sk_id"])

@@ -71,6 +71,8 @@ spark:
     spark.executor.cores: 2
     spark.executor.instances: 4
 
+    spark.cleaner.referenceTracking.cleanCheckpoints: true
+
     spark.serializer: "org.apache.spark.serializer.KryoSerializer"
     spark.jars.packages: org.mongodb:mongodb-driver-sync:4.11.1,org.mongodb.spark:mongo-spark-connector_2.12:10.5.0,org.apache.iceberg:iceberg-spark-runtime-3.2_2.12:1.4.3,org.projectnessie.nessie-integrations:nessie-spark-extensions-3.2_2.12:0.67.0
     spark.sql.extensions: org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions,org.projectnessie.spark.extensions.NessieSparkSessionExtensions

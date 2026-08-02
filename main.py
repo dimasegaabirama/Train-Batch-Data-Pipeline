@@ -154,6 +154,8 @@ def main():
     # =========================
     # Run Behavior
     # =========================
+    required_start_date = True
+    required_end_date = True
 
     if run_bootstrap:
         required_start_date = False
