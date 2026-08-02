@@ -4,12 +4,21 @@ from typing_extensions import Literal
 from src.etl.extract import IcebergExtract, MongoExtract
 from src.etl.load import IcebergLoad
 from src.etl.transform import (
+    # BRONZE STAGE
     BronzeTransform,
+
+    # SILVER STAGE
     PassengersTransform,
     RoutesTransform,
     StationsTransform,
     TicketsTransform,
-    TrainsTransform
+    TrainsTransform,
+
+    # GOLD STAGE
+    CancellationSummary,
+    RefundLoss,
+    RevenueDaily,
+    TrainPerformance
 )
 
 from src.utils.filter_utils import (
@@ -53,7 +62,12 @@ _TRANSFORMER_REGISTRY = {
         "routes": RoutesTransform,
         "tickets": TicketsTransform
     },
-    "gold": {},
+    "gold": {
+        "train_performance": TrainPerformance,
+        "refund_loss": RefundLoss,
+        "revenue_daily": RevenueDaily,
+        "cancellation_summary": CancellationSummary
+    }
 }
 
 

@@ -7,4 +7,9 @@ from .silver import (
     RoutesTransform,
     TrainsTransform
 )
-# from .gold import None
+from .gold import (
+    CancellationSummary, 
+    RefundLoss, 
+    RevenueDaily, 
+    TrainPerformance
+)
