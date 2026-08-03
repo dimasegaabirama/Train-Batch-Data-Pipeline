@@ -37,5 +37,7 @@ class TrainPerformance(BaseTransform):
                 .withColumn("is_fully_booked", F.col("net_tickets_sold") >= F.col("capacity"))
                 .withColumn("updated_at", F.current_timestamp())
             )
+
+            return train_performance_dataframe
         except Exception as e:
             raise RuntimeError(f"Error during train performance transformation: {e}") from e

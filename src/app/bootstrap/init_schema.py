@@ -301,6 +301,75 @@ def initialize_table(spark: SparkSession):
         """
         ALTER TABLE nessie.gold.cancellation_summary
         WRITE ORDERED BY booking_date
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS nessie.gold.revenue_daily(
+            revenue_date TIMESTAMP,
+            route_sk_id BIGINT,
+            class_id INT,
+
+            total_tickets BIGINT,
+            gross_revenue DECIMAL(18, 2),
+            total_discount_calculated DECIMAL(18, 2),
+            net_revenue DECIMAL(18, 2),
+            refunded_revenue DECIMAL(18, 2),
+
+            net_revenue_after_refund DECIMAL(18, 2),
+            avg_ticket_price DECIMAL(18, 2),
+
+            updated_at TIMESTAMP
+        )
+        USING ICEBERG
+        PARTITIONED BY (month(revenue_date))
+        """,
+        """
+        ALTER TABLE nessie.gold.revenue_daily
+        WRITE ORDERED BY revenue_date
+        """,
+
+        """
+        CREATE TABLE IF NOT EXISTS nessie.gold.refund_loss(
+            refund_date TIMESTAMP,
+            route_sk_id BIGINT,
+            class_id INT,
+            total_tickets_refunded BIGINT,
+            total_refund_amount DECIMAL(18, 2),
+            avg_refund_amount DECIMAL(18, 2),
+            avg_days_cancel_to_refund DOUBLE,
+            avg_hours_to_refund DOUBLE,
+            avg_days_created_to_refund DOUBLE,
+            total_refunded_with_promo BIGINT,
+            total_refunded_with_family_flag BIGINT,
+            updated_at TIMESTAMP
+        )
+        USING ICEBERG
+        PARTITIONED BY (month(refund_date))
+        """,
+        """
+        ALTER TABLE nessie.gold.refund_loss
+        WRITE ORDERED BY refund_date
+        """,
+
+        """
+        CREATE TABLE IF NOT EXISTS nessie.gold.train_performance(
+            departure_date TIMESTAMP,
+            train_sk_id BIGINT,
+            name STRING,
+            type STRING,
+            capacity INT,
+            total_tickets_sold BIGINT,
+            total_cancelled_tickets BIGINT,
+            net_tickets_sold BIGINT,
+            total_revenue DECIMAL(18, 2),
+            family_ticket_count BIGINT,
+            promo_ticket_count BIGINT,
+            cancelled_after_departure_flag BOOLEAN,
+            occupancy_rate DOUBLE,
+            is_fully_booked BOOLEAN,
+            updated_at TIMESTAMP
+        )
+        USING ICEBERG
+        PARTITIONED BY (month(departure_date))
         """
     ]
     for table in tables:

@@ -712,6 +712,66 @@ tables:
         catalog: nessie
         schema: silver
 
+  refund_loss:
+    type: aggregate
+    partitioned_by: refund_date
+    write_mode:
+      gold: custom
+    schema:
+      gold: |
+        refund_date DATE,
+        route_sk_id BIGINT,
+        class_id INT,
+        total_tickets_refunded BIGINT,
+        total_refund_amount DECIMAL(18, 2),
+        avg_refund_amount DECIMAL(18, 2),
+        avg_days_cancel_to_refund DECIMAL(10, 2),
+        avg_hours_to_refund DECIMAL(10, 2),
+        avg_days_created_to_refund DECIMAL(10, 2),
+        total_refunded_with_promo BIGINT,
+        total_refunded_with_family_flag BIGINT,
+        updated_at TIMESTAMP
+    query:
+      - |
+
+    depends_on:
+      tickets:
+        catalog: nessie
+        schema: silver
+
+  train_performance:
+    type: aggregate
+    partitioned_by: departure_date
+    write_mode:
+      gold: custom
+    schema:
+      gold: |
+        departure_date DATE,
+        train_sk_id BIGINT,
+        name STRING,
+        type STRING,
+        capacity INT,
+        total_tickets_sold BIGINT,
+        total_cancelled_tickets BIGINT,
+        net_tickets_sold BIGINT,
+        total_revenue DECIMAL(18, 2),
+        family_ticket_count BIGINT,
+        promo_ticket_count BIGINT,
+        cancelled_after_departure_flag BOOLEAN,
+        occupancy_rate DOUBLE,
+        is_fully_booked BOOLEAN,
+        updated_at TIMESTAMP
+    query:
+      - |
+
+    depends_on:
+      tickets:
+        catalog: nessie
+        schema: silver
+      trains:
+        catalog: nessie
+        schema: silver
+
 
 # =====================================================
 # PUSHDOWN FILTERS
