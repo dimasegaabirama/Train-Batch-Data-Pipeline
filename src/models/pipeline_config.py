@@ -18,4 +18,4 @@ class PipelineConfig(BaseModel):
     source_type: str
     catalog_type: str
     stages: List
-    tablenames: List
+    tablenames: Dict[StageType, List[str]]

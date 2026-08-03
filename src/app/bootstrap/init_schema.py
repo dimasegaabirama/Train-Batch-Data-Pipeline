@@ -266,11 +266,41 @@ def initialize_table(spark: SparkSession):
             is_weekend        BOOLEAN
         )
         USING ICEBERG
-        PARTITIONED BY (days(created_at), bucket(8, passenger_sk_id))
+        PARTITIONED BY (month(created_at), bucket(8, passenger_sk_id))
         """,
         """
         ALTER TABLE nessie.silver.tickets
         WRITE ORDERED BY ticket_id
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS nessie.gold.cancellation_summary(
+            booking_date TIMESTAMP,
+            route_sk_id BIGINT,
+            class_id INT,
+
+            total_tickets_created BIGINT,
+            total_tickets_paid BIGINT,
+            total_tickets_cancelled BIGINT,
+            total_tickets_refunded BIGINT,
+
+            cancelled_before_payment BIGINT,
+            cancelled_after_payment BIGINT,
+            cancelled_not_yet_refunded BIGINT,
+
+            total_revenue_lost DECIMAL(18, 2),
+            avg_hours_to_cancel DOUBLE,
+
+            cancellation_rate DOUBLE,
+            cancelled_after_payment_rate DOUBLE,
+
+            updated_at TIMESTAMP
+        )
+        USING ICEBERG
+        PARTITIONED BY (month(booking_date))
+        """,
+        """
+        ALTER TABLE nessie.gold.cancellation_summary
+        WRITE ORDERED BY booking_date
         """
     ]
     for table in tables:

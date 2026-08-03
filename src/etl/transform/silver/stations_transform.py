@@ -1,7 +1,7 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 
-from core.constant import CHECKPOINT_DIR
+from src.core.constant import CHECKPOINT_DIR
 from src.etl.transform import BaseTransform
 
 

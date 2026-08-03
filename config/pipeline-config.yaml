@@ -16,11 +16,23 @@ pipeline:
     - silver
     - gold
   tablenames:
-    - passengers
-    - trains
-    - stations
-    - routes
-    - tickets
+    bronze:
+      - passengers
+      - trains
+      - stations
+      - routes
+      - tickets
+    silver:
+      - passengers
+      - trains
+      - stations
+      - routes
+      - tickets
+    gold:
+      - cancellation_summary
+      - refund_loss
+      - revenue_daily
+      - train_performance
 
 # =====================================================
 # SOURCES
@@ -163,7 +175,6 @@ tables:
     write_mode:
       bronze: overwrite_partitions
       silver: custom
-      gold: custom
     schema:
       source: |
         _id INT,
@@ -242,7 +253,6 @@ tables:
     write_mode:
       bronze: overwrite_partitions
       silver: custom
-      gold: custom
     schema: 
       source: |
         _id INT,
@@ -320,7 +330,6 @@ tables:
     write_mode:
       bronze: overwrite_partitions
       silver: custom
-      gold: custom
     schema: 
       source: |
         _id INT,
@@ -395,7 +404,6 @@ tables:
     write_mode:
       bronze: overwrite_partitions
       silver: custom
-      gold: custom
     schema: 
       source: |
         _id INT,
@@ -496,7 +504,6 @@ tables:
     write_mode:
       bronze: overwrite_partitions
       silver: custom
-      gold: custom
     schema: 
       source: |
         _id INT,
@@ -649,6 +656,62 @@ tables:
       payment:
         catalog: nessie
         schema: silver
+
+  cancellation_summary:
+    type: aggregate
+    partitioned_by: booking_date
+    write_mode:
+      gold: custom
+    schema:
+      gold: |
+        booking_date DATE,
+        route_sk_id BIGINT,
+        class_id INT,
+        total_ticket_id BIGINT,
+        total_created BIGINT,
+        total_paid BIGINT,
+        total_cancelled BIGINT,
+        total_refunded BIGINT,
+        cancel_before_payment BIGINT,
+        cancel_after_payment BIGINT,
+        cancellation_rate DECIMAL(5, 2),
+        lost_revenue DECIMAL(18, 2),
+        avg_hours_to_cancel DECIMAL(10, 2),
+        updated_at TIMESTAMP
+    query:
+      - |
+
+    depends_on:
+      tickets:
+        catalog: nessie
+        schema: silver
+
+  revenue_daily:
+    type: aggregate
+    partitioned_by: booking_date
+    write_mode:
+      gold: custom
+    schema:
+      gold: |
+        revenue_date DATE,
+        route_sk_id BIGINT,
+        class_id INT,
+        total_tickets BIGINT,
+        gross_revenue DECIMAL(18, 2),
+        total_discount DECIMAL(18, 2),
+        net_revenue DECIMAL(18, 2),
+        refunded_revenue DECIMAL(18, 2),
+        net_revenue_after_refund DECIMAL(18, 2),
+        avg_ticket_price DECIMAL(18, 2),
+        updated_at TIMESTAMP
+    query:
+      - |
+
+    depends_on:
+      tickets:
+        catalog: nessie
+        schema: silver
+
 
 # =====================================================
 # PUSHDOWN FILTERS

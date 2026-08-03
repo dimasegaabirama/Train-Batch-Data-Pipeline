@@ -21,8 +21,13 @@ class TableManager:
     def get_config(self) -> TablesConfig:
         return self._config.tables
 
-    def get_tablenames(self) -> List[str]:
-        return self._config.pipeline.tablenames
+    def get_tablenames(self, stage: StageType) -> List[str]:
+        cfg = self._config.pipeline.tablenames.get(stage)
+        if cfg is None:
+            raise ValueError(
+                f"Tablenames for stage '{stage}' not found"
+            )
+        return cfg
 
     def get_table_config(self, table_name: str) -> TableContext:
         return getattr(self.get_config(), table_name)
@@ -78,3 +83,7 @@ class TableManager:
             self._schema_manager.get_stage_schema_name(stage),
             table_name,
         )
+
+if __name__ == "__main__":
+    table_manager = TableManager()
+    print(table_manager.get_tablenames("gold"))
