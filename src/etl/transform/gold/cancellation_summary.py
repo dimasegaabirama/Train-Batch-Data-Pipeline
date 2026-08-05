@@ -1,6 +1,7 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 
+from src.etl.extract import IcebergExtract
 from src.etl.transform import BaseTransform
 
 class CancellationSummary(BaseTransform):

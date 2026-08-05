@@ -31,6 +31,7 @@ Component = Literal["extract", "transform", "load", "filter"]
 _FILTER_REGISTRY = {
     "bronze": {"default": build_mongo_incremental_filter},
     "silver": {"default": build_iceberg_incremental_filter},
+    "gold": {"default": build_iceberg_incremental_filter}
 }
 
 

@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel, PositiveInt, field_validator, model_validator
+from pyspark.sql.dataframe import DataFrame
 from typing_extensions import Dict, List, Literal, Optional
 
 # =========================

@@ -70,7 +70,7 @@ class TableManager:
             deps = self.get_table_config(table_name).depends_on or {}
             dependencies.update(
                 {
-                    name: f"{ctx['catalog']}.{ctx['schema']}.{name}"
+                    name: {"name": name, "catalog": ctx["catalog"], "schema": ctx["schema"]}
                     for name, ctx in deps.items()
                 }
             )

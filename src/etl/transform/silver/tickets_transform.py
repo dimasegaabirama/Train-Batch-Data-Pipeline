@@ -62,12 +62,12 @@ class TicketsTransform(BaseTransform):
                 .filter(F.col("rn") == 1) 
             ).alias("td")
 
-            routes_dataframe = self.session.read.table(self.lookup_tables["routes"])
-            trains_dataframe = self.session.read.table(self.lookup_tables["trains"])
-            passengers_dataframe = self.session.read.table(self.lookup_tables["passengers"]).alias("p")
-            class_dataframe = self.session.read.table(self.lookup_tables["class"])
-            status_dataframe = self.session.read.table(self.lookup_tables["status"])
-            payment_dataframe = self.session.read.table(self.lookup_tables["payment"])
+            routes_dataframe = self.inputs["routes"]
+            trains_dataframe = self.inputs["trains"]
+            passengers_dataframe = self.inputs["passengers"].alias("p")
+            class_dataframe = self.inputs["class"]
+            status_dataframe = self.inputs["status"]
+            payment_dataframe = self.inputs["payment"]
 
             routes_df = F.broadcast(routes_dataframe).alias("r")
             trains_df = F.broadcast(trains_dataframe).alias("tr")

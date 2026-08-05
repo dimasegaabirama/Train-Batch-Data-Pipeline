@@ -805,6 +805,20 @@ filters:
       stations:
         field: updated_at
 
+  gold:
+    type: iceberg
+    tables:
+      tickets:
+        field: created_at
+      passengers:
+        field: updated_at
+      routes:
+        field: updated_at
+      trains:
+        field: updated_at
+      stations:
+        field: updated_at
+
       
       
 

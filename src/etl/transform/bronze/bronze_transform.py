@@ -14,8 +14,7 @@ class BronzeTransform(BaseTransform):
         -----
         1. Rename '_id' to 'id'.
         2. Convert 'created_at' to timestamp.
-        3. Add 'load_at' column with current date.
-        4. If 'updated_at' exists, convert to timestamp and filter rows where:
+        3. If 'updated_at' exists, convert to timestamp and filter rows where:
            start_date <= updated_at < end_date
 
         Parameters

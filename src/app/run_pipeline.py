@@ -1,7 +1,7 @@
 import pytest
 
 from logging import Logger
-from typing import List
+from typing_extensions import Dict, List
 from pathlib import Path
 
 from pyspark.sql.dataframe import DataFrame
@@ -77,7 +77,10 @@ class PipelineOrchestrator:
             stage
         )
 
-        extractor: BaseExtract = resolve_registry_class(stage, table_name, "extract")
+        deps = self._table_manager.get_table_deps(table_name)
+        table_names = [dep[table_name]["name"] for dep in deps]
+        
+        extractor: BaseExtract = resolve_registry_class(stage, table_name, "extract", required= False)
 
         condition_cls = resolve_registry_class(
             stage, table_name, "filter", required=False
@@ -90,6 +93,7 @@ class PipelineOrchestrator:
             else None
         )
 
+        self.logger.debug("Using tablenames: %s", table_names)
         self.logger.debug("Using extractor: %s", extractor)
         self.logger.debug("Using condition: %s", condition)
         self.logger.debug("Using field: %s", field)
@@ -97,34 +101,32 @@ class PipelineOrchestrator:
         return extractor(
             stage=stage,
             session=self.session,
-            table_name=table_name,
-            condition=condition,
+            table_names=table_names,
+            condition=condition
         ).extract()
+
 
     # =========================
     # TRANSFORM
     # =========================
     def transform(
-        self, stage: StageType, dataframe: DataFrame, table_name: str
+        self, stage: StageType, inputs: Dict[str, DataFrame], table_name: str
     ) -> DataFrame:
 
         self.logger.info(
             "[TRANSFORM] Transforming data for table: %s | Stage: %s", table_name, stage
         )
 
-        lookup_tables = self._table_manager.get_table_deps(table_name)
-
         transformer: BaseTransform = resolve_registry_class(
             stage=stage, table_name=table_name, component_name="transform"
         )
 
         self.logger.debug("Using transformer: %s", transformer)
-        self.logger.debug("Using lookup tables: %s", lookup_tables)
 
         return transformer(
             session=self.session,
-            dataframe=dataframe,
-            lookup_tables=lookup_tables,
+            table_name=table_name,
+            inputs=inputs,
         ).transform()
 
     # =========================
@@ -186,7 +188,7 @@ class PipelineOrchestrator:
         if self.quality_check:
             self._run_tests(stage=stage, table_name=table_name)
 
-        load_stage = self.load(stage=stage, dataframe=transform_stage, table_name=table_name)
+        self.load(stage=stage, dataframe=transform_stage, table_name=table_name)
 
     def run_all_tables(self, stage: StageType, table_names: List[str]) -> None:
         for table_name in table_names:

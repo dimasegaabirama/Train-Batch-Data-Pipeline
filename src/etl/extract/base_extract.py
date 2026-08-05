@@ -1,10 +1,11 @@
-from typing_extensions import Optional, Union
+from pyspark.sql import DataFrame
+from typing_extensions import Optional, Union, List, Dict
 from abc import ABC, abstractmethod
 from src.models.data_config import StageType
 
 from pyspark.sql.session import SparkSession
 from pyspark.sql.column import Column
-from src.core import Session, AppLogger, TableManager, SourceManager, SchemaManager
+from src.core import TableManager, SourceManager, SchemaManager
 
 
 class BaseExtract(ABC):
@@ -15,7 +16,7 @@ class BaseExtract(ABC):
         self,
         stage: StageType,
         session: SparkSession,
-        table_name: str,
+        table_names: Union[str, List[str]],
         condition: Optional[Union[str, Column]] = None
     ):
         self._table_manager = TableManager()
@@ -29,9 +30,15 @@ class BaseExtract(ABC):
         self.session = session
         self.condition = condition
 
-        self.table_name = table_name
-        self.table_fullname = self._table_manager.get_table_fullname(table_name, self.upstream_stage)
-        self.table_schema = self._table_manager.get_table_schema(table_name, self.upstream_stage)
+        self.table_names = table_names if isinstance(table_names, list) else [table_names]
+        self.table_fullnames = {
+            table_name: self._table_manager.get_table_fullname(table_name, self.upstream_stage)
+            for table_name in self.table_names
+        }
+        self.table_schemas = {
+            table_name: self._table_manager.get_table_schema(table_name, self.upstream_stage)
+            for table_name in self.table_names
+        }
 
         if self.SOURCE_TYPE:
             self.source_config = self._source_manager.get_source_config(
@@ -42,5 +49,5 @@ class BaseExtract(ABC):
 
 
     @abstractmethod
-    def extract(self):
+    def extract(self) -> Dict[str, DataFrame]:
         pass
