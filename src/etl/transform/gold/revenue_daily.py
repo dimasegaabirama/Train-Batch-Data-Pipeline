@@ -6,7 +6,7 @@ from src.etl.transform import BaseTransform
 class RevenueDaily(BaseTransform):
     def transform(self) -> DataFrame:
         try:
-            tickets_dataframe = self.session.read.table(self.lookup_tables["tickets"])
+            tickets_dataframe = self.inputs["tickets"]
 
             tickets_with_check = (
                 tickets_dataframe

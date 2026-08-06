@@ -6,8 +6,8 @@ from src.etl.transform import BaseTransform
 class TrainPerformance(BaseTransform):
     def transform(self) -> DataFrame:
         try:
-            tickets_dataframe = self.session.read.table(self.lookup_tables["tickets"])
-            train_dataframe = self.session.read.table(self.lookup_tables["trains"])
+            tickets_dataframe = self.inputs["tickets"]
+            train_dataframe = self.inputs["trains"]
 
             joined_dataframe = tickets_dataframe.alias("f").join(
                 train_dataframe.alias("t"),

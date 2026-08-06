@@ -1,13 +1,12 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 
-from src.etl.extract import IcebergExtract
 from src.etl.transform import BaseTransform
 
 class CancellationSummary(BaseTransform):
     def transform(self) -> DataFrame:
         try:
-            tickets_dataframe = self.session.read.table(self.lookup_tables["tickets"])
+            tickets_dataframe = self.inputs["tickets"]
             tickets_dataframe = tickets_dataframe.withColumn("booking_date", F.to_date("created_at"))
 
             cancellation_summary_dataframe = (

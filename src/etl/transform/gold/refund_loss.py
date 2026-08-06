@@ -6,7 +6,7 @@ from src.etl.transform import BaseTransform
 class RefundLoss(BaseTransform):
     def transform(self) -> DataFrame:
         try:
-            tickets_dataframe = self.session.read.table(self.lookup_tables["tickets"])
+            tickets_dataframe = self.inputs["tickets"]
             tickets_dataframe = tickets_dataframe.withColumn("refund_date", F.to_date("refunded_at"))
 
             refund_loss_dataframe = (

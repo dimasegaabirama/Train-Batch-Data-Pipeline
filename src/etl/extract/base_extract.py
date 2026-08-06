@@ -6,6 +6,7 @@ from src.models.data_config import StageType
 from pyspark.sql.session import SparkSession
 from pyspark.sql.column import Column
 from src.core import TableManager, SourceManager, SchemaManager
+from src.utils.table_utils import normalize_table_info
 
 
 class BaseExtract(ABC):
@@ -16,7 +17,7 @@ class BaseExtract(ABC):
         self,
         stage: StageType,
         session: SparkSession,
-        table_names: Union[str, List[str]],
+        table_names: Union[str, List[str], Dict[str, str]],
         condition: Optional[Union[str, Column]] = None
     ):
         self._table_manager = TableManager()
@@ -31,12 +32,8 @@ class BaseExtract(ABC):
         self.condition = condition
 
         self.table_names = table_names if isinstance(table_names, list) else [table_names]
-        self.table_fullnames = {
-            table_name: self._table_manager.get_table_fullname(table_name, self.upstream_stage)
-            for table_name in self.table_names
-        }
-        self.table_schemas = {
-            table_name: self._table_manager.get_table_schema(table_name, self.upstream_stage)
+        self.table_infos = {
+            table_name: normalize_table_info(table_name, self._table_manager, self.upstream_stage)
             for table_name in self.table_names
         }
 

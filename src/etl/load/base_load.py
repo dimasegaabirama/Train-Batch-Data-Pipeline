@@ -15,7 +15,7 @@ class BaseLoad(ABC):
         
         self._table_manager = TableManager()
         self.table_name = table_name
-        self.table_view_name = f"{table_name}_view"
+        
         self.table_fullname = self._table_manager.get_table_fullname(table_name, stage)
         self.write_mode = self._table_manager.get_table_write_mode(table_name, stage)
         self.queries = self._table_manager.get_formated_query(table_name, **query_params)

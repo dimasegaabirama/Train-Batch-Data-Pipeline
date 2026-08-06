@@ -10,8 +10,8 @@ class IcebergExtract(BaseExtract):
         dataframes = {}
 
         try:
-            for table_name in self.table_names:
-                df = self.session.read.table(self.table_fullnames[table_name])
+            for table_name in self.table_names.keys():
+                df = self.session.read.table(self.table_infos[table_name]["fullname"])
                 if condition:
                     df = df.where(condition)
 
