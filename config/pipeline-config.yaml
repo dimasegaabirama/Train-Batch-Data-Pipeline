@@ -1,0 +1,845 @@
+version: "1.0.0"
+
+run_date:
+  start_date: "${START_DATE}"
+  end_date: "${END_DATE}"
+
+# =====================================================
+# PIPELINE
+# =====================================================
+pipeline:
+  name: train_batch_pipeline
+  source_type: mongo
+  catalog_type: nessie
+  stages:
+    - bronze
+    - silver
+    - gold
+  tablenames:
+    bronze:
+      - passengers
+      - trains
+      - stations
+      - routes
+      - tickets
+    silver:
+      - passengers
+      - trains
+      - stations
+      - routes
+      - tickets
+    gold:
+      - cancellation_summary
+      - refund_loss
+      - revenue_daily
+      - train_performance
+
+# =====================================================
+# SOURCES
+# =====================================================
+sources:
+  mongo:
+    username: "${MONGO_USERNAME}"
+    password: "${MONGO_PASSWORD}"
+    host: "${MONGO_HOSTNAME}"
+    port: "${MONGO_PORT}"
+    uri: "${MONGO_URL}"
+    database: "${MONGO_DATABASE}"
+
+# =====================================================
+# CATALOGS
+# =====================================================
+catalogs:
+  nessie:
+    name: nessie
+    host: "${NESSIE_HOSTNAME}"
+    port: "${NESSIE_PORT}"
+    uri: "${NESSIE_URL}"
+    ref: "${NESSIE_REF}"
+    warehouse: "${WAREHOUSE_LOCATION_DEV}"
+
+# =====================================================
+# STORAGES
+# =====================================================
+storages:
+  hdfs:
+    uri: "${HADOOP_URL}"
+    host: "${HADOOP_HOSTNAME}"
+    port: "${HADOOP_PORT}"
+
+# =====================================================
+# SPARK CONFIGURATION
+# =====================================================
+spark:
+  master: "${SPARK_MASTER}"
+
+  common_config: &spark_common
+    spark.driver.bindAddress: "0.0.0.0"
+    spark.driver.host: "spark-submit"
+    spark.driver.port: 4040
+
+    spark.driver.memory: "1g"
+    spark.executor.memory: "512m"
+    spark.executor.cores: 2
+    spark.executor.instances: 4
+
+    spark.cleaner.referenceTracking.cleanCheckpoints: true
+
+    spark.serializer: "org.apache.spark.serializer.KryoSerializer"
+    spark.jars.packages: org.mongodb:mongodb-driver-sync:4.11.1,org.mongodb.spark:mongo-spark-connector_2.12:10.5.0,org.apache.iceberg:iceberg-spark-runtime-3.2_2.12:1.4.3,org.projectnessie.nessie-integrations:nessie-spark-extensions-3.2_2.12:0.67.0
+    spark.sql.extensions: org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions,org.projectnessie.spark.extensions.NessieSparkSessionExtensions
+
+    spark.sql.catalog.nessie: org.apache.iceberg.spark.SparkCatalog
+    spark.sql.catalog.nessie.catalog-impl: org.apache.iceberg.nessie.NessieCatalog
+    spark.sql.catalog.nessie.uri: "${NESSIE_URL}"
+    spark.sql.catalog.nessie.ref: "${NESSIE_REF}"
+
+    spark.mongodb.read.connection.uri: "${MONGO_URL}"
+    spark.mongodb.write.connection.uri: "${MONGO_URL}"
+    spark.mongodb.read.partitioner: com.mongodb.spark.sql.connector.read.partitioner.PaginateIntoPartitionsPartitioner
+    spark.mongodb.read.partitionerOptions.numberOfPartitions: 10
+
+    spark.sql.catalog.nessie.warehouse: "${WAREHOUSE_LOCATION_DEV}"
+    spark.sql.sources.partitionOverwriteMode: dynamic
+
+  dev:
+    app_name: "Development"
+    config:
+      <<: *spark_common
+      spark.sql.shuffle.partitions: 16
+
+  bronze:
+    app_name: "Bronze_Pipeline"
+    config:
+      <<: *spark_common
+      spark.sql.shuffle.partitions: 16
+
+  silver:
+    app_name: "Silver_Pipeline"
+    config:
+      <<: *spark_common
+      spark.sql.shuffle.partitions: 8
+      spark.sql.adaptive.enabled: true
+
+  gold:
+    app_name: "Gold_Pipeline"
+    config:
+      <<: *spark_common
+      spark.sql.shuffle.partitions: 8
+      spark.sql.adaptive.enabled: true
+
+# =====================================================
+# SCHEMAS / NAMESPACES
+# =====================================================
+schemas:
+  source:
+    name: source
+    description: Raw data
+    owner: data_engineering_team
+    upstream: source
+    downstream: bronze
+    retention_days: 30
+
+  bronze:
+    name: bronze
+    description: Raw ingested data from sources
+    owner: data_engineering_team
+    upstream: source
+    downstream: silver
+    retention_days: 30
+
+  silver:
+    name: silver
+    description: Cleaned and conformed data
+    owner: data_engineering_team
+    upstream: bronze
+    downstream: gold
+    retention_days: 180
+    
+  gold:
+    name: gold
+    description: Analytics-ready data for BI and ML
+    owner: analytics_team
+    upstream: silver
+    downstream: gold
+    retention_days: 365
+
+# =====================================================
+# TABLES
+# =====================================================
+
+tables:
+  passengers:
+    type: scd2
+    partitioned_by: updated_at
+    write_mode:
+      bronze: overwrite_partitions
+      silver: custom
+    schema:
+      source: |
+        _id INT,
+        name STRING,
+        gender STRING,
+        phone STRING,
+        email STRING,
+        created_at STRING,
+        updated_at STRING
+
+      bronze: |
+        id INT,
+        name STRING,
+        gender STRING,
+        phone STRING,
+        email STRING,
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP
+
+      silver: |
+        sk_id BIGINT,
+        id INT,
+        name STRING,
+        gender STRING,
+        phone STRING,
+        email STRING,
+        is_active BOOLEAN,
+        start_date TIMESTAMP,
+        end_date TIMESTAMP
+
+    query:
+      - |  
+        MERGE INTO {full_table_name} t
+        USING {table_view} s
+        ON t.id = s.id AND t.is_active = true
+
+        WHEN MATCHED AND (
+          t.name <> s.name OR 
+          t.gender <> s.gender OR 
+          t.phone <> s.phone OR 
+          t.email <> s.email
+        )
+        THEN UPDATE SET 
+          t.is_active = false,
+          t.end_date = s.updated_at
+
+        WHEN NOT MATCHED THEN 
+        INSERT (sk_id, id, name, gender, phone, email, is_active, start_date, end_date)
+        VALUES(s.sk_id, s.id, s.name, s.gender, s.phone, s.email, true, s.updated_at, null)
+
+      - |
+        WITH CURRENT_RECORD AS (
+            SELECT 
+                id
+            FROM {full_table_name}
+            WHERE is_active = true
+        )
+        INSERT INTO {full_table_name}
+        SELECT 
+            pc.sk_id,
+            pc.id,
+            pc.name,
+            pc.gender,
+            pc.phone,
+            pc.email,
+            true as is_active,
+            pc.updated_at as start_date,
+            NULL as end_date 
+        FROM {table_view} pc 
+        LEFT ANTI JOIN 
+            CURRENT_RECORD cr ON pc.id = cr.id 
+
+  stations:
+    type: scd1
+    partitioned_by: updated_at
+    write_mode:
+      bronze: overwrite_partitions
+      silver: custom
+    schema: 
+      source: |
+        _id INT,
+        name STRING,
+        city STRING,
+        code STRING,
+        updated_at STRING,
+        created_at STRING
+
+      bronze: |
+        id INT,
+        name STRING,
+        city STRING,
+        code STRING,
+        updated_at TIMESTAMP,
+        created_at TIMESTAMP
+
+      silver: |
+        sk_id BIGINT,
+        id INT,
+        name STRING,
+        city STRING,
+        code STRING,
+        is_deleted BOOLEAN
+    
+    query:
+      - |
+        MERGE INTO {full_table_name} t
+        USING {table_view} s
+        ON t.id = s.id
+
+        WHEN MATCHED AND (
+            t.name <> s.name OR
+            t.city <> s.city OR
+            t.code <> s.code OR
+            t.is_deleted = true
+        )
+        THEN UPDATE SET
+            t.name = s.name,
+            t.city = s.city,
+            t.code = s.code,
+            t.is_deleted = false
+
+        WHEN NOT MATCHED THEN
+        INSERT (
+            sk_id,
+            id,
+            name,
+            city,
+            code,
+            is_deleted
+        )
+        VALUES (
+            s.sk_id,
+            s.id,
+            s.name,
+            s.city,
+            s.code,
+            false
+        )
+
+      - |
+        UPDATE {full_table_name} st
+        SET is_deleted = true
+        WHERE is_deleted = false
+          AND NOT EXISTS (
+            SELECT 1
+            FROM {table_view} s
+            WHERE s.id = st.id
+          )
+        
+  trains:
+    type: scd2
+    partitioned_by: updated_at
+    write_mode:
+      bronze: overwrite_partitions
+      silver: custom
+    schema: 
+      source: |
+        _id INT,
+        name STRING,
+        type STRING,
+        capacity INT,
+        created_at STRING,
+        updated_at STRING
+
+      bronze: |
+        id INT,
+        name STRING,
+        type STRING,
+        capacity INT,
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP
+
+      silver: |
+        sk_id BIGINT,
+        id INT,
+        name STRING,
+        type STRING,
+        capacity INT,
+        is_active BOOLEAN,
+        start_date TIMESTAMP,
+        end_date TIMESTAMP
+    
+    query: 
+      - |
+        MERGE INTO {full_table_name} t
+        USING {table_view} s
+        ON t.id = s.id AND t.is_active = true
+
+        WHEN MATCHED AND (
+            t.name <> s.name OR 
+            t.type <> s.type OR 
+            t.capacity <> s.capacity
+        )
+        THEN UPDATE SET 
+            t.is_active = false,
+            t.end_date = s.updated_at
+
+        WHEN NOT MATCHED THEN 
+        INSERT (sk_id, id, name, type, capacity, is_active, start_date, end_date)
+        VALUES(s.sk_id, s.id, s.name, s.type, s.capacity, true, s.updated_at, null)
+      
+      - |
+        WITH CURRENT_RECORD AS (
+            SELECT 
+                id
+            FROM {full_table_name}
+            WHERE is_active = true
+        )
+
+        INSERT INTO {full_table_name}
+        SELECT
+            sc.sk_id,
+            sc.id,
+            sc.name,
+            sc.type,
+            sc.capacity,
+            true as is_active,
+            sc.updated_at as start_date,
+            NULL as end_date
+        FROM {table_view} sc 
+        LEFT ANTI JOIN CURRENT_RECORD cr 
+        ON sc.id = cr.id
+   
+  routes:
+    type: scd1
+    partitioned_by: updated_at
+    write_mode:
+      bronze: overwrite_partitions
+      silver: custom
+    schema: 
+      source: |
+        _id INT,
+        origin STRING,
+        destination STRING,
+        train_id INT,
+        distance_km INT,
+        duration_minutes INT,
+        updated_at STRING,
+        created_at STRING
+
+      bronze: |
+        id INT,
+        origin STRING,
+        destination STRING,
+        train_id INT,
+        distance_km INT,
+        duration_minutes INT,
+        updated_at TIMESTAMP,
+        created_at TIMESTAMP
+      
+      silver: |
+        sk_id BIGINT,
+        id INT,
+        org_station_id INT,
+        dest_station_id INT,
+        train_id INT,
+        distance_km INT,
+        duration_minutes INT,
+        is_deleted BOOLEAN
+    
+    query: 
+      - |      
+        MERGE INTO {full_table_name} t
+        USING {table_view} s
+        ON t.id = s.id
+
+        WHEN MATCHED AND (
+            t.sk_org_station_id <> s.sk_org_station_id OR 
+            t.sk_dest_station_id <> s.sk_dest_station_id OR 
+            t.sk_train_id <> s.sk_train_id OR 
+            t.distance_km <> s.distance_km OR 
+            t.duration_minutes <> s.duration_minutes OR
+            t.is_deleted = true
+        )
+        THEN UPDATE SET 
+            sk_org_station_id = s.sk_org_station_id,
+            sk_dest_station_id = s.sk_dest_station_id,
+            sk_train_id = s.sk_train_id,
+            distance_km = s.distance_km,
+            duration_minutes = s.duration_minutes,
+            is_deleted = false
+
+        WHEN NOT MATCHED THEN 
+        INSERT (
+          sk_id, 
+          id, 
+          sk_org_station_id, 
+          sk_dest_station_id, 
+          sk_train_id, 
+          distance_km, 
+          duration_minutes, 
+          is_deleted
+        )
+        
+        VALUES(
+          s.sk_id, 
+          s.id, 
+          s.sk_org_station_id, 
+          s.sk_dest_station_id, 
+          s.sk_train_id, 
+          s.distance_km, 
+          s.duration_minutes, 
+          false
+        )
+
+      - |
+        UPDATE {full_table_name} st
+        SET is_deleted = true
+        WHERE is_deleted = false
+          AND NOT EXISTS (
+            SELECT 1
+            FROM {table_view} s
+            WHERE s.id = st.id
+          )
+
+    depends_on:
+      silver:
+        - name: stations
+          catalog: nessie
+          schema_name: silver
+
+        - name: trains
+          catalog: nessie
+          schema_name: silver
+
+  tickets:
+    type: fact
+    partitioned_by: created_at
+    write_mode:
+      bronze: overwrite_partitions
+      silver: custom
+    schema: 
+      source: |
+        _id INT,
+        ticket_id STRING,
+        route_id INT,
+        passenger_id INT,
+        train_id INT,
+        discount DECIMAL(10, 2),
+        price DECIMAL(38, 2),
+        class STRING,
+        seat_number STRING,
+        status STRING,
+        departure_date STRING,
+        extra_info STRUCT<
+          child_discount: BOOLEAN,
+          family_members: INT,
+          promo_code: STRING,
+          source: STRING
+        >,
+        payment STRUCT<
+          method: STRING,
+          bank: STRING,
+          provider: STRING
+        >,
+        addons ARRAY<STRING>,
+        created_at STRING
+
+      bronze: |
+        id INT,
+        ticket_id STRING,
+        route_id INT,
+        passenger_id INT,
+        train_id INT,
+        discount DECIMAL(10, 2),
+        price DECIMAL(38, 2),
+        class STRING,
+        seat_number STRING,
+        status STRING,
+        departure_date TIMESTAMP,
+        extra_info STRUCT<
+          child_discount: BOOLEAN,
+          family_members: INT,
+          promo_code: STRING,
+          source: STRING
+        >,
+        payment STRUCT<
+          method: STRING,
+          bank: STRING,
+          provider: STRING
+        >,
+        addons ARRAY<STRING>,
+        created_at TIMESTAMP
+
+      silver: |
+        ticket_id         STRING,
+        route_sk_id       BIGINT,
+        passenger_sk_id   BIGINT,
+        train_sk_id       BIGINT,
+        class_id          INT,
+        payment_id        INT,
+        active_status_id  INT,
+        day_of_week       TINYINT,
+        booking_lead_days INT,
+        departure_date    TIMESTAMP,
+        paid_at           TIMESTAMP,
+        cancelled_at      TIMESTAMP,
+        refunded_at       TIMESTAMP,
+        created_at        TIMESTAMP,
+        price             DECIMAL(18, 2),
+        discount          DECIMAL(18, 2),
+        final_price       DECIMAL(18, 2),
+        family_flag       BOOLEAN,
+        has_child         BOOLEAN,
+        has_promo         BOOLEAN,
+        is_weekend        BOOLEAN
+
+    query: 
+      - |      
+        MERGE INTO {full_table_name} t
+        USING {table_view} s
+        ON t.ticket_id = s.ticket_id
+
+        WHEN MATCHED AND (
+            t.route_sk_id <> s.route_sk_id
+            OR t.passenger_sk_id <> s.passenger_sk_id
+            OR t.train_sk_id <> s.train_sk_id
+            OR t.class_id <> s.class_id
+            OR t.payment_id <> s.payment_id
+            OR t.active_status_id <> s.active_status_id
+            OR t.day_of_week <> s.day_of_week
+            OR t.booking_lead_days <> s.booking_lead_days
+            OR t.departure_date <> s.departure_date
+            OR t.paid_at <> s.paid_at
+            OR t.cancelled_at <> s.cancelled_at
+            OR t.refunded_at <> s.refunded_at
+            OR t.created_at <> s.created_at
+            OR t.price <> s.price
+            OR t.discount <> s.discount
+            OR t.final_price <> s.final_price
+            OR t.family_flag <> s.family_flag
+            OR t.has_child <> s.has_child
+            OR t.has_promo <> s.has_promo
+            OR t.is_weekend <> s.is_weekend
+        )
+        THEN UPDATE SET 
+            t.route_sk_id = s.route_sk_id,
+            t.passenger_sk_id = s.passenger_sk_id,
+            t.train_sk_id = s.train_sk_id,
+            t.class_id = s.class_id,
+            t.payment_id = s.payment_id,
+            t.active_status_id = s.active_status_id,
+            t.day_of_week = s.day_of_week,
+            t.booking_lead_days = s.booking_lead_days,
+            t.departure_date = s.departure_date,
+            t.paid_at = s.paid_at,
+            t.cancelled_at = s.cancelled_at,
+            t.refunded_at = s.refunded_at,
+            t.created_at = s.created_at,
+            t.price = s.price,
+            t.discount = s.discount,
+            t.final_price = s.final_price,
+            t.family_flag = s.family_flag,
+            t.has_child = s.has_child,
+            t.has_promo = s.has_promo,
+            t.is_weekend = s.is_weekend
+
+        WHEN NOT MATCHED THEN 
+            INSERT (ticket_id, route_sk_id, passenger_sk_id, train_sk_id, class_id, payment_id, active_status_id, day_of_week, booking_lead_days, departure_date, paid_at, cancelled_at, refunded_at, created_at, price, discount, final_price, family_flag, has_child, has_promo, is_weekend)
+            VALUES(s.ticket_id, s.route_sk_id, s.passenger_sk_id, s.train_sk_id, s.class_id, s.payment_id, s.active_status_id, s.day_of_week, s.booking_lead_days, s.departure_date, s.paid_at, s.cancelled_at, s.refunded_at, s.created_at, s.price, s.discount, s.final_price, s.family_flag, s.has_child, s.has_promo, s.is_weekend)
+      
+    depends_on:
+      silver:
+        - name: stations
+          catalog: nessie
+          schema_name: silver
+
+        - name: routes
+          catalog: nessie
+          schema_name: silver
+
+        - name: trains
+          catalog: nessie
+          schema_name: silver
+
+        - name: passengers
+          catalog: nessie
+          schema_name: silver
+
+        - name: class
+          catalog: nessie
+          schema_name: silver
+
+        - name: status
+          catalog: nessie
+          schema_name: silver
+
+        - name: payment
+          catalog: nessie
+          schema_name: silver
+
+  cancellation_summary:
+    type: aggregate
+    partitioned_by: booking_date
+    write_mode:
+      gold: custom
+    schema:
+      gold: |
+        booking_date DATE,
+        route_sk_id BIGINT,
+        class_id INT,
+        total_ticket_id BIGINT,
+        total_created BIGINT,
+        total_paid BIGINT,
+        total_cancelled BIGINT,
+        total_refunded BIGINT,
+        cancel_before_payment BIGINT,
+        cancel_after_payment BIGINT,
+        cancellation_rate DECIMAL(5, 2),
+        lost_revenue DECIMAL(18, 2),
+        avg_hours_to_cancel DECIMAL(10, 2),
+        updated_at TIMESTAMP
+    query:
+      - |
+
+    depends_on:
+      gold:
+        - name: tickets
+          catalog: nessie
+          schema_name: silver
+
+  revenue_daily:
+    type: aggregate
+    partitioned_by: booking_date
+    write_mode:
+      gold: custom
+    schema:
+      gold: |
+        revenue_date DATE,
+        route_sk_id BIGINT,
+        class_id INT,
+        total_tickets BIGINT,
+        gross_revenue DECIMAL(18, 2),
+        total_discount DECIMAL(18, 2),
+        net_revenue DECIMAL(18, 2),
+        refunded_revenue DECIMAL(18, 2),
+        net_revenue_after_refund DECIMAL(18, 2),
+        avg_ticket_price DECIMAL(18, 2),
+        updated_at TIMESTAMP
+    query:
+      - |
+
+    depends_on:
+      gold:
+        - name: tickets
+          catalog: nessie
+          schema_name: silver
+
+  refund_loss:
+    type: aggregate
+    partitioned_by: refund_date
+    write_mode:
+      gold: custom
+    schema:
+      gold: |
+        refund_date DATE,
+        route_sk_id BIGINT,
+        class_id INT,
+        total_tickets_refunded BIGINT,
+        total_refund_amount DECIMAL(18, 2),
+        avg_refund_amount DECIMAL(18, 2),
+        avg_days_cancel_to_refund DECIMAL(10, 2),
+        avg_hours_to_refund DECIMAL(10, 2),
+        avg_days_created_to_refund DECIMAL(10, 2),
+        total_refunded_with_promo BIGINT,
+        total_refunded_with_family_flag BIGINT,
+        updated_at TIMESTAMP
+    query:
+      - |
+
+    depends_on:
+      gold:
+        - name: tickets
+          catalog: nessie
+          schema_name: silver
+
+  train_performance:
+    type: aggregate
+    partitioned_by: departure_date
+    write_mode:
+      gold: custom
+    schema:
+      gold: |
+        departure_date DATE,
+        train_sk_id BIGINT,
+        name STRING,
+        type STRING,
+        capacity INT,
+        total_tickets_sold BIGINT,
+        total_cancelled_tickets BIGINT,
+        net_tickets_sold BIGINT,
+        total_revenue DECIMAL(18, 2),
+        family_ticket_count BIGINT,
+        promo_ticket_count BIGINT,
+        cancelled_after_departure_flag BOOLEAN,
+        occupancy_rate DOUBLE,
+        is_fully_booked BOOLEAN,
+        updated_at TIMESTAMP
+    query:
+      - |
+
+    depends_on:
+      gold:
+        - name: tickets
+          catalog: nessie
+          schema_name: silver
+
+        - name: trains
+          catalog: nessie
+          schema_name: silver
+
+
+# =====================================================
+# PUSHDOWN FILTERS
+# =====================================================
+filters:
+  bronze:
+    type: mongo
+    tables:
+      tickets:
+        field: created_at
+      passengers:
+        field: updated_at
+      routes:
+        field: updated_at
+      trains:
+        field: updated_at
+      stations:
+        field: updated_at
+        
+  silver:
+    type: iceberg
+    tables:
+      tickets:
+        field: created_at
+      passengers:
+        field: updated_at
+      routes:
+        field: updated_at
+      trains:
+        field: updated_at
+      stations:
+        field: updated_at
+
+  gold:
+    type: iceberg
+    tables:
+      tickets:
+        field: created_at
+      passengers:
+        field: updated_at
+      routes:
+        field: updated_at
+      trains:
+        field: updated_at
+      stations:
+        field: updated_at
+
+      
+      
+
+            
+
+
+
+
+
+    

@@ -1,0 +1,47 @@
+[
+  {
+    "_id": 1,
+    "name": "Dimas Ega",
+    "gender": "Male",
+    "email": "dimas.ega1@example.com",
+    "phone": "081234500001",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "_id": 2,
+    "name": "Ayu Lestari",
+    "gender": "Female",
+    "email": "ayu.lestari2@example.com",
+    "phone": "081234500002",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "_id": 3,
+    "name": "Rudi Hartono",
+    "gender": "Male",
+    "email": "rudi.hartono3@example.com",
+    "phone": "081234500003",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "_id": 4,
+    "name": "Siti Rahmawati",
+    "gender": "Female",
+    "email": "siti.rahma4@example.com",
+    "phone": "081234500004",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  {
+    "_id": 5,
+    "name": "Fajar Prasetyo",
+    "gender": "Male",
+    "email": "fajar.pras5@example.com",
+    "phone": "081234500005",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  }
+]

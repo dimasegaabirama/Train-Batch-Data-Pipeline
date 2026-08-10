@@ -1,0 +1,68 @@
+x-datanode-base: &datanode-base
+  image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+  environment:
+    CLUSTER_NAME: train_cluster
+    CORE_CONF_fs_defaultFS: ${HADOOP_URL}
+    HDFS_CONF_dfs_blocksize: 134217728
+    HDFS_CONF_dfs_replication: 2
+    HDFS_CONF_dfs_namenode_name_dir: ${HADOOP_NAMENODE_DIR}
+    HDFS_CONF_dfs_datanode_name_dir: ${HADOOP_DATANODE_DIR}
+  networks:
+    - hadoop_net
+    - data_eng_net
+  depends_on:
+    namenode:
+      condition: service_healthy
+
+services:
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    hostname: namenode
+    environment:
+      CLUSTER_NAME: ${CLUSTER_NAME}
+      CORE_CONF_fs_defaultFS: ${HADOOP_URL}
+      HDFS_CONF_dfs_blocksize: 134217728
+      HDFS_CONF_dfs_replication: 2
+      HDFS_CONF_dfs_namenode_name_dir: ${HADOOP_NAMENODE_DIR}
+      HDFS_CONF_dfs_datanode_name_dir: ${HADOOP_DATANODE_DIR}
+    volumes:
+      - ./docker/hadoop/namenode:/data/hdfs/namenode
+    ports:
+      - "9870:9870"
+      - "8020:8020"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9870/"]
+      start_period: 20s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - data_eng_net
+      - hadoop_net
+
+  datanode-1:
+    <<: *datanode-base
+    container_name: datanode-1
+    hostname: datanode-1
+    volumes:
+      - ./docker/hadoop/datanode/datanode_1:/data/hdfs/datanode
+    ports:
+      - "9864:9864"
+      - "9866:9866"
+
+  datanode-2:
+    <<: *datanode-base
+    container_name: datanode-2
+    hostname: datanode-2
+    volumes:
+      - ./docker/hadoop/datanode/datanode_2:/data/hdfs/datanode
+    ports:
+      - "9865:9864"
+      - "9867:9866"
+    
+networks:
+  data_eng_net:
+    external: True
+  hadoop_net:
+    external: True

@@ -1,0 +1,54 @@
+services:
+  postgres-backend:
+    container_name: postgres-backend
+    image: postgres:12.6
+    environment:
+      POSTGRES_USER: ${NESSIE_BACKEND_USERNAME}
+      POSTGRES_PASSWORD: ${NESSIE_BACKEND_PASSWORD}
+      POSTGRES_DB: ${NESSIE_BACKEND_DATABASE}
+    volumes:
+      - ./docker/nessie/data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    networks:
+      - nessie_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${NESSIE_BACKEND_USERNAME} -d ${NESSIE_BACKEND_DATABASE}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 120s
+
+  nessie-rest-catalog:
+    container_name: nessie-rest-catalog
+    image: ghcr.io/projectnessie/nessie:0.67.0
+    environment:
+      NESSIE_VERSION_STORE_TYPE: TRANSACTIONAL
+      NESSIE_VERSION_STORE_PERSIST_JDBC_DATASOURCE: postgres
+
+      QUARKUS_HTTP_PORT: ${NESSIE_PORT}
+
+      QUARKUS_DATASOURCE_DB_KIND: postgresql
+      QUARKUS_DATASOURCE_JDBC_URL: ${NESSIE_BACKEND_URL}
+      QUARKUS_DATASOURCE_USERNAME: ${NESSIE_BACKEND_USERNAME}
+      QUARKUS_DATASOURCE_PASSWORD: ${NESSIE_BACKEND_PASSWORD}
+
+      NESSIE_CATALOG_DEFAULT_WAREHOUSE: ${WAREHOUSE}
+      NESSIE_CATALOG_WAREHOUSES_DEV_LOCATION: ${WAREHOUSE_LOCATION_DEV}
+      NESSIE_CATALOG_WAREHOUSES_PROD_LOCATION: ${WAREHOUSE_LOCATION_PROD}
+    volumes:
+      - ./docker/nessie/rest_data:/var/lib/nessie/data
+    ports:
+      - "19120:19120"
+    networks:
+      - data_eng_net
+      - nessie_net
+    depends_on:
+      postgres-backend:
+        condition: service_healthy
+
+networks:
+  data_eng_net:
+    external: True
+  nessie_net:
+    external: True
