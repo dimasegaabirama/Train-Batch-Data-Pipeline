@@ -7,7 +7,7 @@ class IcebergLoad(BaseLoad):
 
     def load(self) -> None:
 
-        fullname = create_table_fullname(self.transform_result.catalog, self.transform_result.schema_name, self.transform_result.name)
+        location
         write_mode = self.transform_result.write_mode
         queries = self.transform_result.queries
 

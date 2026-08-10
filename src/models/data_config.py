@@ -183,6 +183,7 @@ class TableMetadata(BaseModel):
     schema_name: str
     write_mode: WriteType
     fullname: str
+    location: str
     schema: str
     queries: List[str]
 
