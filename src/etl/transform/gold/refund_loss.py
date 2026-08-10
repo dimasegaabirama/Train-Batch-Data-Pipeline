@@ -5,9 +5,9 @@ from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
 
 class RefundLoss(BaseTransform):
-    def transform(self) -> DataFrame:
+    def transform(self):
         try:
-            tickets_dataframe = self.inputs["tickets"]
+            tickets_dataframe = self.dependencies["tickets"]
             tickets_dataframe = tickets_dataframe.withColumn("refund_date", F.to_date("refunded_at"))
 
             refund_loss_dataframe = (

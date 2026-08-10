@@ -1,12 +1,13 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 
+from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
 
 class RevenueDaily(BaseTransform):
-    def transform(self) -> DataFrame:
+    def transform(self):
         try:
-            tickets_dataframe = self.inputs["tickets"]
+            tickets_dataframe = self.dependencies["tickets"]
 
             tickets_with_check = (
                 tickets_dataframe
@@ -38,6 +39,6 @@ class RevenueDaily(BaseTransform):
                 .withColumn("updated_at", F.current_timestamp())
             )
             
-            return revenue_daily_dataframe
+            return TransformResult.from_extract(self.extract_result, revenue_daily_dataframe)
         except Exception as e:
             raise RuntimeError(f"Error during revenue daily transformation: {e}") from e

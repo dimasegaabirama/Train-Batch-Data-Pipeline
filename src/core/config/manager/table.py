@@ -84,36 +84,24 @@ class TableManager:
 
         return dependencies
 
-    def get_table_metadata(self, table_ref: Union[str, TableDependency], stage: StageType, query_params: Dict[str, str] = None) -> TableMetadata:
+    def get_table_metadata(self, table_ref: str, stage: StageType, query_params: Dict[str, str] = None) -> TableMetadata:
         if stage is None:
             raise ValueError("Stage must be provided to get table metadata.")
 
-        if isinstance(table_ref, str):
-            catalog = self._catalog_manager.get_catalog_name()
-
-            schema = self._schema_manager.get_stage_schema_name(stage)
-            upstream_stage = self._schema_manager.get_stage_upstream(stage)
-
-            return {
-                "name": table_ref,
-                "catalog": catalog,
-                "schema_name": schema,
-                "write_mode": self.get_table_write_mode(table_ref, stage),
-                "fullname": create_table_fullname(catalog, schema, table_ref),
-                "schema": self.get_table_schema(table_ref, upstream_stage),
-                "queries": self.get_formated_query(table_ref, **query_params)
-            }
+        catalog = self._catalog_manager.get_catalog_name()
+        schema = self._schema_manager.get_stage_schema_name(stage)
+        upstream_stage = self._schema_manager.get_stage_upstream(stage)
 
         return {
-            "name": table_ref.name,
-            "catalog": table_ref.catalog,
-            "schema_name": table_ref.schema_name,
-            "write_mode": self.get_table_write_mode(table_ref.name, stage),
-            "fullname": create_table_fullname(table_ref.catalog, table_ref.schema_name, table_ref.name),
-            "schema": self.get_table_schema(table_ref.name, upstream_stage),
-            "queries": self.get_formated_query(table_ref.name, **query_params)
+            "name": table_ref,
+            "catalog": catalog,
+            "schema_name": schema,
+            "write_mode": self.get_table_write_mode(table_ref, stage),
+            "fullname": create_table_fullname(catalog, upstream_stage, table_ref),
+            "location": create_table_fullname(catalog, stage, table_ref),  # Assuming location is the same as fullname for this case
+            "schema": self.get_table_schema(table_ref, upstream_stage),
+            "queries": self.get_formated_query(table_ref, **query_params)
         }
-
 
 if __name__ == "__main__":
     table_manager = TableManager().get_table_deps("cancellation_summary", "gold")

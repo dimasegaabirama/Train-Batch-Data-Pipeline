@@ -21,9 +21,10 @@ class BaseTransform(ABC):
         self.session = session
         self.logger = logger
         self.extract_result = extract_result
-        self.dataframe = extract_result.dataframe if extract_result else None
-        self.dependencies = extract_result.dependencies if extract_result else None
+        
+        self.dataframe = self.extract_result.dataframe if self.extract_result else None
+        self.dependencies = self.extract_result.dependencies if self.extract_result else None
 
     @abstractmethod
-    def transform(self) -> List[TransformResult]:
+    def transform(self) -> TransformResult:
         return None

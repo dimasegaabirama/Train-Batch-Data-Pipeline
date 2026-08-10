@@ -1,16 +1,22 @@
 from typing_extensions import Callable, Dict
+
 from .base_load import BaseLoad
-from src.utils.text_utils import clean_multiple_line
+from src.utils.table_utils import create_table_fullname
 
 class IcebergLoad(BaseLoad):
 
     def load(self) -> None:
+
+        fullname = create_table_fullname(self.transform_result.catalog, self.transform_result.schema_name, self.transform_result.name)
+        write_mode = self.transform_result.write_mode
+        queries = self.transform_result.queries
+
         try:
-            if self.write_mode == "custom":
-                if not self.queries:
+            if write_mode == "custom":
+                if not queries:
                     raise ValueError("Mode 'custom' requires a SQL query.")
   
-                for query in self.queries:
+                for query in queries:
                     self.session.sql(query)
 
             else:

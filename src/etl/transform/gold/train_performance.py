@@ -2,12 +2,13 @@ import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 
 from src.etl.transform import BaseTransform
+from src.models.etl_config import TransformResult
 
 class TrainPerformance(BaseTransform):
-    def transform(self) -> DataFrame:
+    def transform(self):
         try:
-            tickets_dataframe = self.inputs["tickets"]
-            train_dataframe = self.inputs["trains"]
+            tickets_dataframe = self.dependencies["tickets"]
+            train_dataframe = self.dependencies["trains"]
 
             joined_dataframe = tickets_dataframe.alias("f").join(
                 train_dataframe.alias("t"),
@@ -38,6 +39,6 @@ class TrainPerformance(BaseTransform):
                 .withColumn("updated_at", F.current_timestamp())
             )
 
-            return train_performance_dataframe
+            return TransformResult.from_extract(self.extract_result, train_performance_dataframe)
         except Exception as e:
             raise RuntimeError(f"Error during train performance transformation: {e}") from e
