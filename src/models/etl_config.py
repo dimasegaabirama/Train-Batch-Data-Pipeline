@@ -9,6 +9,7 @@ from src.models.data_config import WriteType
 class PipelineResult(BaseModel):
     name: str
     fullname: str
+    location: str
     write_mode: WriteType
     queries: List[str] = []
 
