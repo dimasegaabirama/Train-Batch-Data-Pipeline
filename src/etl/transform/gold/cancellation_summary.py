@@ -1,6 +1,7 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 
+from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
 
 class CancellationSummary(BaseTransform):
@@ -39,6 +40,6 @@ class CancellationSummary(BaseTransform):
                 .withColumn("updated_at", F.current_timestamp())
             )
 
-            return cancellation_summary_dataframe
+            return TransformResult.from_extract(self.extract_result, cancellation_summary_dataframe)
         except Exception as e:
             raise RuntimeError(f"Error during cancellation summary transformation: {e}") from e

@@ -1,6 +1,7 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 
+from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
 
 class RefundLoss(BaseTransform):
@@ -43,7 +44,7 @@ class RefundLoss(BaseTransform):
                 .withColumn("updated_at", F.current_timestamp())
             )
 
-            return refund_loss_dataframe
+            return TransformResult.from_extract(self.extract_result, refund_loss_dataframe)
         except Exception as e:
             raise RuntimeError(f"Error during refund loss transformation: {e}") from e
 

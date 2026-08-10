@@ -148,14 +148,19 @@ class StoragesConfig(BaseModel):
 # Tables
 # =========================
 
+class TableDependency(BaseModel):
+    name: str
+    catalog: str
+    schema_name: str
+
 
 class TableContext(BaseModel):
-    type: Literal["scd1", "scd2", "fact"]
+    type: str
     partitioned_by: str
     write_mode: Dict[StageType, WriteType]
     schema: Dict[StageType, str]
     query: List[str]
-    depends_on: Optional[dict] = None
+    depends_on: Optional[Dict[StageType, List[TableDependency]]] = None
 
 
 class TablesConfig(BaseModel):
@@ -164,6 +169,22 @@ class TablesConfig(BaseModel):
     stations: TableContext
     trains: TableContext
     tickets: TableContext
+
+    cancellation_summary: TableContext
+    refund_loss: TableContext
+    revenue_daily: TableContext
+    train_performance: TableContext
+
+
+
+class TableMetadata(BaseModel):
+    name: str
+    catalog: str
+    schema_name: str
+    write_mode: WriteType
+    fullname: str
+    schema: str
+    queries: List[str]
 
 
 class TableNames(BaseModel):

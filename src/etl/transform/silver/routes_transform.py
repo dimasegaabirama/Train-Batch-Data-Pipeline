@@ -1,5 +1,6 @@
 import pyspark.sql.functions as F
 
+from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
 
 
@@ -45,6 +46,10 @@ class RoutesTransform(BaseTransform):
         """
 
         try:
+            if self.dataframe is None:
+                self.logger.warning("No DataFrame provided for transformation.")
+                return self.dataframe
+            
             routes_dataframe = (self.dataframe
                 .withColumn("sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
                 .withColumn("origin", F.trim(F.lower(F.col("origin"))))
@@ -53,8 +58,8 @@ class RoutesTransform(BaseTransform):
                 .withColumn("duration_minutes", F.coalesce(F.col("duration_minutes"), F.lit(0)))
             )
 
-            stations_dataframe = self.inputs["stations"]
-            trains_dataframe = self.inputs["trains"]
+            stations_dataframe = self.dependencies["stations"]
+            trains_dataframe = self.dependencies["trains"]
 
             stations_df = F.broadcast(stations_dataframe)
             trains_df = F.broadcast(trains_dataframe)
@@ -79,8 +84,8 @@ class RoutesTransform(BaseTransform):
                     F.col("r.distance_km"),
                     F.col("r.duration_minutes")
                 )
-            )
+            ).dropDuplicates(["sk_id"])
 
-            return df_joined.dropDuplicates(["sk_id"])
+            return TransformResult.from_extract(self.extract_result, df_joined)
         except Exception as e:
             raise RuntimeError(f"Error during routes transformation: {e}") from e

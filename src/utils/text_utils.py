@@ -34,3 +34,7 @@ def replace_env(value: Union[dict, list, str]) -> Union[dict, list, str]:
 def clean_multiple_line(value: str) -> str:
     """Collapse a multi-line string into a single space-separated line."""
     return value.replace("\n", " ").strip()
+
+def split_text(value: str, delimiter: str = ",") -> List[str]:
+    """Split a string by a delimiter and return a list of trimmed strings."""
+    return [item.strip() for item in value.split(delimiter) if item.strip()]

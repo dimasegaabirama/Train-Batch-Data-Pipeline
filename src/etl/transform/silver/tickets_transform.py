@@ -3,6 +3,7 @@ from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.types import TimestampType, BooleanType
 from pyspark.sql import Window
 
+from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
 
 
@@ -62,12 +63,12 @@ class TicketsTransform(BaseTransform):
                 .filter(F.col("rn") == 1) 
             ).alias("td")
 
-            routes_dataframe = self.inputs["routes"]
-            trains_dataframe = self.inputs["trains"]
-            passengers_dataframe = self.inputs["passengers"].alias("p")
-            class_dataframe = self.inputs["class"]
-            status_dataframe = self.inputs["status"]
-            payment_dataframe = self.inputs["payment"]
+            routes_dataframe = self.dependencies["routes"]
+            trains_dataframe = self.dependencies["trains"]
+            passengers_dataframe = self.dependencies["passengers"].alias("p")
+            class_dataframe = self.dependencies["class"]
+            status_dataframe = self.dependencies["status"]
+            payment_dataframe = self.dependencies["payment"]
 
             routes_df = F.broadcast(routes_dataframe).alias("r")
             trains_df = F.broadcast(trains_dataframe).alias("tr")
@@ -123,6 +124,6 @@ class TicketsTransform(BaseTransform):
                                 F.col("td.is_weekend")   
                             )
             )
-            return tickets_cleaned
+            return TransformResult.from_extract(self.extract_result, tickets_cleaned)
         except Exception as e:
             raise RuntimeError(f"Error during tickets transformation: {e}") from e

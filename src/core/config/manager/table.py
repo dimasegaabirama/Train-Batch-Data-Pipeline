@@ -1,9 +1,13 @@
+from typing import Optional
+
 from typing_extensions import Dict, List, Union
 
 from src.core.config.config import Config
 from src.models.data_config import (
     StageType,
     TableContext,
+    TableDependency,
+    TableMetadata,
     TablesConfig,
 )
 from src.utils.table_utils import create_table_fullname
@@ -60,30 +64,57 @@ class TableManager:
             )
         return cfg
 
-    def get_table_deps(self, table_names: Union[str, List[str]]) -> Dict[str, str]:
+    def get_table_deps(self, table_names: Union[str, List[str]], stage: StageType) -> Dict[str, List[TableDependency]]:
         if isinstance(table_names, str):
             table_names = [table_names]
 
-        dependencies: Dict[str, str] = {}
+        dependencies = {}
 
         for table_name in table_names:
-            deps = self.get_table_config(table_name).depends_on or {}
-            dependencies.update(
-                {
-                    name: {"name": name, "catalog": ctx["catalog"], "schema": ctx["schema"]}
-                    for name, ctx in deps.items()
-                }
-            )
+            if table_name not in dependencies:
+                dependencies[table_name] = []
+
+            deps = self.get_table_config(table_name).depends_on.get(stage, [])
+            for dep in deps:
+                dependencies[table_name].append({
+                    "name": dep.name,
+                    "catalog": dep.catalog,
+                    "schema_name": dep.schema_name,
+                })
 
         return dependencies
 
-    def get_table_fullname(self, table_name: str, stage: StageType) -> str:
-        return create_table_fullname(
-            self._catalog_manager.get_catalog_name(),
-            self._schema_manager.get_stage_schema_name(stage),
-            table_name,
-        )
+    def get_table_metadata(self, table_ref: Union[str, TableDependency], stage: StageType, query_params: Dict[str, str] = None) -> TableMetadata:
+        if stage is None:
+            raise ValueError("Stage must be provided to get table metadata.")
+
+        if isinstance(table_ref, str):
+            catalog = self._catalog_manager.get_catalog_name()
+
+            schema = self._schema_manager.get_stage_schema_name(stage)
+            upstream_stage = self._schema_manager.get_stage_upstream(stage)
+
+            return {
+                "name": table_ref,
+                "catalog": catalog,
+                "schema_name": schema,
+                "write_mode": self.get_table_write_mode(table_ref, stage),
+                "fullname": create_table_fullname(catalog, schema, table_ref),
+                "schema": self.get_table_schema(table_ref, upstream_stage),
+                "queries": self.get_formated_query(table_ref, **query_params)
+            }
+
+        return {
+            "name": table_ref.name,
+            "catalog": table_ref.catalog,
+            "schema_name": table_ref.schema_name,
+            "write_mode": self.get_table_write_mode(table_ref.name, stage),
+            "fullname": create_table_fullname(table_ref.catalog, table_ref.schema_name, table_ref.name),
+            "schema": self.get_table_schema(table_ref.name, upstream_stage),
+            "queries": self.get_formated_query(table_ref.name, **query_params)
+        }
+
 
 if __name__ == "__main__":
-    table_manager = TableManager()
-    print(table_manager.get_tablenames("gold"))
+    table_manager = TableManager().get_table_deps("cancellation_summary", "gold")
+    print(table_manager)

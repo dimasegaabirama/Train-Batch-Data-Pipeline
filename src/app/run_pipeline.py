@@ -21,6 +21,7 @@ from src.etl.load import BaseLoad
 
 from src.models.data_config import StageType
 from src.utils.nessie_utils import pipeline_branch
+from src.utils.table_utils import normalize_table_info
 
 
 class PipelineOrchestrator:
@@ -78,8 +79,12 @@ class PipelineOrchestrator:
         )
 
         deps = self._table_manager.get_table_deps(table_name)
-        table_names = [dep[table_name]["name"] for dep in deps]
-        
+
+        metadata_tables = [
+            self._table_manager.get_table_metadata(table_name, stage), 
+            *[self._table_manager.get_table_metadata(dep, stage) for dep in deps if dep["name"] != table_name]
+        ]
+
         extractor: BaseExtract = resolve_registry_class(stage, table_name, "extract", required= False)
 
         condition_cls = resolve_registry_class(
@@ -93,7 +98,7 @@ class PipelineOrchestrator:
             else None
         )
 
-        self.logger.debug("Using tablenames: %s", table_names)
+        self.logger.debug("Using metadata_tables: %s", metadata_tables)
         self.logger.debug("Using extractor: %s", extractor)
         self.logger.debug("Using condition: %s", condition)
         self.logger.debug("Using field: %s", field)
@@ -101,7 +106,7 @@ class PipelineOrchestrator:
         return extractor(
             stage=stage,
             session=self.session,
-            table_names=table_names,
+            metadata_tables=metadata_tables,
             condition=condition
         ).extract()
 
@@ -138,9 +143,9 @@ class PipelineOrchestrator:
 
         self.logger.info("[LOAD] Loading data for table: %s | Stage: %s", table_name, stage)
 
-        full_table_name = self._table_manager.get_table_fullname(
-            stage=stage, table_name=table_name
-        )
+        table_metadata = self._table_manager.get_table_metadata(table_name, stage)
+        
+        full_table_name = table_metadata["fullname"]
         table_view_name = f"{table_name}_view"
         partitioned_by = self._table_manager.get_table_partitioned_by(
             table_name=table_name

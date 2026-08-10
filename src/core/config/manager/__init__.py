@@ -1,8 +1,8 @@
 __all__ = [
+    "PipelineManager",
     "CatalogManager",
     "DateManager",
     "FilterManager",
-    "PipelineManager",
     "SchemaManager",
     "SourceManager",
     "SparkManager",
@@ -10,12 +10,12 @@ __all__ = [
     "TableManager",
 ]
 
+from .pipeline import PipelineManager
 from .catalog import CatalogManager
 from .date import DateManager
 from .filter import FilterManager
-from .pipeline import PipelineManager
 from .schema import SchemaManager
+from .table import TableManager
 from .source import SourceManager
 from .spark import SparkManager
 from .storage import StorageManager
-from .table import TableManager

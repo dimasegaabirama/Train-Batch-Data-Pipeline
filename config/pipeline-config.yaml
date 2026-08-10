@@ -491,12 +491,14 @@ tables:
           )
 
     depends_on:
-      stations:
-        catalog: nessie
-        schema: silver
-      trains:
-        catalog: nessie
-        schema: silver
+      silver:
+        - name: stations
+          catalog: nessie
+          schema_name: silver
+
+        - name: trains
+          catalog: nessie
+          schema_name: silver
 
   tickets:
     type: fact
@@ -635,27 +637,34 @@ tables:
             VALUES(s.ticket_id, s.route_sk_id, s.passenger_sk_id, s.train_sk_id, s.class_id, s.payment_id, s.active_status_id, s.day_of_week, s.booking_lead_days, s.departure_date, s.paid_at, s.cancelled_at, s.refunded_at, s.created_at, s.price, s.discount, s.final_price, s.family_flag, s.has_child, s.has_promo, s.is_weekend)
       
     depends_on:
-      stations:
-        catalog: nessie
-        schema: silver
-      routes:
-        catalog: nessie
-        schema: silver
-      trains:
-        catalog: nessie
-        schema: silver
-      passengers:
-        catalog: nessie
-        schema: silver
-      class:
-        catalog: nessie
-        schema: silver
-      status:
-        catalog: nessie
-        schema: silver
-      payment:
-        catalog: nessie
-        schema: silver
+      silver:
+        - name: stations
+          catalog: nessie
+          schema_name: silver
+
+        - name: routes
+          catalog: nessie
+          schema_name: silver
+
+        - name: trains
+          catalog: nessie
+          schema_name: silver
+
+        - name: passengers
+          catalog: nessie
+          schema_name: silver
+
+        - name: class
+          catalog: nessie
+          schema_name: silver
+
+        - name: status
+          catalog: nessie
+          schema_name: silver
+
+        - name: payment
+          catalog: nessie
+          schema_name: silver
 
   cancellation_summary:
     type: aggregate
@@ -682,9 +691,10 @@ tables:
       - |
 
     depends_on:
-      tickets:
-        catalog: nessie
-        schema: silver
+      gold:
+        - name: tickets
+          catalog: nessie
+          schema_name: silver
 
   revenue_daily:
     type: aggregate
@@ -708,9 +718,10 @@ tables:
       - |
 
     depends_on:
-      tickets:
-        catalog: nessie
-        schema: silver
+      gold:
+        - name: tickets
+          catalog: nessie
+          schema_name: silver
 
   refund_loss:
     type: aggregate
@@ -735,9 +746,10 @@ tables:
       - |
 
     depends_on:
-      tickets:
-        catalog: nessie
-        schema: silver
+      gold:
+        - name: tickets
+          catalog: nessie
+          schema_name: silver
 
   train_performance:
     type: aggregate
@@ -765,12 +777,14 @@ tables:
       - |
 
     depends_on:
-      tickets:
-        catalog: nessie
-        schema: silver
-      trains:
-        catalog: nessie
-        schema: silver
+      gold:
+        - name: tickets
+          catalog: nessie
+          schema_name: silver
+
+        - name: trains
+          catalog: nessie
+          schema_name: silver
 
 
 # =====================================================

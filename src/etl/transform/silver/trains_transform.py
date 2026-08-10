@@ -2,6 +2,7 @@ import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.types import TimestampType
 
+from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
 
 
@@ -36,12 +37,15 @@ class TrainsTransform(BaseTransform):
         """
 
         try:
-            return (self.dataframe
+            transformed_df = (
+                self.dataframe
                 .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
                 .withColumn("name", F.trim(F.lower("name")))
                 .withColumn("type", F.coalesce(F.trim(F.lower("type")), F.lit("unknown")))
                 .withColumn("capacity", F.coalesce("capacity", F.lit(0)))
             ).dropDuplicates(["sk_id"])
+            
+            return TransformResult.from_extract(self.extract_result, transformed_df)
         except Exception as e:
             raise RuntimeError(f"Error during trains transformation: {e}") from e
 

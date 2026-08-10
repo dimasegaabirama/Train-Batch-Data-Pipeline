@@ -1,24 +1,27 @@
 from abc import ABC, abstractmethod
+from typing import List
 from typing_extensions import Dict
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
 from src.core import Session, AppLogger, TableManager
-from src.models.data_config import StageType
+from src.models.data_config import StageType, TableMetadata
 
 class BaseLoad(ABC):
 
-    def __init__(self, stage: StageType, session: SparkSession, table_name: str, dataframe: DataFrame, query_params: Dict[str, str], **kwargs):
+    def __init__(
+        self, 
+        stage: StageType, 
+        session: SparkSession, 
+        metadata_tables: List[TableMetadata],
+        dataframe: DataFrame
+    ):
         self.stage = stage
-        self.session: SparkSession = session
+        self.session = session
         self.dataframe = dataframe
         
         self._table_manager = TableManager()
-        self.table_name = table_name
-        
-        self.table_fullname = self._table_manager.get_table_fullname(table_name, stage)
-        self.write_mode = self._table_manager.get_table_write_mode(table_name, stage)
-        self.queries = self._table_manager.get_formated_query(table_name, **query_params)
+        self.metadata_tables = metadata_tables
 
     @abstractmethod
     def load(self):

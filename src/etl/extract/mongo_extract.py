@@ -1,46 +1,73 @@
+from typing_extensions import List, Dict, Optional
 
-from pyspark.sql.dataframe import DataFrame
+from src.models.etl_config import ExtractResult
+from src.utils.table_utils import create_table_fullname
 from .base_extract import BaseExtract
-from src.core import SourceManager
 
 class MongoExtract(BaseExtract):
 
     SOURCE_TYPE = "mongo"
 
-    def extract(self):
+    def extract(self, extract_main: Optional[bool] = True) -> ExtractResult:
 
         database = self.source_config.database
-        condition = self.condition
+        deps_table: Dict[str, "DataFrame"] = {}
 
-        dataframes = {}
+        table_name = self.main_table.name
 
         try:
-            for table_name in self.table_names:
-
-                reader = (
-                    self.session.read.format("mongodb")
-                    .option("database", database)
-                    .option("collection", table_name)
+            dependencies = self.table_deps[table_name]
+            for dep in dependencies:
+                deps_table[dep.name] = self._read_collection(
+                    database, dep.name
                 )
 
-                if condition is not None:
-                    reader = reader.option("aggregation.pipeline", self.condition)
+            if not extract_main and not deps_table:
+                raise ValueError(
+                    f"Cannot extract table '{table_name}': extract_main is set to False, "
+                    f"but no dependencies are defined for this table."
+                )
 
-                schema = self.table_schemas.get(table_name)
+            df = self._read_collection(database, table_name) if extract_main else None
 
-                if schema:
-                    reader = reader.schema(schema)
-                if not schema:
-                    raise ValueError(f"Schema not found for table '{table_name}' in stage '{self.upstream_stage}'")
-
-                df = reader.load()
-
-                dataframes[table_name] = df
-
-            return dataframes
-
+            return ExtractResult(
+                name=table_name,
+                catalog=self.main_table.catalog,
+                schema_name=self.main_table.schema_name,
+                fullname=self.main_table.fullname,
+                write_mode=self.main_table.write_mode,
+                dataframe=df,
+                queries=self.main_table.queries,
+                dependencies=deps_table
+            )
+        
         except Exception as e:
-            raise RuntimeError(f"Failed to extract data for table '{self.table_name}': {e}") from e
+            raise RuntimeError(f"Failed to extract data for table '{table_name}': {e}") from e
+
+
+    def _read_collection(self, database: str, table: str):
+        schema = self.main_table.schema
+        if not schema:
+            raise ValueError(f"Schema not found for table '{table}'")
+
+        reader = (
+            self.session.read.format("mongodb")
+            .option("database", database)
+            .option("collection", table)
+            .schema(schema)
+        )
+
+        condition = self._resolve_condition(table)
+        if condition:
+            reader = reader.option("aggregation.pipeline", condition)
+
+        return reader.load()
+
+
+    def _resolve_condition(self, table: str):
+        if table in self.table_names:
+            return self.condition
+        return None  
 
 
 if __name__ == "__main__":

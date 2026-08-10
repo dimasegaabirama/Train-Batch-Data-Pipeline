@@ -1,6 +1,7 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
 
+from src.models.etl_config import TransformResult
 from src.core.constant import CHECKPOINT_DIR
 from src.etl.transform import BaseTransform
 
@@ -58,8 +59,8 @@ class StationsTransform(BaseTransform):
                 F.col("name"),
                 F.col("city"),
                 F.col("code"),
-            )
+            ).dropDuplicates(["sk_id"])
 
-            return stations_dataframe.dropDuplicates(["sk_id"])
+            return TransformResult.from_extract(self.extract_result, stations_dataframe)
         except Exception as e:
             raise RuntimeError(f"Error during stations transformation: {e}") from e

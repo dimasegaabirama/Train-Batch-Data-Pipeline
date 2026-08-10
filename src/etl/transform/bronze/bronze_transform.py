@@ -3,6 +3,7 @@ from pyspark.sql.dataframe import DataFrame
 
 from src.etl.transform import BaseTransform
 from src.core import DATE_COLUMNS
+from src.models.etl_config import TransformResult
 
 class BronzeTransform(BaseTransform):
 
@@ -29,17 +30,18 @@ class BronzeTransform(BaseTransform):
         """
 
         try:
-            df = self.dataframe.withColumnRenamed("_id", "id")
-
+            if self.dataframe is None:
+                self.logger.warning("No DataFrame provided for transformation.")
+                return None
+            
+            transformed_df = self.dataframe.withColumnRenamed("_id", "id")
             for column in DATE_COLUMNS:
-                if column in df.columns:
-                    df = df.withColumn(
+                if column in transformed_df.columns:
+                    transformed_df = transformed_df.withColumn(
                         column,
                         F.to_timestamp(column)
                     )
-
-            return df
-        
+            return TransformResult.from_extract(self.extract_result, transformed_df)
         except Exception as e:
             raise RuntimeError(f"Error during bronze transformation: {e}") from e
 
