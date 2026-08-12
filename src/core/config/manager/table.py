@@ -71,18 +71,18 @@ class TableManager:
         dependencies: Dict[str, Optional[List[TableDependency]]] = {}
 
         for table_name in table_names:
-            deps = self.get_table_config(table_name).depends_on
+            deps = self.get_table_config(table_name).depends_on.get(stage)
 
             if deps is None:
                 dependencies[table_name] = []
                 continue
 
             dependencies[table_name] = [
-                {
-                    "name": dep.name,
-                    "catalog": dep.catalog,
-                    "schema_name": dep.schema_name,
-                }
+                TableDependency(
+                    name=dep.name,
+                    catalog=dep.catalog,
+                    schema_name=dep.schema_name,
+                )
                 for dep in deps
             ]
 
@@ -113,5 +113,5 @@ class TableManager:
         )
        
 if __name__ == "__main__":
-    table_manager = TableManager().get_table_deps("cancellation_summary", "gold")
+    table_manager = TableManager().get_table_deps("routes", "silver")
     print(table_manager)

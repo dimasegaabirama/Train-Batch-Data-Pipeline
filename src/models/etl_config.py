@@ -40,19 +40,3 @@ class TransformResult(PipelineResult):
             queries=extract.queries,
             cleaned_dataframe=cleaned_dataframe
         )
-
-# =========================
-# Load
-# =========================
-class LoadResult(PipelineResult):
-    loaded_dataframe: object
-
-    @classmethod
-    def from_transform(cls, transform: TransformResult, loaded_dataframe: object) -> "LoadResult":
-        return cls(
-            name=transform.name,
-            fullname=transform.fullname,
-            write_mode=transform.write_mode,
-            queries=transform.queries,
-            loaded_dataframe=loaded_dataframe,
-        )
