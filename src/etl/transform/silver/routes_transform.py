@@ -46,10 +46,6 @@ class RoutesTransform(BaseTransform):
         """
 
         try:
-            if self.dataframe is None:
-                self.logger.warning("No DataFrame provided for transformation.")
-                return self.dataframe
-            
             routes_dataframe = (self.dataframe
                 .withColumn("sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
                 .withColumn("origin", F.trim(F.lower(F.col("origin"))))

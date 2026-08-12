@@ -10,13 +10,12 @@ class IcebergExtract(BaseExtract):
 
     def extract(self, extract_main: Optional[bool] = True) -> ExtractResult:
 
-        table_name = self.main_table.name
         full_table_name = self.main_table.fullname
 
         deps_table: Dict[str, "DataFrame"] = {}
 
         try:
-            dependencies = self.table_deps[table_name]
+            dependencies = self.table_deps[self.table_name]
             for dep in dependencies:
                 deps_table[dep.name] = self._read_table(
                     create_table_fullname(dep.catalog, dep.schema_name, dep.name)
@@ -24,17 +23,18 @@ class IcebergExtract(BaseExtract):
 
             if not extract_main and not deps_table:
                 raise ValueError(
-                    f"Cannot extract table '{table_name}': extract_main is set to False, "
+                    f"Cannot extract table '{self.table_name}': extract_main is set to False, "
                     f"but no dependencies are defined for this table."
                 )
         
             df = self._read_table(full_table_name) if extract_main else None
 
             return ExtractResult(
-                name=table_name,
+                name=self.table_name,
                 catalog=self.main_table.catalog,
                 schema_name=self.main_table.schema_name,
                 fullname=full_table_name,
+                location=self.main_table.location,
                 write_mode=self.main_table.write_mode,
                 dataframe=df,
                 queries=self.main_table.queries,
@@ -42,7 +42,7 @@ class IcebergExtract(BaseExtract):
             )
         
         except Exception as e:
-            raise RuntimeError(f"Failed to extract data for table '{table_name}': {e}") from e
+            raise RuntimeError(f"Failed to extract data for table '{self.table_name}': {e}") from e
 
     def _read_table(self, table: str) -> "DataFrame":
         df = self.session.read.table(table)

@@ -22,10 +22,6 @@ class PassengersTransform(BaseTransform):
         """
 
         try:
-            if self.dataframe is None:
-                self.logger.warning("No DataFrame provided for transformation.")
-                return self.dataframe
-
             transformed_df = (
                 self.dataframe
                 .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))

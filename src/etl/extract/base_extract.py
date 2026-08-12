@@ -15,22 +15,23 @@ class BaseExtract(ABC):
 
     def __init__(
         self,
-        stage: StageType,
         session: SparkSession,
         main_table: TableMetadata,
         table_deps: Dict[str, List[TableDependency]],
         condition: Optional[Union[str, Column]] = None,
     ):
-        self._table_manager = TableManager()
-        self._source_manager = SourceManager()
-        self._schema_manager = SchemaManager()
+        if main_table is None:
+            raise ValueError("main_table must be provided.")
 
-        self.stage = stage
+        self._source_manager = SourceManager()
+
         self.session = session
         self.condition = condition
 
         self.main_table = main_table
         self.table_deps = table_deps
+
+        self.table_name = self.main_table.name
 
         if self.SOURCE_TYPE:
             self.source_config = self._source_manager.get_source_config(

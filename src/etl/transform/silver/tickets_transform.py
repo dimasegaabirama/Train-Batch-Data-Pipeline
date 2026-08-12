@@ -32,7 +32,7 @@ class TicketsTransform(BaseTransform):
         """
 
         try:
-
+            
             tickets_dataframe = (
                 self.dataframe
                 .withColumn("ticket_id", F.lower(F.trim(F.col("ticket_id"))))

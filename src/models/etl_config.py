@@ -35,11 +35,11 @@ class TransformResult(PipelineResult):
         return cls(
             name=extract.name,
             fullname=extract.fullname,
+            location=extract.location,
             write_mode=extract.write_mode,
             queries=extract.queries,
-            cleaned_dataframe=cleaned_dataframe,
+            cleaned_dataframe=cleaned_dataframe
         )
-
 
 # =========================
 # Load

@@ -7,6 +7,7 @@ from pathlib import Path
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
+from src.models.etl_config import ExtractResult, TransformResult
 from src.core import (
     AppLogger,
     DateManager,
@@ -21,7 +22,7 @@ from src.etl.load import BaseLoad
 
 from src.models.data_config import StageType
 from src.utils.nessie_utils import pipeline_branch
-from src.utils.table_utils import normalize_table_info
+from src.utils.table_utils import create_table_fullname
 
 
 class PipelineOrchestrator:
@@ -64,13 +65,43 @@ class PipelineOrchestrator:
                 f"Data Quality Tests Failed for Stage: {stage} | Error: {e}"
             )
 
+    def _prepared_inputs(self, stage: StageType, table_name: str) -> BaseExtract:
+
+        query_params = {
+            "full_table_name": self._table_manager.get_table_fullname(table_name, stage),
+            "table_view": f"{table_name}_view"
+        }
+
+        table_metadata = self._table_manager.get_table_metadata(table_name, stage, query_params)
+        table_deps = self._table_manager.get_table_deps(table_name, stage)
+
+        extractor: BaseExtract = resolve_registry_class(stage, table_name, "extract", required=False)
+
+        field = self._filter_manager.get_field(stage, table_name)
+        condition_cls = resolve_registry_class(stage, table_name, "filter", required=False)
+        condition = (
+            condition_cls(field=field, start_date=self._date_manager.get_start_date(), end_date=self._date_manager.get_end_date())
+            if condition_cls is not None
+            else None
+        )
+
+        self.logger.debug("Using main table: %s", table_metadata)
+        self.logger.debug("Using table deps: %s", table_deps)
+        self.logger.debug("Using extractor: %s", extractor)
+        self.logger.debug("Using condition: %s", condition)
+        self.logger.debug("Using field: %s", field)
+
+        return extractor(
+            session=self.session,
+            main_table=table_metadata,
+            table_deps=table_deps,
+            condition=condition
+        )
+
     # =========================
     # EXTRACT
     # =========================
-    def extract(self, stage: StageType, table_name: str) -> DataFrame:
-
-        start_date = self._date_manager.get_start_date()
-        end_date = self._date_manager.get_end_date()
+    def extract(self, stage: StageType, table_name: str) -> ExtractResult:
 
         self.logger.info(
             "[EXTRACT] Extracting data for table: %s | Stage: %s",
@@ -78,48 +109,21 @@ class PipelineOrchestrator:
             stage
         )
 
-        deps = self._table_manager.get_table_deps(table_name)
-
-        metadata_tables = [
-            self._table_manager.get_table_metadata(table_name, stage), 
-            *[self._table_manager.get_table_metadata(dep, stage) for dep in deps if dep["name"] != table_name]
-        ]
-
-        extractor: BaseExtract = resolve_registry_class(stage, table_name, "extract", required= False)
-
-        condition_cls = resolve_registry_class(
-            stage, table_name, "filter", required=False
-        )
-
-        field = self._filter_manager.get_field(stage, table_name)
-        condition = (
-            condition_cls(field=field, start_date=start_date, end_date=end_date)
-            if condition_cls is not None
-            else None
-        )
-
-        self.logger.debug("Using metadata_tables: %s", metadata_tables)
-        self.logger.debug("Using extractor: %s", extractor)
-        self.logger.debug("Using condition: %s", condition)
-        self.logger.debug("Using field: %s", field)
-
-        return extractor(
-            stage=stage,
-            session=self.session,
-            metadata_tables=metadata_tables,
-            condition=condition
-        ).extract()
+        extractor = self._prepared_inputs(stage, table_name)
+        return extractor.extract()
 
 
     # =========================
     # TRANSFORM
     # =========================
     def transform(
-        self, stage: StageType, inputs: Dict[str, DataFrame], table_name: str
-    ) -> DataFrame:
+        self, stage: StageType, table_name: str, inputs: ExtractResult
+    ) -> TransformResult:
 
         self.logger.info(
-            "[TRANSFORM] Transforming data for table: %s | Stage: %s", table_name, stage
+            "[TRANSFORM] Transforming data for table: %s | Stage: %s", 
+            table_name, 
+            stage
         )
 
         transformer: BaseTransform = resolve_registry_class(
@@ -129,54 +133,33 @@ class PipelineOrchestrator:
         self.logger.debug("Using transformer: %s", transformer)
 
         return transformer(
+            stage=stage,
             session=self.session,
-            table_name=table_name,
-            inputs=inputs,
+            extract_result=inputs,
         ).transform()
 
     # =========================
     # LOAD
     # =========================
     def load(
-        self, stage: StageType, dataframe: DataFrame, table_name: str
-    ) -> DataFrame:
+        self, stage: StageType, table_name: str, inputs: TransformResult
+    ):
 
-        self.logger.info("[LOAD] Loading data for table: %s | Stage: %s", table_name, stage)
-
-        table_metadata = self._table_manager.get_table_metadata(table_name, stage)
-        
-        full_table_name = table_metadata["fullname"]
-        table_view_name = f"{table_name}_view"
-        partitioned_by = self._table_manager.get_table_partitioned_by(
-            table_name=table_name
+        self.logger.info(
+            "[LOAD] Loading data for table: %s | Stage: %s", 
+            table_name, 
+            stage
         )
-
-        query_params = {
-            "full_table_name": full_table_name,
-            "table_view": table_view_name,
-            "partitioned_by": partitioned_by,
-        }
-
-        write_mode = self._table_manager.get_table_write_mode(
-            table_name=table_name, stage=stage
-        )
-        if write_mode == "custom":
-            dataframe.createOrReplaceTempView(table_view_name)
 
         loader: BaseLoad = resolve_registry_class(
             stage=stage, table_name=table_name, component_name="load"
         )
 
         self.logger.debug("Using loader: %s", loader)
-        self.logger.debug("Using query params: %s", query_params)
-        self.logger.debug("Using write mode: %s", write_mode)
 
         return loader(
-            stage=stage,
             session=self.session,
-            dataframe=dataframe,
-            table_name=table_name,
-            query_params=query_params,
+            transform_result=inputs,
         ).load()
 
     # =========================
@@ -185,15 +168,21 @@ class PipelineOrchestrator:
     @pipeline_branch
     def run_table(self, stage: StageType, table_name: str) -> None:
 
-        extract_stage = self.extract(stage=stage, table_name=table_name)
+        extract_stage = self.extract(stage, table_name)
         transform_stage = self.transform(
-            stage=stage, dataframe=extract_stage, table_name=table_name
+            stage=stage, 
+            table_name=table_name,
+            inputs=extract_stage
         )
 
         if self.quality_check:
-            self._run_tests(stage=stage, table_name=table_name)
+            self._run_tests(stage, table_name)
 
-        self.load(stage=stage, dataframe=transform_stage, table_name=table_name)
+        self.load(
+            stage=stage, 
+            dataframe=transform_stage, 
+            table_name=table_name
+        )
 
     def run_all_tables(self, stage: StageType, table_names: List[str]) -> None:
         for table_name in table_names:

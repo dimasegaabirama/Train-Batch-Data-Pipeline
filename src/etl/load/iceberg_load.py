@@ -8,17 +8,12 @@ from src.utils.table_utils import create_table_fullname
 class IcebergLoad(BaseLoad):
 
     def load(self) -> None:
-
-        location = self.transform_result.location
-        write_mode = self.transform_result.write_mode
-        queries = self.transform_result.queries
-
         try:
-            writer = self.dataframe.writeTo(location)
-            writer_action = self._resolve_write_mode(write_mode, writer)
+            writer = self.dataframe.writeTo(self.location)
+            writer_action = self._resolve_write_mode(self.write_mode, writer)
 
             if self.write_mode == "custom":
-                for query in queries:
+                for query in self.queries:
                     writer_action(query)
             else:
                 writer_action()

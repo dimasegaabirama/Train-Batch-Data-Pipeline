@@ -13,10 +13,8 @@ class MongoExtract(BaseExtract):
         database = self.source_config.database
         deps_table: Dict[str, "DataFrame"] = {}
 
-        table_name = self.main_table.name
-
         try:
-            dependencies = self.table_deps[table_name]
+            dependencies = self.table_deps[self.table_name]
             for dep in dependencies:
                 deps_table[dep.name] = self._read_collection(
                     database, dep.name
@@ -24,17 +22,18 @@ class MongoExtract(BaseExtract):
 
             if not extract_main and not deps_table:
                 raise ValueError(
-                    f"Cannot extract table '{table_name}': extract_main is set to False, "
+                    f"Cannot extract table '{self.table_name}': extract_main is set to False, "
                     f"but no dependencies are defined for this table."
                 )
 
-            df = self._read_collection(database, table_name) if extract_main else None
+            df = self._read_collection(database, self.table_name) if extract_main else None
 
             return ExtractResult(
-                name=table_name,
+                name=self.table_name,
                 catalog=self.main_table.catalog,
                 schema_name=self.main_table.schema_name,
                 fullname=self.main_table.fullname,
+                location=self.main_table.location,
                 write_mode=self.main_table.write_mode,
                 dataframe=df,
                 queries=self.main_table.queries,
@@ -42,7 +41,7 @@ class MongoExtract(BaseExtract):
             )
         
         except Exception as e:
-            raise RuntimeError(f"Failed to extract data for table '{table_name}': {e}") from e
+            raise RuntimeError(f"Failed to extract data for table '{self.table_name}': {e}") from e
 
 
     def _read_collection(self, database: str, table: str):
@@ -65,7 +64,7 @@ class MongoExtract(BaseExtract):
 
 
     def _resolve_condition(self, table: str):
-        if table in self.table_names:
+        if table == self.table_name:
             return self.condition
         return None  
 

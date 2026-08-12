@@ -11,16 +11,20 @@ class BaseLoad(ABC):
 
     def __init__(
         self, 
-        stage: StageType, 
         session: SparkSession, 
-        transform_result: TransformResult,
-        dataframe: DataFrame
+        transform_result: TransformResult
     ):
-        self.stage = stage
+        if transform_result is None:
+            raise ValueError("transform_result must be provided.")
+        
         self.session = session
-        self.dataframe = dataframe
-
         self.transform_result = transform_result
+
+        self.dataframe: DataFrame = self.transform_result.cleaned_dataframe
+        self.write_mode: str = self.transform_result.write_mode
+        self.location: str = self.transform_result.location
+        self.queries: List[str] = self.transform_result.queries
+
 
     @abstractmethod
     def load(self):
