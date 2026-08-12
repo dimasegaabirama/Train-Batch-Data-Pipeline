@@ -30,10 +30,6 @@ class BronzeTransform(BaseTransform):
         """
 
         try:
-            if self.dataframe is None:
-                self.logger.warning("No DataFrame provided for transformation.")
-                return None
-            
             transformed_df = self.dataframe.withColumnRenamed("_id", "id")
             for column in DATE_COLUMNS:
                 if column in transformed_df.columns:

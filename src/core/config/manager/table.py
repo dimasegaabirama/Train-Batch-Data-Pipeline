@@ -71,7 +71,7 @@ class TableManager:
         dependencies: Dict[str, Optional[List[TableDependency]]] = {}
 
         for table_name in table_names:
-            deps = self.get_table_config(table_name).depends_on.get(stage)
+            deps = self.get_table_config(table_name).depends_on
 
             if deps is None:
                 dependencies[table_name] = []
@@ -83,7 +83,7 @@ class TableManager:
                     catalog=dep.catalog,
                     schema_name=dep.schema_name,
                 )
-                for dep in deps
+                for dep in deps.get(stage, [])
             ]
 
         return dependencies
@@ -93,22 +93,24 @@ class TableManager:
         schema = self._schema_manager.get_stage_schema_name(stage)
         return create_table_fullname(catalog, schema, table_name)
 
-    def get_table_metadata(self, table_ref: str, stage: StageType, query_params: Dict[str, str] = None) -> TableMetadata:
+    def get_table_metadata(self, table_ref: str, stage: StageType, query_params: Optional[Dict[str, str]] = None) -> TableMetadata:
         if stage is None:
             raise ValueError("Stage must be provided to get table metadata.")
 
         catalog = self._catalog_manager.get_catalog_name()
-        schema = self._schema_manager.get_stage_schema_name(stage)
+        schema_name = self._schema_manager.get_stage_schema_name(stage)
         upstream_stage = self._schema_manager.get_stage_upstream(stage)
 
         return TableMetadata(
             name=table_ref, 
             catalog=catalog, 
-            schema_name=schema, 
-            write_mode=self.get_table_write_mode(table_ref, stage), 
-            fullname=self.get_table_fullname(table_ref, upstream_stage), 
-            location=self.get_table_fullname(table_ref, stage), 
-            schema=self.get_table_schema(table_ref, upstream_stage), 
+            schema_name=schema_name,                                        #schema_name is the schema/namespace of the current stage, which is used for loading the table.
+            write_mode=self.get_table_write_mode(table_ref, stage),
+            
+            fullname=self.get_table_fullname(table_ref, upstream_stage),    #For Extract, we need to get the full name of the table from the upstream stage, not the current stage. 
+            location=self.get_table_fullname(table_ref, stage),             #For load, we need to get the full name of the table from the current stage, not the upstream stage.
+            
+            schema=self.get_table_schema(table_ref, upstream_stage),        #schema is structure of the table, which is used for validaton schema when extracting data from the upstream stage.
             queries=self.get_formated_query(table_ref, **(query_params or {}))
         )
        
