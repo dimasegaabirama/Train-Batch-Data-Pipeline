@@ -38,6 +38,7 @@ class IcebergExtract(BaseExtract):
                 write_mode=self.main_table.write_mode,
                 dataframe=df,
                 queries=self.main_table.queries,
+                query_params=self.main_table.query_params,
                 dependencies=deps_table
             )
         

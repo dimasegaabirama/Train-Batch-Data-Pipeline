@@ -12,6 +12,7 @@ class PipelineResult(BaseModel):
     location: str
     write_mode: WriteType
     queries: List[str] = []
+    query_params: Optional[Dict[str, str]] = None
 
 
 # =========================
@@ -38,5 +39,7 @@ class TransformResult(PipelineResult):
             location=extract.location,
             write_mode=extract.write_mode,
             queries=extract.queries,
+            query_params=extract.query_params,
             cleaned_dataframe=cleaned_dataframe
         )
+

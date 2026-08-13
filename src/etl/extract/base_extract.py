@@ -43,3 +43,4 @@ class BaseExtract(ABC):
     @abstractmethod
     def extract(self, extract_main: Optional[bool] = True) -> ExtractResult:
         pass
+

@@ -12,6 +12,7 @@ class IcebergLoad(BaseLoad):
             writer_action = self._resolve_write_mode(self.write_mode, writer)
 
             if self.write_mode == "custom":
+                self.dataframe.createOrReplaceTempView(self.transform_result.query_params["table_view"])
                 for query in self.queries:
                     writer_action(query)
             else:

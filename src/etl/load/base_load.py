@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
-from typing_extensions import Dict
+from typing_extensions import Dict, List, Optional
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
@@ -24,6 +23,7 @@ class BaseLoad(ABC):
         self.write_mode: str = self.transform_result.write_mode
         self.location: str = self.transform_result.location
         self.queries: List[str] = self.transform_result.queries
+        self.query_params: Optional[Dict[str, str]] = self.transform_result.query_params
 
 
     @abstractmethod
