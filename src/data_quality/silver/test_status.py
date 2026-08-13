@@ -7,19 +7,33 @@ class TestStatus(BaseTest):
 
     stage = "silver"
     table_name = "status"
-    
+
     def test_completeness(self):
         check = (
-            Check(self.session, CheckLevel.Error, "Completeness Check")
-            .isComplete("id", "ID shouldn't have null value")
-            .isComplete("status", "STATUS shouldn't have null value")
+            Check(
+                self.session,
+                CheckLevel.Error,
+                "Completeness Check",
+            )
+            .isComplete(
+                "id",
+                "ID shouldn't have null value",
+            )
+            .isComplete(
+                "status",
+                "STATUS shouldn't have null value",
+            )
         )
 
         self.run_tests(check)
 
     def test_uniqueness(self):
         check = (
-            Check(self.session, CheckLevel.Error, "Uniqueness Check")
+            Check(
+                self.session,
+                CheckLevel.Error,
+                "Uniqueness Check",
+            )
             .isUnique(
                 "id",
                 "ID must be unique",
@@ -28,19 +42,22 @@ class TestStatus(BaseTest):
 
         self.run_tests(check)
 
-
     def test_string(self):
         check = (
-            Check(self.session, CheckLevel.Warning, "String Validation")
+            Check(
+                self.session,
+                CheckLevel.Warning,
+                "String Validation",
+            )
             .isContainedIn(
-                column = "status",
-                allowed_values = [
+                column="status",
+                allowed_values=[
                     "paid",
                     "unpaid",
                     "cancelled",
-                    "refunded"
+                    "refunded",
                 ],
-                hint = "Invalid status"
+                hint="Invalid status",
             )
         )
 
@@ -48,7 +65,11 @@ class TestStatus(BaseTest):
 
     def test_dataset(self):
         check = (
-            Check(self.session, CheckLevel.Error, "Dataset Validation")
+            Check(
+                self.session,
+                CheckLevel.Error,
+                "Dataset Validation",
+            )
             .hasSize(
                 lambda x: x > 0,
                 "Dataset must not be empty",

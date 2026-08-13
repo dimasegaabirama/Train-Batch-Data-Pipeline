@@ -10,12 +10,31 @@ class TestPassengers(BaseTest):
 
     def test_completeness(self):
         check = (
-            Check(self.session, CheckLevel.Error, "Completeness Check")
-            .isComplete("sk_id", "SK_ID shouldn't have null value")
-            .isComplete("id", "ID shouldn't have null value")
-            .isComplete("name", "NAME shouldn't have null value")
-            .isComplete("start_date", "START_DATE shouldn't have null value")
-            .isComplete("is_active", "IS_ACTIVE shouldn't have null value")
+            Check(
+                self.session,
+                CheckLevel.Error,
+                "Completeness Check",
+            )
+            .isComplete(
+                "sk_id",
+                "SK_ID shouldn't have null value",
+            )
+            .isComplete(
+                "id",
+                "ID shouldn't have null value",
+            )
+            .isComplete(
+                "name",
+                "NAME shouldn't have null value",
+            )
+            .isComplete(
+                "start_date",
+                "START_DATE shouldn't have null value",
+            )
+            .isComplete(
+                "is_active",
+                "IS_ACTIVE shouldn't have null value",
+            )
             .areAnyComplete(
                 ["phone", "email"],
                 "Either PHONE or EMAIL must not be null",
@@ -24,13 +43,36 @@ class TestPassengers(BaseTest):
 
         self.run_tests(check)
 
+    def test_uniqueness(self):
+        check = (
+            Check(
+                self.session,
+                CheckLevel.Error,
+                "Uniqueness Check",
+            )
+            .isUnique(
+                "sk_id",
+                "SK_ID must be unique",
+            )
+        )
+
+        self.run_tests(check)
+
     def test_string(self):
         check = (
-            Check(self.session, CheckLevel.Warning, "String Validation")
+            Check(
+                self.session,
+                CheckLevel.Warning,
+                "String Validation",
+            )
             .isContainedIn(
-                column = "gender",
-                allowed_values = ["male", "female", "unknown"],
-                hint = "Gender must be male/female/unknown",
+                column="gender",
+                allowed_values=[
+                    "male",
+                    "female",
+                    "unknown",
+                ],
+                hint="Gender must be male/female/unknown",
             )
             .hasMinLength(
                 "name",
@@ -43,12 +85,14 @@ class TestPassengers(BaseTest):
                 "Name must be at most 100 characters",
             )
             .satisfies(
-                "email IS NULL OR email RLIKE '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'",
+                "email IS NULL OR "
+                "email RLIKE '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'",
                 "email_validation",
                 lambda x: x == 1.0,
             )
             .satisfies(
-                "phone IS NULL OR phone RLIKE '^[0-9]{10,12}$'",
+                "phone IS NULL OR "
+                "phone RLIKE '^[0-9]{10,12}$'",
                 "phone_validation",
                 lambda x: x == 1.0,
             )
@@ -58,7 +102,11 @@ class TestPassengers(BaseTest):
 
     def test_numeric(self):
         check = (
-            Check(self.session, CheckLevel.Error, "Numeric Validation")
+            Check(
+                self.session,
+                CheckLevel.Error,
+                "Numeric Validation",
+            )
             .hasMin(
                 "id",
                 lambda x: x > 0,
@@ -70,7 +118,11 @@ class TestPassengers(BaseTest):
 
     def test_date(self):
         check = (
-            Check(self.session, CheckLevel.Error, "Date Validation")
+            Check(
+                self.session,
+                CheckLevel.Error,
+                "Date Validation",
+            )
             .satisfies(
                 "end_date IS NULL OR end_date >= start_date",
                 "date_validation",
@@ -82,21 +134,14 @@ class TestPassengers(BaseTest):
 
     def test_dataset(self):
         check = (
-            Check(self.session, CheckLevel.Error, "Dataset Validation")
+            Check(
+                self.session,
+                CheckLevel.Error,
+                "Dataset Validation",
+            )
             .hasSize(
                 lambda x: x > 0,
                 "Dataset must not be empty",
-            )
-        )
-
-        self.run_tests(check)
-
-    def test_uniqueness(self):
-        check = (
-            Check(self.session, CheckLevel.Error, "Uniqueness Check")
-            .isUnique(
-                "sk_id",
-                "SK_ID must be unique",
             )
         )
 

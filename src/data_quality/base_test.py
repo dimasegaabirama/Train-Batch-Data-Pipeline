@@ -1,15 +1,15 @@
 import json
 from abc import ABC
-from logging import Logger
+from typing_extensions import List, Union, Optional
 from src.core.logger import AppLogger
 
 import pytest
 from pydeequ.checks import Check
 from pydeequ.verification import VerificationResult, VerificationSuite
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import SparkSession
 from pyspark.sql.types import _parse_datatype_string
 
-from src.core import SchemaManager, Session, SourceManager, TableManager
+from src.core import PipelineManager, SchemaManager, Session, SourceManager, TableManager
 
 
 class BaseTest(ABC):

@@ -10,48 +10,33 @@ class TestClass(BaseTest):
 
     def test_completeness(self):
         check = (
-            Check(self.session, CheckLevel.Error, "Completeness Check")
+            Check(self.session, CheckLevel.Error, "Class - Completeness Check")
             .isComplete("id", "ID shouldn't have null value")
-            .isComplete("class_name", "STATUS shouldn't have null value")
+            .isComplete("class_name", "class_name shouldn't have null value")  # fix hint
         )
-
         self.run_tests(check)
 
     def test_uniqueness(self):
         check = (
-            Check(self.session, CheckLevel.Error, "Uniqueness Check")
-            .isUnique(
-                "id",
-                "ID must be unique",
-            )
+            Check(self.session, CheckLevel.Error, "Class - Uniqueness Check")
+            .isUnique("id", "ID must be unique")
         )
-
         self.run_tests(check)
 
-    def test_string(self):
+    def test_class_name_allowed_values(self):  # renamed
         check = (
-            Check(self.session, CheckLevel.Warning, "String Validation")
+            Check(self.session, CheckLevel.Warning, "Class - String Validation")
             .isContainedIn(
-                column = "class_name",
-                allowed_values = [
-                    "vip",
-                    "family",
-                    "regular",
-                    "promo"
-                ],
-                hint = "Invalid class name"
+                column="class_name",
+                allowed_values=["vip", "family", "regular", "promo"],
+                hint="Invalid class_name value",
             )
         )
-
         self.run_tests(check)
 
-    def test_dataset(self):
+    def test_row_count_not_empty(self):  # renamed
         check = (
-            Check(self.session, CheckLevel.Error, "Dataset Validation")
-            .hasSize(
-                lambda x: x > 0,
-                "Dataset must not be empty",
-            )
+            Check(self.session, CheckLevel.Error, "Class - Dataset Validation")
+            .hasSize(lambda x: x > 0, "Dataset must not be empty")
         )
-
         self.run_tests(check)
