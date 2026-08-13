@@ -687,8 +687,75 @@ tables:
         lost_revenue DECIMAL(18, 2),
         avg_hours_to_cancel DECIMAL(10, 2),
         updated_at TIMESTAMP
+
     query:
       - |
+        MERGE INTO {full_table_name} t
+        USING {table_view} s
+
+        ON t.booking_date = s.booking_date
+        AND t.route_sk_id = s.route_sk_id
+        AND t.class_id = s.class_id
+
+        WHEN MATCHED AND (
+            NOT (t.total_ticket_id <=> s.total_ticket_id)
+            OR NOT (t.total_created <=> s.total_created)
+            OR NOT (t.total_paid <=> s.total_paid)
+            OR NOT (t.total_cancelled <=> s.total_cancelled)
+            OR NOT (t.total_refunded <=> s.total_refunded)
+            OR NOT (t.cancel_before_payment <=> s.cancel_before_payment)
+            OR NOT (t.cancel_after_payment <=> s.cancel_after_payment)
+            OR NOT (t.cancellation_rate <=> s.cancellation_rate)
+            OR NOT (t.lost_revenue <=> s.lost_revenue)
+            OR NOT (t.avg_hours_to_cancel <=> s.avg_hours_to_cancel)
+        )
+
+        THEN UPDATE SET
+            t.total_ticket_id = s.total_ticket_id,
+            t.total_created = s.total_created,
+            t.total_paid = s.total_paid,
+            t.total_cancelled = s.total_cancelled,
+            t.total_refunded = s.total_refunded,
+            t.cancel_before_payment = s.cancel_before_payment,
+            t.cancel_after_payment = s.cancel_after_payment,
+            t.cancellation_rate = s.cancellation_rate,
+            t.lost_revenue = s.lost_revenue,
+            t.avg_hours_to_cancel = s.avg_hours_to_cancel,
+            t.updated_at = s.updated_at
+
+        WHEN NOT MATCHED THEN
+            INSERT (
+                booking_date,
+                route_sk_id,
+                class_id,
+                total_ticket_id,
+                total_created,
+                total_paid,
+                total_cancelled,
+                total_refunded,
+                cancel_before_payment,
+                cancel_after_payment,
+                cancellation_rate,
+                lost_revenue,
+                avg_hours_to_cancel,
+                updated_at
+            )
+            VALUES (
+                s.booking_date,
+                s.route_sk_id,
+                s.class_id,
+                s.total_ticket_id,
+                s.total_created,
+                s.total_paid,
+                s.total_cancelled,
+                s.total_refunded,
+                s.cancel_before_payment,
+                s.cancel_after_payment,
+                s.cancellation_rate,
+                s.lost_revenue,
+                s.avg_hours_to_cancel,
+                s.updated_at
+            )
 
     depends_on:
       gold:
@@ -714,8 +781,63 @@ tables:
         net_revenue_after_refund DECIMAL(18, 2),
         avg_ticket_price DECIMAL(18, 2),
         updated_at TIMESTAMP
+
     query:
       - |
+        MERGE INTO {full_table_name} t
+        USING {table_view} s
+
+        ON t.revenue_date = s.revenue_date
+        AND t.route_sk_id = s.route_sk_id
+        AND t.class_id = s.class_id
+
+        WHEN MATCHED AND (
+            NOT (t.total_tickets <=> s.total_tickets)
+            OR NOT (t.gross_revenue <=> s.gross_revenue)
+            OR NOT (t.total_discount <=> s.total_discount)
+            OR NOT (t.net_revenue <=> s.net_revenue)
+            OR NOT (t.refunded_revenue <=> s.refunded_revenue)
+            OR NOT (t.net_revenue_after_refund <=> s.net_revenue_after_refund)
+            OR NOT (t.avg_ticket_price <=> s.avg_ticket_price)
+        )
+
+        THEN UPDATE SET
+            t.total_tickets = s.total_tickets,
+            t.gross_revenue = s.gross_revenue,
+            t.total_discount = s.total_discount,
+            t.net_revenue = s.net_revenue,
+            t.refunded_revenue = s.refunded_revenue,
+            t.net_revenue_after_refund = s.net_revenue_after_refund,
+            t.avg_ticket_price = s.avg_ticket_price,
+            t.updated_at = s.updated_at
+
+        WHEN NOT MATCHED THEN
+            INSERT (
+                revenue_date,
+                route_sk_id,
+                class_id,
+                total_tickets,
+                gross_revenue,
+                total_discount,
+                net_revenue,
+                refunded_revenue,
+                net_revenue_after_refund,
+                avg_ticket_price,
+                updated_at
+            )
+            VALUES (
+                s.revenue_date,
+                s.route_sk_id,
+                s.class_id,
+                s.total_tickets,
+                s.gross_revenue,
+                s.total_discount,
+                s.net_revenue,
+                s.refunded_revenue,
+                s.net_revenue_after_refund,
+                s.avg_ticket_price,
+                s.updated_at
+            )
 
     depends_on:
       gold:
@@ -742,8 +864,67 @@ tables:
         total_refunded_with_promo BIGINT,
         total_refunded_with_family_flag BIGINT,
         updated_at TIMESTAMP
+
     query:
       - |
+        MERGE INTO {full_table_name} t
+        USING {table_view} s
+
+        ON t.refund_date = s.refund_date
+        AND t.route_sk_id = s.route_sk_id
+        AND t.class_id = s.class_id
+
+        WHEN MATCHED AND (
+            NOT (t.total_tickets_refunded <=> s.total_tickets_refunded)
+            OR NOT (t.total_refund_amount <=> s.total_refund_amount)
+            OR NOT (t.avg_refund_amount <=> s.avg_refund_amount)
+            OR NOT (t.avg_days_cancel_to_refund <=> s.avg_days_cancel_to_refund)
+            OR NOT (t.avg_hours_to_refund <=> s.avg_hours_to_refund)
+            OR NOT (t.avg_days_created_to_refund <=> s.avg_days_created_to_refund)
+            OR NOT (t.total_refunded_with_promo <=> s.total_refunded_with_promo)
+            OR NOT (t.total_refunded_with_family_flag <=> s.total_refunded_with_family_flag)
+        )
+
+        THEN UPDATE SET
+            t.total_tickets_refunded = s.total_tickets_refunded,
+            t.total_refund_amount = s.total_refund_amount,
+            t.avg_refund_amount = s.avg_refund_amount,
+            t.avg_days_cancel_to_refund = s.avg_days_cancel_to_refund,
+            t.avg_hours_to_refund = s.avg_hours_to_refund,
+            t.avg_days_created_to_refund = s.avg_days_created_to_refund,
+            t.total_refunded_with_promo = s.total_refunded_with_promo,
+            t.total_refunded_with_family_flag = s.total_refunded_with_family_flag,
+            t.updated_at = s.updated_at
+
+        WHEN NOT MATCHED THEN
+            INSERT (
+                refund_date,
+                route_sk_id,
+                class_id,
+                total_tickets_refunded,
+                total_refund_amount,
+                avg_refund_amount,
+                avg_days_cancel_to_refund,
+                avg_hours_to_refund,
+                avg_days_created_to_refund,
+                total_refunded_with_promo,
+                total_refunded_with_family_flag,
+                updated_at
+            )
+            VALUES (
+                s.refund_date,
+                s.route_sk_id,
+                s.class_id,
+                s.total_tickets_refunded,
+                s.total_refund_amount,
+                s.avg_refund_amount,
+                s.avg_days_cancel_to_refund,
+                s.avg_hours_to_refund,
+                s.avg_days_created_to_refund,
+                s.total_refunded_with_promo,
+                s.total_refunded_with_family_flag,
+                s.updated_at
+            )
 
     depends_on:
       gold:
@@ -775,6 +956,77 @@ tables:
         updated_at TIMESTAMP
     query:
       - |
+        MERGE INTO {full_table_name} t
+        USING {table_view} s
+
+        ON t.departure_date = s.departure_date
+        AND t.train_sk_id = s.train_sk_id
+
+        WHEN MATCHED AND (
+            NOT (t.name <=> s.name)
+            OR NOT (t.type <=> s.type)
+            OR NOT (t.capacity <=> s.capacity)
+            OR NOT (t.total_tickets_sold <=> s.total_tickets_sold)
+            OR NOT (t.total_cancelled_tickets <=> s.total_cancelled_tickets)
+            OR NOT (t.net_tickets_sold <=> s.net_tickets_sold)
+            OR NOT (t.total_revenue <=> s.total_revenue)
+            OR NOT (t.family_ticket_count <=> s.family_ticket_count)
+            OR NOT (t.promo_ticket_count <=> s.promo_ticket_count)
+            OR NOT (t.cancelled_after_departure_flag <=> s.cancelled_after_departure_flag)
+            OR NOT (t.occupancy_rate <=> s.occupancy_rate)
+            OR NOT (t.is_fully_booked <=> s.is_fully_booked)
+        )
+
+        THEN UPDATE SET
+            t.name = s.name,
+            t.type = s.type,
+            t.capacity = s.capacity,
+            t.total_tickets_sold = s.total_tickets_sold,
+            t.total_cancelled_tickets = s.total_cancelled_tickets,
+            t.net_tickets_sold = s.net_tickets_sold,
+            t.total_revenue = s.total_revenue,
+            t.family_ticket_count = s.family_ticket_count,
+            t.promo_ticket_count = s.promo_ticket_count,
+            t.cancelled_after_departure_flag = s.cancelled_after_departure_flag,
+            t.occupancy_rate = s.occupancy_rate,
+            t.is_fully_booked = s.is_fully_booked,
+            t.updated_at = s.updated_at
+
+        WHEN NOT MATCHED THEN
+            INSERT (
+                departure_date,
+                train_sk_id,
+                name,
+                type,
+                capacity,
+                total_tickets_sold,
+                total_cancelled_tickets,
+                net_tickets_sold,
+                total_revenue,
+                family_ticket_count,
+                promo_ticket_count,
+                cancelled_after_departure_flag,
+                occupancy_rate,
+                is_fully_booked,
+                updated_at
+            )
+            VALUES (
+                s.departure_date,
+                s.train_sk_id,
+                s.name,
+                s.type,
+                s.capacity,
+                s.total_tickets_sold,
+                s.total_cancelled_tickets,
+                s.net_tickets_sold,
+                s.total_revenue,
+                s.family_ticket_count,
+                s.promo_ticket_count,
+                s.cancelled_after_departure_flag,
+                s.occupancy_rate,
+                s.is_fully_booked,
+                s.updated_at
+            )
 
     depends_on:
       gold:
