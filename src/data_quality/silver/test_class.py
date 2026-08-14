@@ -12,7 +12,7 @@ class TestClass(BaseTest):
         check = (
             Check(self.session, CheckLevel.Error, "Class - Completeness Check")
             .isComplete("id", "ID shouldn't have null value")
-            .isComplete("class_name", "class_name shouldn't have null value")  # fix hint
+            .isComplete("class_name", "class_name shouldn't have null value")
         )
         self.run_tests(check)
 
@@ -23,7 +23,7 @@ class TestClass(BaseTest):
         )
         self.run_tests(check)
 
-    def test_class_name_allowed_values(self):  # renamed
+    def test_class_name_allowed_values(self):
         check = (
             Check(self.session, CheckLevel.Warning, "Class - String Validation")
             .isContainedIn(
@@ -34,7 +34,7 @@ class TestClass(BaseTest):
         )
         self.run_tests(check)
 
-    def test_row_count_not_empty(self):  # renamed
+    def test_row_count_not_empty(self):
         check = (
             Check(self.session, CheckLevel.Error, "Class - Dataset Validation")
             .hasSize(lambda x: x > 0, "Dataset must not be empty")
