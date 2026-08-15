@@ -28,7 +28,7 @@ class TestBronze(BaseTest):
 
 
     def test_completeness(self):
-        check = Check(self.session, CheckLevel.Warning).isComplete(
+        check = Check(self.session, CheckLevel.Warning, "Bronze Completeness Check").isComplete(
             "id", "ID Shouldn't have null value !!"
         )
 

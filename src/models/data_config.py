@@ -186,6 +186,7 @@ class TableMetadata(BaseModel):
     location: str
     schema: str
     queries: List[str]
+    query_params: Optional[Dict[str, str]] = None
 
 
 class TableNames(BaseModel):

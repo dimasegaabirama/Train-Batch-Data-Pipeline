@@ -111,7 +111,8 @@ class TableManager:
             location=self.get_table_fullname(table_ref, stage),             #For load, we need to get the full name of the table from the current stage, not the upstream stage.
             
             schema=self.get_table_schema(table_ref, upstream_stage),        #schema is structure of the table, which is used for validaton schema when extracting data from the upstream stage.
-            queries=self.get_formated_query(table_ref, **(query_params or {}))
+            queries=self.get_formated_query(table_ref, **(query_params or {})),
+            query_params=query_params
         )
        
 if __name__ == "__main__":
