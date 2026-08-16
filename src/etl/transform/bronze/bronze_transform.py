@@ -5,8 +5,8 @@ from src.etl.transform import BaseTransform
 from src.core import DATE_COLUMNS
 from src.models.etl_config import TransformResult
 
-class BronzeTransform(BaseTransform):
 
+class BronzeTransform(BaseTransform):
     def transform(self) -> DataFrame:
         """
         Transform the input DataFrame by normalizing columns and filtering rows.
@@ -34,8 +34,7 @@ class BronzeTransform(BaseTransform):
             for column in DATE_COLUMNS:
                 if column in transformed_df.columns:
                     transformed_df = transformed_df.withColumn(
-                        column,
-                        F.to_timestamp(column)
+                        column, F.to_timestamp(column)
                     )
             return TransformResult.from_extract(self.extract_result, transformed_df)
         except Exception as e:

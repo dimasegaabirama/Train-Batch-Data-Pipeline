@@ -2,14 +2,9 @@ from .base_transform import BaseTransform
 from .bronze import BronzeTransform
 from .silver import (
     PassengersTransform,
-    StationsTransform, 
+    StationsTransform,
     TicketsTransform,
     RoutesTransform,
-    TrainsTransform
+    TrainsTransform,
 )
-from .gold import (
-    CancellationSummary, 
-    RefundLoss, 
-    RevenueDaily, 
-    TrainPerformance
-)
+from .gold import CancellationSummary, RefundLoss, RevenueDaily, TrainPerformance

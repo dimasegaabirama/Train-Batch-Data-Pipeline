@@ -1,5 +1,5 @@
 from logging import Logger
-from typing_extensions import List
+from typing_extensions import List, Dict
 from pathlib import Path
 
 import pytest
@@ -18,7 +18,7 @@ from src.etl.extract import BaseExtract
 from src.etl.transform import BaseTransform
 from src.etl.load import BaseLoad
 
-from src.models.data_config import StageType
+from src.models.data_config import StageType, TableDependency, TableMetadata
 from src.utils.nessie_utils import pipeline_branch
 
 
@@ -85,10 +85,10 @@ class PipelineOrchestrator:
             "table_view": f"{table_name}_view"
         }
 
-        table_metadata = self._table_manager.get_table_metadata(table_name, stage, query_params)
-        table_deps = self._table_manager.get_table_deps(table_name, stage)
+        table_metadata: TableMetadata = self._table_manager.get_table_metadata(table_name, stage, query_params)
+        table_deps: Dict[str, List[TableDependency]] = self._table_manager.get_table_deps(table_name, stage)
 
-        extractor_cls = resolve_registry_class(
+        extractor_cls: BaseExtract = resolve_registry_class(
             stage=stage, table_name=table_name, component_name="extract", required=False
         )
 

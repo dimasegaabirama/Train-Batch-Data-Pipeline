@@ -7,7 +7,6 @@ from src.etl.transform import BaseTransform
 
 
 class StationsTransform(BaseTransform):
-
     def transform(self) -> DataFrame:
         """
         Transform the input stations DataFrame by normalizing the 'city' column
@@ -42,12 +41,15 @@ class StationsTransform(BaseTransform):
             self.session.sparkContext.setCheckpointDir(CHECKPOINT_DIR)
 
             stations_dataframe = (
-                self.dataframe
-                    .withColumn("sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
-                    .withColumn("id", F.col("id").cast("int"))
-                    .withColumn("name", F.trim(F.lower("name")))
-                    .withColumn("city", F.coalesce(F.trim(F.lower("city")), F.lit("unknown")))
-                    .withColumn("code", F.trim(F.lower("code")))
+                self.dataframe.withColumn(
+                    "sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at")))
+                )
+                .withColumn("id", F.col("id").cast("int"))
+                .withColumn("name", F.trim(F.lower("name")))
+                .withColumn(
+                    "city", F.coalesce(F.trim(F.lower("city")), F.lit("unknown"))
+                )
+                .withColumn("code", F.trim(F.lower("code")))
             )
 
             # FIX BUG CATALYST-40548: Use localCheckpoint to avoid nested schema pruning issues

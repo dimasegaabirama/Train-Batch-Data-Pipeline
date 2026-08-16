@@ -4,8 +4,8 @@ from pyspark.sql.dataframe import DataFrame
 from src.etl.transform import BaseTransform
 from src.models.etl_config import TransformResult
 
-class PassengersTransform(BaseTransform):
 
+class PassengersTransform(BaseTransform):
     def transform(self) -> DataFrame:
         """
         Normalize the 'city' column and remove duplicate rows.
@@ -23,10 +23,13 @@ class PassengersTransform(BaseTransform):
 
         try:
             transformed_df = (
-                self.dataframe
-                .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
+                self.dataframe.withColumn(
+                    "sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at")))
+                )
                 .withColumn("name", F.trim(F.lower("name")))
-                .withColumn("gender", F.coalesce(F.trim(F.lower("gender")), F.lit("unknown")))
+                .withColumn(
+                    "gender", F.coalesce(F.trim(F.lower("gender")), F.lit("unknown"))
+                )
                 .withColumn("email", F.trim(F.lower("email")))
             ).dropDuplicates(["sk_id"])
 

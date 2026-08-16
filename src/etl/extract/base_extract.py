@@ -32,6 +32,7 @@ class BaseExtract(ABC):
         self.table_deps = table_deps
 
         self.table_name = self.main_table.name
+        self.table_deps_dataframe: Dict[str, "DataFrame"] = {}
 
         if self.SOURCE_TYPE:
             self.source_config = self._source_manager.get_source_config(
@@ -43,4 +44,15 @@ class BaseExtract(ABC):
     @abstractmethod
     def extract(self, extract_main: Optional[bool] = True) -> ExtractResult:
         pass
+
+    def validate_deps_and_main_table(self, extract_main: bool = True):
+        """
+        Validates that if extract_main is False, there are dependencies defined for the table.
+        Raises a ValueError if the validation fails.
+        """
+        if not extract_main and not self.table_deps.get(self.table_name):
+            raise ValueError(
+                f"Cannot extract table '{self.table_name}': extract_main is set to False, "
+                f"but no dependencies are defined for this table."
+            )
 

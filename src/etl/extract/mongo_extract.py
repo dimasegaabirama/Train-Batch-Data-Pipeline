@@ -1,32 +1,33 @@
-from typing_extensions import List, Dict, Optional
+from typing_extensions import Optional
 
 from src.models.etl_config import ExtractResult
-from src.utils.table_utils import create_table_fullname
+
 from .base_extract import BaseExtract
 
-class MongoExtract(BaseExtract):
 
+class MongoExtract(BaseExtract):
     SOURCE_TYPE = "mongo"
 
     def extract(self, extract_main: Optional[bool] = True) -> ExtractResult:
 
         database = self.source_config.database
-        deps_table: Dict[str, "DataFrame"] = {}
 
         try:
+            # Extract dependencies first
             dependencies = self.table_deps[self.table_name]
             for dep in dependencies:
-                deps_table[dep.name] = self._read_collection(
+                self.table_deps_dataframe[dep.name] = self._read_collection(
                     database, dep.name
                 )
 
-            if not extract_main and not deps_table:
-                raise ValueError(
-                    f"Cannot extract table '{self.table_name}': extract_main is set to False, "
-                    f"but no dependencies are defined for this table."
-                )
+            # Validate dependencies and main table before proceeding with extraction
+            self.validate_deps_and_main_table(extract_main)
 
-            df = self._read_collection(database, self.table_name) if extract_main else None
+            df = (
+                self._read_collection(database, self.table_name)
+                if extract_main
+                else None
+            )
 
             return ExtractResult(
                 name=self.table_name,
@@ -38,12 +39,13 @@ class MongoExtract(BaseExtract):
                 dataframe=df,
                 queries=self.main_table.queries,
                 query_params=self.main_table.query_params,
-                dependencies=deps_table
+                dependencies=self.table_deps_dataframe,
             )
-        
-        except Exception as e:
-            raise RuntimeError(f"Failed to extract data for table '{self.table_name}': {e}") from e
 
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to extract data for table '{self.table_name}': {e}"
+            ) from e
 
     def _read_collection(self, database: str, table: str):
         schema = self.main_table.schema
@@ -63,11 +65,10 @@ class MongoExtract(BaseExtract):
 
         return reader.load()
 
-
     def _resolve_condition(self, table: str):
         if table == self.table_name:
             return self.condition
-        return None  
+        return None
 
 
 if __name__ == "__main__":

@@ -7,7 +7,6 @@ from src.etl.transform import BaseTransform
 
 
 class TrainsTransform(BaseTransform):
-
     def transform(self) -> DataFrame:
         """
         Transform the input trains DataFrame by normalizing the 'type' column and dropping duplicates.
@@ -38,15 +37,16 @@ class TrainsTransform(BaseTransform):
 
         try:
             transformed_df = (
-                self.dataframe
-                .withColumn("sk_id",  F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
+                self.dataframe.withColumn(
+                    "sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at")))
+                )
                 .withColumn("name", F.trim(F.lower("name")))
-                .withColumn("type", F.coalesce(F.trim(F.lower("type")), F.lit("unknown")))
+                .withColumn(
+                    "type", F.coalesce(F.trim(F.lower("type")), F.lit("unknown"))
+                )
                 .withColumn("capacity", F.coalesce("capacity", F.lit(0)))
             ).dropDuplicates(["sk_id"])
-            
+
             return TransformResult.from_extract(self.extract_result, transformed_df)
         except Exception as e:
             raise RuntimeError(f"Error during trains transformation: {e}") from e
-
-

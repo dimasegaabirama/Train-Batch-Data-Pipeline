@@ -7,26 +7,21 @@ from .base_extract import BaseExtract
 
 
 class IcebergExtract(BaseExtract):
-
     def extract(self, extract_main: Optional[bool] = True) -> ExtractResult:
 
         full_table_name = self.main_table.fullname
 
-        deps_table: Dict[str, "DataFrame"] = {}
-
         try:
+            # Extract dependencies first
             dependencies = self.table_deps[self.table_name]
             for dep in dependencies:
-                deps_table[dep.name] = self._read_table(
+                self.table_deps_dataframe[dep.name] = self._read_table(
                     create_table_fullname(dep.catalog, dep.schema_name, dep.name)
                 )
 
-            if not extract_main and not deps_table:
-                raise ValueError(
-                    f"Cannot extract table '{self.table_name}': extract_main is set to False, "
-                    f"but no dependencies are defined for this table."
-                )
-        
+            # Validate dependencies and main table before proceeding with extraction
+            self.validate_deps_and_main_table(extract_main)
+
             df = self._read_table(full_table_name) if extract_main else None
 
             return ExtractResult(
@@ -39,11 +34,13 @@ class IcebergExtract(BaseExtract):
                 dataframe=df,
                 queries=self.main_table.queries,
                 query_params=self.main_table.query_params,
-                dependencies=deps_table
+                dependencies=self.table_deps_dataframe,
             )
-        
+
         except Exception as e:
-            raise RuntimeError(f"Failed to extract data for table '{self.table_name}': {e}") from e
+            raise RuntimeError(
+                f"Failed to extract data for table '{self.table_name}': {e}"
+            ) from e
 
     def _read_table(self, table: str) -> "DataFrame":
         df = self.session.read.table(table)
