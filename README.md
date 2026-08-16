@@ -140,7 +140,7 @@ Example: `bronze_tickets`, `silver_passengers`
 4. **DQ passed** → merge branch into `main`.
 5. **DQ failed** → branch is dropped, `main` stays consistent, other tables are unaffected, task fails and alerts.
 
-This is handled in `src/utils/nessie_utils.py` as a wrapper around the `run_table` function (`src/app/run_pipeline.py`).
+This is handled in `src/utils/nessie_utils.py` as a wrapper used by `PipelineOrchestrator.run_all_tables` (invoked from `main.py` via `PipelineRunner`).
 
 ### Data Quality Checks (PyDeequ)
 
@@ -327,8 +327,8 @@ This config-driven approach enables a generic pipeline that reads table definiti
 │   │   ├── bootstrap/
 │   │   │   ├── init_nessie.py    # Creates Nessie branches/namespaces on first run
 │   │   │   └── init_schema.py    # Creates base table schemas
-│   │   ├── run_bootstrap.py      # Entry point for one-time environment bootstrap
-│   │   └── run_pipeline.py       # Entry point for running the ETL pipeline (per table)
+│   │   ├── run_bootstrap.py      # Defines PipelineBootstrap, used by main.py --run_bootstrap
+│   │   └── run_pipeline.py       # Defines PipelineOrchestrator, used by main.py for stage runs
 │   │
 │   ├── core/                     # Cross-cutting infrastructure code
 │   │   ├── config/
@@ -382,7 +382,7 @@ This config-driven approach enables a generic pipeline that reads table definiti
 │       ├── table_utils.py
 │       └── text_utils.py
 │
-├── main.py                       # CLI entry point
+├── main.py                       # CLI entry point (PipelineRunner: argparse → validate → run stage/bootstrap)
 ├── pyproject.toml
 ├── requirements.txt
 ├── uv.lock
@@ -432,26 +432,68 @@ This config-driven approach enables a generic pipeline that reads table definiti
 
 ## Running the Pipeline
 
-**One-time bootstrap** (creates Nessie branches/namespaces and base schemas):
+The entry point is `main.py` at the project root, backed by `PipelineRunner` (argument parsing → validation → env var setup → execution). All commands below assume dependencies are installed and the infra stack from [Installation & Setup](#installation--setup) is up.
+
+### CLI arguments
+
+| Flag | Env var fallback | Required? | Description |
+|---|---|---|---|
+| `-stg`, `--stage` | — | **Always** | Pipeline stage to run: `bronze`, `silver`, or `gold`. |
+| `-cfg`, `--config` | `CONFIG_PATH` | Yes (even with `--run_bootstrap`) | Path to the pipeline config file, e.g. `config/pipeline-config.yaml`. |
+| `-env`, `--environment` | `ENV_PATH` | Yes (even with `--run_bootstrap`) | Path to the environment file (Mongo/Nessie/HDFS/Spark connection values). |
+| `-start`, `--start_date` | `START_DATE` | Yes, unless `--run_bootstrap` | Pipeline run start date (`YYYY-MM-DD`). |
+| `-end`, `--end_date` | `END_DATE` | Yes, unless `--run_bootstrap` | Pipeline run end date (`YYYY-MM-DD`). |
+| `-tbl`, `--tables` | — | No | Space-separated table names to process, e.g. `--tables stations trains`. If omitted, every table configured for that `--stage` is processed. |
+| `--run_bootstrap` | — | No (flag) | Runs `PipelineBootstrap` instead of the normal stage run — sets up Nessie namespaces/branches and base schemas. When set, `--start_date`/`--end_date`/`--tables` are no longer required. |
+| `--data_quality` | — | No (flag) | Runs the PyDeequ DQ checks for the processed tables as part of the orchestrator run. |
+
+> `-cfg`/`-env`/`-start`/`-end` can each be supplied either as a CLI flag or via the matching environment variable (`CONFIG_PATH`, `ENV_PATH`, `START_DATE`, `END_DATE`) — whichever is set first wins, and the resolved values are re-exported to `os.environ` for the rest of the run.
+
+### Examples
+
+**One-time bootstrap** (creates Nessie branches/namespaces and base schemas — no dates/tables needed):
 ```bash
-python -m src.app.run_bootstrap
-# or
-python src/app/run_bootstrap.py
+python main.py -stg bronze -cfg config/pipeline-config.yaml -env .env --run_bootstrap
 ```
 
-**Run the ETL pipeline manually** (per table, following extract → transform → load → DQ → merge):
+**Run a stage for all its configured tables, with DQ checks:**
 ```bash
-python -m src.app.run_pipeline
-# or
-python src/app/run_pipeline.py
+python main.py -stg bronze \
+  -cfg config/pipeline-config.yaml \
+  -env .env \
+  -start 2026-01-01 \
+  -end 2026-01-01 \
+  --data_quality
 ```
 
-**Run via Airflow (recommended for scheduled/production use):**
+**Run a stage for specific tables only:**
+```bash
+python main.py -stg silver \
+  -cfg config/pipeline-config.yaml \
+  -env .env \
+  -start 2026-01-01 \
+  -end 2026-01-01 \
+  -tbl stations trains \
+  --data_quality
+```
+
+**Run the Gold stage** (aggregates — `cancellation_summary`, `revenue_daily`, `refund_loss`, `train_performance`):
+```bash
+python main.py -stg gold \
+  -cfg config/pipeline-config.yaml \
+  -env .env \
+  -start 2026-01-01 \
+  -end 2026-01-01 \
+  --data_quality
+```
+
+Under the hood, `PipelineOrchestrator.run_all_tables(stage, table_names)` runs the Nessie create-branch → load → (optional) DQ-check → merge/drop flow per table, as described in [Nessie Branching Strategy](#nessie-branching-strategy).
+
+### Run via Airflow (recommended for scheduled/production use)
+
 1. Ensure the Airflow stack is up (`./start-all.sh`, or `docker/airflow/docker-compose.yaml` directly).
 2. Open the Airflow UI and enable the `train_pipeline` DAG (`airflow/dags/train_pipeline.py`).
-3. The DAG runs the full create-branch → load → DQ-check → merge/drop flow per table, per stage (Bronze → Silver → Gold), as described in [Nessie Branching Strategy](#nessie-branching-strategy).
-
-> Adjust the exact CLI invocation above to match the arguments defined in `main.py` / `run_pipeline.py` in your codebase — flag if it differs and I can update this section to match exactly.
+3. The DAG effectively invokes the same `main.py` CLI per table, per stage (Bronze → Silver → Gold), wiring `--data_quality` as its own separate Airflow task/image from the load task.
 
 ## Contributing
 
