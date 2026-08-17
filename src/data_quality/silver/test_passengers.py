@@ -5,6 +5,8 @@ from src.data_quality import BaseTest
 
 class TestPassengers(BaseTest):
 
+    stage = "silver"
+
     def test_completeness(self):
         check = (
             Check(

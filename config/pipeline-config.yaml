@@ -125,8 +125,8 @@ spark:
       spark.executor.instances: 1 
       spark.executor.memory: "512m"
       spark.executor.cores: 1
-      spark.sql.shuffle.partitions: 1    # tidak ada shuffle sama sekali di DDL, jadi tidak relevan
-      spark.sql.adaptive.enabled: false  # tidak ada workload data untuk di-adapt
+      spark.sql.shuffle.partitions: 1
+      spark.sql.adaptive.enabled: false
 
   bronze:
     app_name: "Bronze_Pipeline"

@@ -1,9 +1,26 @@
+import pytest
+from pyspark.sql import SparkSession
 from pydeequ.checks import Check, CheckLevel
+
+from src.core import DataQualityContext
 from src.data_quality.base_test import BaseTest
 
 
+SCOPE_BRONZE = "function"
+
 class TestBronze(BaseTest):
     """Data quality checks that run against every table in the bronze layer."""
+
+    stage = "bronze"
+
+    @pytest.fixture(scope=SCOPE_BRONZE, autouse=True)
+    def setup(self, session: SparkSession):
+        self.session = session
+
+        context = DataQualityContext.get()
+
+        self.table_name = context.name
+        self.dataframe = context.cleaned_dataframe
 
     def test_completeness(self):
         check = Check(

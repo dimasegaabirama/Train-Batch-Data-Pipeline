@@ -25,11 +25,13 @@ class BaseTest(ABC):
     and/or call `run_tests` with a pydeequ `Check`.
     """
 
+    stage: Optional[str] = None
+
     _table_manager = TableManager()
     _source_manager = SourceManager()
     _schema_manager = SchemaManager()
 
-    @pytest.fixture(scope="package")
+    @pytest.fixture(scope="class")
     def session(self):
         logger = AppLogger("BaseTest")
 
@@ -37,13 +39,12 @@ class BaseTest(ABC):
             with Session(stage=self.stage, logger=logger) as session:
                 yield session
 
-    @pytest.fixture(scope="class", autouse=True)
+    @pytest.fixture(scope="package", autouse=True)
     def setup(self, session: SparkSession):
         self.session = session
 
         context = DataQualityContext.get()
 
-        self.stage = context.stage
         self.table_name = context.name
         self.dataframe = context.cleaned_dataframe
 

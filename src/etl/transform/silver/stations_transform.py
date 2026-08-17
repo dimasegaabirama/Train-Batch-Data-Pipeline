@@ -34,7 +34,7 @@ class StationsTransform(BaseTransform):
                 self.dataframe.withColumn(
                     "sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at")))
                 )
-                .withColumn("station_id", F.col("id").cast("int"))
+                .withColumn("station_id", F.col("id").cast("string"))
                 .withColumn("name", F.trim(F.lower("name")))
                 .withColumn(
                     "city", F.coalesce(F.trim(F.lower("city")), F.lit("unknown"))
@@ -42,7 +42,7 @@ class StationsTransform(BaseTransform):
                 .withColumn("code", F.trim(F.lower("code")))
                 .select(
                     F.col("sk_id"),
-                    F.col("station_id").alias("id"),
+                    F.col("station_id").cast("int").alias("id"),
                     F.col("name"),
                     F.col("city"),
                     F.col("code"),
