@@ -1,21 +1,23 @@
 from abc import ABC, abstractmethod
 from typing_extensions import Dict, List, Optional
+
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
 from src.models.etl_config import TransformResult
-from src.models.data_config import StageType
+
 
 class BaseLoad(ABC):
+    """Base class for stage-specific loaders.
 
-    def __init__(
-        self, 
-        session: SparkSession, 
-        transform_result: TransformResult
-    ):
+    Subclasses implement `load()` to write `self.dataframe` to its
+    destination using the write configuration carried in `transform_result`.
+    """
+
+    def __init__(self, session: SparkSession, transform_result: TransformResult):
         if transform_result is None:
             raise ValueError("transform_result must be provided.")
-        
+
         self.session = session
         self.transform_result = transform_result
 
@@ -25,7 +27,7 @@ class BaseLoad(ABC):
         self.queries: List[str] = self.transform_result.queries
         self.query_params: Optional[Dict[str, str]] = self.transform_result.query_params
 
-
     @abstractmethod
     def load(self):
+        """Write `self.dataframe` to its destination. Implemented by subclasses."""
         pass

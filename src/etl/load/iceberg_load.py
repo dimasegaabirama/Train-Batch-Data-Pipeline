@@ -1,10 +1,12 @@
-from typing_extensions import Callable, Dict, Optional
+from typing_extensions import Callable, Dict
 
 from src.models.data_config import WriteType
 
 from .base_load import BaseLoad
 
+
 class IcebergLoad(BaseLoad):
+    """Loader that writes the transformed dataframe to an Iceberg table."""
 
     def load(self) -> None:
         try:
@@ -12,17 +14,20 @@ class IcebergLoad(BaseLoad):
             writer_action = self._resolve_write_mode(self.write_mode, writer)
 
             if self.write_mode == "custom":
-                self.dataframe.createOrReplaceTempView(self.transform_result.query_params["table_view"])
+                view_name = self.transform_result.query_params["table_view"]
+                self.dataframe.createOrReplaceTempView(view_name)
                 for query in self.queries:
                     writer_action(query)
             else:
                 writer_action()
 
         except Exception as e:
-            raise RuntimeError(f"Failed to load data for table '{self.transform_result.fullname}': {e}") from e
+            raise RuntimeError(
+                f"Failed to load data for table '{self.transform_result.fullname}': {e}"
+            ) from e
 
-    def _resolve_write_mode(self, write_mode: WriteType, writer: Optional[object] = None) -> Callable:
-
+    def _resolve_write_mode(self, write_mode: WriteType, writer: object) -> Callable:
+        """Map a write mode to the writer action that performs it."""
         dispatch: Dict[str, Callable] = {
             "custom": self.session.sql,
             "append": writer.append,
@@ -30,6 +35,4 @@ class IcebergLoad(BaseLoad):
             "overwrite_partitions": writer.overwritePartitions,
         }
 
-        dispatch_action = dispatch.get(write_mode)
-
-        return dispatch_action
+        return dispatch.get(write_mode)

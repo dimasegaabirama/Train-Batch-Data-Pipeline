@@ -6,6 +6,7 @@ def initialize_namespace(spark: SparkSession):
     for ns in namespaces:
         spark.sql(f"CREATE NAMESPACE IF NOT EXISTS {ns}")
 
+
 def initialize_seed(spark: SparkSession):
     seeds = ["""
         INSERT INTO nessie.silver.status (id, status)
@@ -104,13 +105,13 @@ def initialize_table(spark: SparkSession):
             seat_number STRING,
             status STRING,
             departure_date STRING,
-            extra_info STRUCT<
+            extra_info STRUCT
                 child_discount: BOOLEAN,
                 family_members: INT,
                 promo_code: STRING,
                 source: STRING
             >,
-            payment STRUCT<
+            payment STRUCT
                 method: STRING,
                 bank: STRING,
                 provider: STRING
@@ -196,7 +197,7 @@ def initialize_table(spark: SparkSession):
         WRITE ORDERED BY id
         """,
 
-        # SCD Type 1
+        # Lookup table - kecil, tidak perlu global sort order
         """
         CREATE TABLE IF NOT EXISTS nessie.silver.status(
             id INT,
@@ -206,10 +207,10 @@ def initialize_table(spark: SparkSession):
         """,
         """
         ALTER TABLE nessie.silver.status
-        WRITE ORDERED BY id
+        WRITE UNORDERED
         """,
 
-        # SCD Type 1
+        # Lookup table - kecil, tidak perlu global sort order
         """
         CREATE TABLE IF NOT EXISTS nessie.silver.class(
             id INT,
@@ -219,10 +220,10 @@ def initialize_table(spark: SparkSession):
         """,
         """
         ALTER TABLE nessie.silver.class
-        WRITE ORDERED BY id
+        WRITE UNORDERED
         """,
 
-        # SCD Type 1
+        # Lookup table - kecil, tidak perlu global sort order
         """
         CREATE TABLE IF NOT EXISTS nessie.silver.payment(
             id INT,
@@ -232,7 +233,7 @@ def initialize_table(spark: SparkSession):
         """,
         """
         ALTER TABLE nessie.silver.payment
-        WRITE ORDERED BY id
+        WRITE UNORDERED
         """,
 
         # Fact table

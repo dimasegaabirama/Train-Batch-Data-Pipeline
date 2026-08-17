@@ -1,52 +1,79 @@
-import pyspark.sql.functions as F
-from pyspark.sql.dataframe import DataFrame
-from pyspark.sql.types import TimestampType
+from pyspark.sql import DataFrame
+from pyspark.sql import functions as F
 
-from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
+from src.models.etl_config import TransformResult
 
 
 class TrainsTransform(BaseTransform):
-    def transform(self) -> DataFrame:
+    """Transform trains data into the Silver layer."""
+
+    def transform(self) -> TransformResult:
         """
-        Transform the input trains DataFrame by normalizing the 'type' column and dropping duplicates.
+        Transform trains data by:
 
-        Steps
-        -----
-        1. Normalize string columns:
-        - 'type' → fill null or invalid values with "unknown"
-
-        2. Drop duplicate rows.
-
-        Parameters
-        ----------
-        dataframe : DataFrame
-            Input Spark DataFrame containing trains data. Expected columns include:
-            ['type', ...]
+        1. Generating a surrogate key from `id` and `updated_at`.
+        2. Normalizing string columns.
+        3. Replacing null capacity with 0.
+        4. Removing duplicate records based on `sk_id`.
 
         Returns
         -------
-        DataFrame
-            Transformed trains DataFrame with normalized 'type' column and duplicates removed.
+        TransformResult
+            Transformed trains DataFrame wrapped in a TransformResult.
 
-        Notes
-        -----
-        - This transform is independent and has no prerequisites.
-        - Only the 'type' column is normalized in this transformation.
+        Raises
+        ------
+        RuntimeError
+            If an error occurs during transformation.
         """
-
         try:
             transformed_df = (
-                self.dataframe.withColumn(
-                    "sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at")))
-                )
-                .withColumn("name", F.trim(F.lower("name")))
+                self.dataframe
                 .withColumn(
-                    "type", F.coalesce(F.trim(F.lower("type")), F.lit("unknown"))
+                    "sk_id",
+                    F.abs(
+                        F.xxhash64(
+                            F.col("id"),
+                            F.col("updated_at"),
+                        )
+                    ),
                 )
-                .withColumn("capacity", F.coalesce("capacity", F.lit(0)))
-            ).dropDuplicates(["sk_id"])
+                .withColumn(
+                    "name",
+                    F.trim(
+                        F.lower(
+                            F.col("name"),
+                        )
+                    ),
+                )
+                .withColumn(
+                    "type",
+                    F.coalesce(
+                        F.trim(
+                            F.lower(
+                                F.col("type"),
+                            )
+                        ),
+                        F.lit("unknown"),
+                    ),
+                )
+                .withColumn(
+                    "capacity",
+                    F.coalesce(
+                        F.col("capacity"),
+                        F.lit(0),
+                    ),
+                )
+                .dropDuplicates(["sk_id"])
+            )
 
-            return TransformResult.from_extract(self.extract_result, transformed_df)
+            return TransformResult.from_extract(
+                self.extract_result,
+                transformed_df
+            )
+
         except Exception as e:
-            raise RuntimeError(f"Error during trains transformation: {e}") from e
+            raise RuntimeError(
+                f"Error during trains transformation: {e}"
+            ) from e

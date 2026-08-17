@@ -1,4 +1,3 @@
-from typing_extensions import Union, TYPE_CHECKING
 from pyspark.sql.types import (
     StructType,
     _parse_datatype_string

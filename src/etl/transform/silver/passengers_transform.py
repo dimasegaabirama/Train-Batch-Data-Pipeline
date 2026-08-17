@@ -1,26 +1,26 @@
 import pyspark.sql.functions as F
-from pyspark.sql.dataframe import DataFrame
 
 from src.etl.transform import BaseTransform
 from src.models.etl_config import TransformResult
 
 
 class PassengersTransform(BaseTransform):
-    def transform(self) -> DataFrame:
+    def transform(self) -> TransformResult:
         """
-        Normalize the 'city' column and remove duplicate rows.
+        Build a surrogate key and normalize passenger columns, deduplicating by it.
 
-        Parameters
-        ----------
-        dataframe : DataFrame
-            Input DataFrame with a 'city' column.
+        Steps
+        -----
+        1. Add 'sk_id': a hash of 'id' and 'updated_at', used as the surrogate key.
+        2. Normalize 'name' and 'email' by trimming whitespace and lowercasing.
+        3. Normalize 'gender' the same way, defaulting to 'unknown' when null.
+        4. Drop duplicate rows based on 'sk_id'.
 
         Returns
         -------
-        DataFrame
-            Transformed DataFrame with normalized 'city' and no duplicates.
+        TransformResult
+            The extract result's metadata paired with the transformed DataFrame.
         """
-
         try:
             transformed_df = (
                 self.dataframe.withColumn(
@@ -31,8 +31,10 @@ class PassengersTransform(BaseTransform):
                     "gender", F.coalesce(F.trim(F.lower("gender")), F.lit("unknown"))
                 )
                 .withColumn("email", F.trim(F.lower("email")))
-            ).dropDuplicates(["sk_id"])
+                .dropDuplicates(["sk_id"])
+            )
 
             return TransformResult.from_extract(self.extract_result, transformed_df)
+
         except Exception as e:
             raise RuntimeError(f"Error during passengers transformation: {e}") from e

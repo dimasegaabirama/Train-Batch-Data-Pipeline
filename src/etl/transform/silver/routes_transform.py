@@ -1,49 +1,35 @@
 import pyspark.sql.functions as F
 
-from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
+from src.models.etl_config import TransformResult
 
 
 class RoutesTransform(BaseTransform):
-    def transform(self):
+    def transform(self) -> TransformResult:
         """
-        Transform routes DataFrame by normalizing numeric columns, dropping duplicates,
-        and enriching with origin and destination station IDs from stations DataFrame.
+        Normalize routes and enrich them with station and train surrogate keys.
 
         Steps
         -----
-        1. Normalize numeric columns 'distance_km' and 'duration_minutes' using
-           `normalize_numeric` (filling nulls with 0).
-        2. Drop duplicate rows in the routes DataFrame.
-        3. Cache and trigger action on stations DataFrame for performance.
-        4. Broadcast stations DataFrame to optimize join.
-        5. Join routes with stations twice to map origin and destination codes to IDs.
-        6. Select and rename relevant columns in the final DataFrame.
-
-        Parameters
-        ----------
-        dataframe : DataFrame
-            Spark DataFrame containing routes data. Expected columns:
-            ['id', 'origin', 'destination', 'train_id', 'distance_km',
-             'duration_minutes', 'created_at', 'updated_at'].
-        stations_dataframe : DataFrame
-            Spark DataFrame containing stations data. Expected columns:
-            ['id', 'code', ...] for mapping to origin and destination.
+        1. Add 'sk_id': a hash of 'id' and 'updated_at', used as the surrogate key.
+        2. Normalize 'origin' and 'destination' by trimming whitespace and
+           lowercasing, so they match station codes for the join.
+        3. Coalesce 'distance_km' and 'duration_minutes' nulls to 0.
+        4. Broadcast the 'stations' and 'trains' dependency DataFrames to keep
+           the joins efficient.
+        5. Filter stations to non-deleted rows and trains to active rows, and
+           rename each 'sk_id' so origin, destination, and train keys don't clash.
+        6. Join routes to origin stations (by code == origin), destination
+           stations (by code == destination), and trains (by id == train_id).
+        7. Select the final columns and drop duplicate rows by 'sk_id'.
 
         Returns
         -------
-        DataFrame
-            Transformed routes DataFrame with the following columns:
-            ['id', 'org_station_id', 'dest_station_id', 'train_id',
-             'distance_km', 'duration_minutes', 'created_at', 'updated_at'].
-
-        Notes
-        -----
-        - Broadcasting stations DataFrame ensures the join is efficient for large routes tables.
-        - Numeric columns are normalized with `normalize_numeric` to avoid nulls.
-        - Duplicate rows are removed before joining to avoid redundant data.
+        TransformResult
+            The extract result's metadata paired with the transformed DataFrame,
+            containing: 'sk_id', 'id', 'sk_org_station_id', 'sk_dest_station_id',
+            'sk_train_id', 'distance_km', 'duration_minutes'.
         """
-
         try:
             routes_dataframe = (
                 self.dataframe.withColumn(
@@ -57,27 +43,24 @@ class RoutesTransform(BaseTransform):
                 )
             )
 
-            stations_dataframe = self.dependencies["stations"]
-            trains_dataframe = self.dependencies["trains"]
-
-            stations_df = F.broadcast(stations_dataframe)
-            trains_df = F.broadcast(trains_dataframe)
+            stations_df = F.broadcast(self.dependencies["stations"])
+            trains_df = F.broadcast(self.dependencies["trains"])
 
             r = routes_dataframe.alias("r")
 
             s1 = (
                 stations_df.withColumnRenamed("sk_id", "sk_org_station_id")
-                .where(F.col("is_deleted") == False)
+                .where(~F.col("is_deleted"))
                 .alias("s1")
             )
             s2 = (
                 stations_df.withColumnRenamed("sk_id", "sk_dest_station_id")
-                .where(F.col("is_deleted") == False)
+                .where(~F.col("is_deleted"))
                 .alias("s2")
             )
             tr = (
                 trains_df.withColumnRenamed("sk_id", "sk_train_id")
-                .where(F.col("is_active") == True)
+                .where(F.col("is_active"))
                 .alias("tr")
             )
 
@@ -94,8 +77,10 @@ class RoutesTransform(BaseTransform):
                     F.col("r.distance_km"),
                     F.col("r.duration_minutes"),
                 )
-            ).dropDuplicates(["sk_id"])
+                .dropDuplicates(["sk_id"])
+            )
 
             return TransformResult.from_extract(self.extract_result, df_joined)
+
         except Exception as e:
             raise RuntimeError(f"Error during routes transformation: {e}") from e

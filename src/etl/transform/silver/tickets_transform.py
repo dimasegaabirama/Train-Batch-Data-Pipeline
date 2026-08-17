@@ -1,14 +1,13 @@
 import pyspark.sql.functions as F
-from pyspark.sql.dataframe import DataFrame
-from pyspark.sql.types import TimestampType, BooleanType
+from pyspark.sql.types import BooleanType
 from pyspark.sql import Window
 
-from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
+from src.models.etl_config import TransformResult
 
 
 class TicketsTransform(BaseTransform):
-    def transform(self) -> DataFrame:
+    def transform(self) -> TransformResult:
         """
         Clean, deduplicate, and enrich raw tickets into a fact table.
 
@@ -17,19 +16,19 @@ class TicketsTransform(BaseTransform):
         1. Normalize strings (lower/trim), cast types, fill nulls with defaults.
         2. Compute derived columns: ``final_price``, ``booking_lead_days``,
            ``is_weekend``, ``day_of_week``, ``family_flag``, ``has_child``, ``has_promo``.
-        3. Deduplicate per ``ticket_id`` (latest ``created_at``); aggregate
-           ``paid_at``, ``cancelled_at``, ``refunded_at`` across all historical rows.
+        3. Deduplicate per ``ticket_id`` (latest ``created_at``); derive
+           ``active_status`` from that latest row, and aggregate ``paid_at``,
+           ``cancelled_at``, ``refunded_at`` across all historical rows.
         4. Left-join broadcast lookup tables (routes, class, status, payment)
            and SCD2 dimensions (trains, passengers) validated against ``departure_date``.
 
         Returns
         -------
-        DataFrame
-            Fact table with surrogate keys, dimension IDs, timestamps,
-            pricing fields, and boolean flags. Nulls in FK columns indicate
-            no matching dimension record found.
+        TransformResult
+            The extract result's metadata paired with the fact table, containing
+            surrogate keys, dimension IDs, timestamps, pricing fields, and boolean
+            flags. Nulls in FK columns indicate no matching dimension record found.
         """
-
         try:
             tickets_dataframe = (
                 self.dataframe.withColumn(
@@ -66,9 +65,7 @@ class TicketsTransform(BaseTransform):
                     ).otherwise(F.lit(False)),
                 )
                 .withColumn("day_of_week", F.dayofweek(F.col("departure_date")))
-                .withColumn(
-                    "is_weekend", F.dayofweek(F.col("departure_date")).isin([1, 7])
-                )
+                .withColumn("is_weekend", F.col("day_of_week").isin([1, 7]))
                 .withColumn(
                     "booking_lead_days",
                     F.greatest(
@@ -105,20 +102,15 @@ class TicketsTransform(BaseTransform):
                     ).over(window_timestamp),
                 )
                 .filter(F.col("rn") == 1)
-            ).alias("td")
+                .alias("td")
+            )
 
-            routes_dataframe = self.dependencies["routes"]
-            trains_dataframe = self.dependencies["trains"]
-            passengers_dataframe = self.dependencies["passengers"].alias("p")
-            class_dataframe = self.dependencies["class"]
-            status_dataframe = self.dependencies["status"]
-            payment_dataframe = self.dependencies["payment"]
-
-            routes_df = F.broadcast(routes_dataframe).alias("r")
-            trains_df = F.broadcast(trains_dataframe).alias("tr")
-            class_df = F.broadcast(class_dataframe).alias("cl")
-            status_df = F.broadcast(status_dataframe).alias("st")
-            payment_df = F.broadcast(payment_dataframe).alias("py")
+            routes_df = F.broadcast(self.dependencies["routes"]).alias("r")
+            trains_df = F.broadcast(self.dependencies["trains"]).alias("tr")
+            passengers_df = self.dependencies["passengers"].alias("p")
+            class_df = F.broadcast(self.dependencies["class"]).alias("cl")
+            status_df = F.broadcast(self.dependencies["status"]).alias("st")
+            payment_df = F.broadcast(self.dependencies["payment"]).alias("py")
 
             tickets_cleaned = (
                 tickets_deduped.join(
@@ -135,7 +127,7 @@ class TicketsTransform(BaseTransform):
                     "left",
                 )
                 .join(
-                    passengers_dataframe,
+                    passengers_df,
                     (F.col("p.id") == F.col("td.passenger_id"))
                     & (F.col("td.departure_date") >= F.col("p.start_date"))
                     & (
@@ -173,6 +165,8 @@ class TicketsTransform(BaseTransform):
                     F.col("td.is_weekend"),
                 )
             )
+
             return TransformResult.from_extract(self.extract_result, tickets_cleaned)
+
         except Exception as e:
             raise RuntimeError(f"Error during tickets transformation: {e}") from e
