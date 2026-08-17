@@ -1,7 +1,8 @@
 import json
 from abc import ABC
 from typing_extensions import List, Union, Optional
-from src.core.logger import AppLogger
+
+from src.core import AppLogger, DataQualityContext
 
 import pytest
 from pydeequ.checks import Check
@@ -9,13 +10,12 @@ from pydeequ.verification import VerificationResult, VerificationSuite
 from pyspark.sql import SparkSession
 from pyspark.sql.types import _parse_datatype_string
 
-from src.core import PipelineManager, SchemaManager, Session, SourceManager, TableManager
+from src.core import SchemaManager, Session, SourceManager, TableManager
 
 
 class BaseTest(ABC):
 
     stage: str = None
-    table_name: str = None
 
     _table_manager = TableManager()
     _source_manager = SourceManager()
@@ -34,12 +34,9 @@ class BaseTest(ABC):
     def setup(self, session: SparkSession):
         self.session = session
 
-        self.table_fullname = self._table_manager.get_table_fullname(
-            self.table_name,
-            self.stage,
-        )
-
-        self.dataframe = session.read.table(self.table_fullname)
+        self.dataframe = getattr(DataQualityContext.get(), 'cleaned_dataframe', None)
+        if self.dataframe is None:
+            raise ValueError("DataQualityContext does not contain 'cleaned_dataframe'. Ensure it is set before running tests.")
 
     def test_schema_table(self):
         expected_schema = _parse_datatype_string(
@@ -60,12 +57,12 @@ class BaseTest(ABC):
             VerificationSuite(self.session).onData(self.dataframe).addCheck(check).run()
         )
 
-        result = json.loads(
-            VerificationResult.checkResultsAsJson(
-                self.session,
-                check_result,
-            )
+        raw_result = VerificationResult.checkResultsAsJson(
+            self.session,
+            check_result,
         )
+
+        result = json.loads(raw_result) if isinstance(raw_result, (str, bytes, bytearray)) else raw_result
 
         failures = [
             constraint

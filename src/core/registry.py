@@ -43,6 +43,12 @@ _DATA_QUALITY_REGISTRY = {
         "stations": "test_stations.py",
         "routes": "test_routes.py",
         "tickets": "test_tickets.py"
+    },
+    "gold": {
+        "train_performance": "test_train_performance.py",
+        "refund_loss": "test_refund_loss.py",
+        "revenue_daily": "test_revenue_daily.py",
+        "cancellation_summary": "test_cancellation_summary.py"
     }
 }
 

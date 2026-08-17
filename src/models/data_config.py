@@ -8,7 +8,7 @@ from typing_extensions import Dict, List, Literal, Optional
 # Stage Type
 # =========================
 
-StageType = Literal["source", "bronze", "silver", "gold"]
+StageType = Literal["bootstrap", "source", "bronze", "silver", "gold"]
 
 # =========================
 # Write Type

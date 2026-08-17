@@ -31,13 +31,13 @@ def pipeline_branch(func):
         logger.info(f"[NESSIE] Creating temp branch '{branch_name}' from main")
 
         try:
-            session.sql(f"CREATE BRANCH {branch_name} IN {catalog} FROM main").show()
-            session.sql(f"USE REFERENCE {branch_name} IN {catalog}").show()
+            session.sql(f"CREATE BRANCH IF NOT EXISTS {branch_name} IN {catalog} FROM main")
+            session.sql(f"USE REFERENCE {branch_name} IN {catalog}")
 
             func(*args, **kwargs)
 
             logger.info(f"[NESSIE] Merging '{branch_name}' back to main")
-            session.sql(f"MERGE BRANCH {branch_name} INTO main IN {catalog}").show()
+            session.sql(f"MERGE BRANCH {branch_name} INTO main IN {catalog}")
             logger.info(f"[NESSIE] Stage = {branch_name} finished successfully")
 
         except Py4JJavaError as e:

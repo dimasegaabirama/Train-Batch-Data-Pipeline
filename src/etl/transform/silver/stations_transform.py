@@ -38,29 +38,25 @@ class StationsTransform(BaseTransform):
         """
 
         try:
-            self.session.sparkContext.setCheckpointDir(CHECKPOINT_DIR)
 
             stations_dataframe = (
-                self.dataframe.withColumn(
-                    "sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at")))
-                )
-                .withColumn("id", F.col("id").cast("int"))
+                self.dataframe
+                .withColumn("sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at"))))
+                .withColumn("station_id", F.col("id").cast("int"))
                 .withColumn("name", F.trim(F.lower("name")))
                 .withColumn(
                     "city", F.coalesce(F.trim(F.lower("city")), F.lit("unknown"))
                 )
                 .withColumn("code", F.trim(F.lower("code")))
-            )
 
-            # FIX BUG CATALYST-40548: Use localCheckpoint to avoid nested schema pruning issues
-            stations_dataframe = stations_dataframe.localCheckpoint(eager=True)
+            )
 
             stations_dataframe = stations_dataframe.select(
                 F.col("sk_id"),
-                F.col("id"),
+                F.col("station_id").alias("id"),
                 F.col("name"),
                 F.col("city"),
-                F.col("code"),
+                F.col("code")
             ).dropDuplicates(["sk_id"])
 
             return TransformResult.from_extract(self.extract_result, stations_dataframe)

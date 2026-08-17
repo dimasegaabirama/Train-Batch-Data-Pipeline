@@ -48,8 +48,7 @@ class PipelineRunner:
         parser.add_argument(
             "-stg",
             "--stage",
-            choices=["bronze", "silver", "gold"],
-            required=True,
+            choices=["bootstrap", "bronze", "silver", "gold"],
             help="Pipeline stage to run",
         )
         parser.add_argument(
@@ -130,18 +129,21 @@ class PipelineRunner:
     # Resolution Steps
     # =========================
     def resolve_params(self):
+
         self.stage = self.args.stage
         self.config_path = self.get_arg_or_env("config", "CONFIG_PATH")
         self.env_path = self.get_arg_or_env("environment", "ENV_PATH")
         self.start_date = self.get_arg_or_env("start_date", "START_DATE")
         self.end_date = self.get_arg_or_env("end_date", "END_DATE")
-
         self.run_bootstrap = self.args.run_bootstrap
-        self.data_quality = self.args.data_quality
 
         if self.run_bootstrap:
+            self.stage = "bootstrap"
             self.required_date = False
             self.required_table_names = False
+
+        self.data_quality = self.args.data_quality
+
 
     def validate(self):
         if self.required_date:
@@ -150,6 +152,11 @@ class PipelineRunner:
             self.validate_path(self.config_path, "CONFIG_PATH")
         if self.required_env:
             self.validate_path(self.env_path, "ENV_PATH")
+        if not self.run_bootstrap:
+            if self.stage not in ["bronze", "silver", "gold"]:
+                raise ValueError(
+                    f"Invalid stage '{self.stage}'. Must be one of: bronze, silver, gold."
+                )
 
     def apply_env_vars(self):
         self.set_env_vars(
@@ -162,14 +169,16 @@ class PipelineRunner:
         )
 
     def resolve_tables(self):
-        self.table_names = self.get_arg_or_config(
-            args=self.args,
-            config_manager=TableManager(),
-            arg="tables",
-            config_key="get_tablenames",
-            config_params={"stage": self.stage},
-            required=self.required_table_names,
-        )
+        if not self.run_bootstrap:
+            self.table_names = self.get_arg_or_config(
+                args=self.args,
+                config_manager=TableManager(),
+                arg="tables",
+                config_key="get_tablenames",
+                config_params={"stage": self.stage},
+                required=self.required_table_names,
+            )
+
         return self.table_names
 
     # =========================

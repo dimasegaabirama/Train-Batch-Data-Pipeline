@@ -3,9 +3,7 @@ import re
 
 from typing_extensions import List, Union
 
-# Matches environment variable placeholders like ${VAR_NAME}
 _ENV_PATTERN = re.compile(r"\$\{(\w+)\}")
-
 
 def find_env(value: str) -> List[object]:
     """Return all environment variable names found in a string."""

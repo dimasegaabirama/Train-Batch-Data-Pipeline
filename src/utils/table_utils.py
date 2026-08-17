@@ -1,8 +1,6 @@
 from typing_extensions import Union, TYPE_CHECKING
 from pyspark.sql.types import (
-    StructType, StructField,
-    StringType, IntegerType, LongType, DoubleType,
-    FloatType, BooleanType, TimestampType, DateType,
+    StructType,
     _parse_datatype_string
 )
 

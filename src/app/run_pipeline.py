@@ -11,7 +11,8 @@ from src.core import (
     DateManager,
     FilterManager,
     TableManager,
-    resolve_registry_class,
+    DataQualityContext,
+    resolve_registry_class
 )
 
 from src.etl.extract import BaseExtract
@@ -34,11 +35,7 @@ class PipelineOrchestrator:
         self._date_manager = DateManager()
         self._filter_manager = FilterManager()
 
-    def _run_tests(self, stage: StageType, table_name: str) -> bool:
-        """
-        Runs the data quality tests for the given stage/table.
-        Returns True if tests pass (or there are none to run), False otherwise.
-        """
+    def _run_tests(self, stage: StageType, table_name: str, inputs: TransformResult) -> bool:
         try:
             self.logger.info(
                 "Running Data Quality Tests for Stage: %s | Table: %s", stage, table_name
@@ -59,10 +56,14 @@ class PipelineOrchestrator:
 
             dq_path = Path(__file__).parents[1] / "data_quality" / stage / test_filename
 
+            DataQualityContext.set(transform_result=inputs)
+
             self.logger.debug("Using Data Quality Test Class: %s", test_filename)
             self.logger.debug("Data Quality Test Path: %s", dq_path)
 
-            exit_code = pytest.main(["-q", "--tb=short", str(dq_path)])
+            exit_code = pytest.main(
+                ["-q", "--tb=short", str(dq_path)]
+            )
 
             passed = exit_code == 0
             if not passed:
@@ -201,7 +202,7 @@ class PipelineOrchestrator:
         )
 
         if self.quality_check:
-            dq_passed = self._run_tests(stage, table_name)
+            dq_passed = self._run_tests(stage, table_name, transform_stage)
             if not dq_passed:
                 raise RuntimeError(
                     f"Aborting load: Data Quality checks did not pass for "

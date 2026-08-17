@@ -9,7 +9,7 @@ class SparkLayerContext(BaseModel):
 
 class SparkConfig(BaseModel):
     master: str
-    dev: SparkLayerContext
+    bootstrap: SparkLayerContext
     bronze: SparkLayerContext
     silver: SparkLayerContext
     gold: SparkLayerContext
