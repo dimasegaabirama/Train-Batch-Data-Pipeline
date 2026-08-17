@@ -4,10 +4,7 @@ from src.data_quality import BaseTest
 
 
 class TestRevenueDaily(BaseTest):
-
-    stage = "gold"
-    table_name = "revenue_daily"
-
+    
     def test_completeness(self):
         check = (
             Check(self.session, CheckLevel.Error, "RevenueDaily - Completeness Check")

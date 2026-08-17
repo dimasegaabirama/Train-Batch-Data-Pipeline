@@ -5,9 +5,6 @@ from src.data_quality import BaseTest
 
 class TestCancellationSummary(BaseTest):
 
-    stage = "gold"
-    table_name = "cancellation_summary"
-
     def test_completeness(self):
         check = (
             Check(self.session, CheckLevel.Error, "CancellationSummary - Completeness Check")

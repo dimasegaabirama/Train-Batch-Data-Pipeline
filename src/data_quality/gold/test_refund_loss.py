@@ -5,9 +5,6 @@ from src.data_quality import BaseTest
 
 class TestRefundLoss(BaseTest):
 
-    stage = "gold"
-    table_name = "refund_loss"
-
     def test_completeness(self):
         check = (
             Check(self.session, CheckLevel.Error, "RefundLoss - Completeness Check")

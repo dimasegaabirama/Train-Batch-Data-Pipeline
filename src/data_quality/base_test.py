@@ -25,9 +25,6 @@ class BaseTest(ABC):
     and/or call `run_tests` with a pydeequ `Check`.
     """
 
-    stage: Optional[str] = None
-    table_name: Optional[str] = None
-
     _table_manager = TableManager()
     _source_manager = SourceManager()
     _schema_manager = SchemaManager()
@@ -40,16 +37,15 @@ class BaseTest(ABC):
             with Session(stage=self.stage, logger=logger) as session:
                 yield session
 
-    @pytest.fixture(scope="package", autouse=True)
+    @pytest.fixture(scope="class", autouse=True)
     def setup(self, session: SparkSession):
         self.session = session
 
-        self.dataframe = getattr(DataQualityContext.get(), "cleaned_dataframe", None)
-        if self.dataframe is None:
-            raise ValueError(
-                "DataQualityContext does not contain 'cleaned_dataframe'. "
-                "Ensure it is set before running tests."
-            )
+        context = DataQualityContext.get()
+
+        self.stage = context.stage
+        self.table_name = context.name
+        self.dataframe = context.cleaned_dataframe
 
     def test_schema_table(self):
         """Assert the dataframe's schema matches the registered table schema."""
@@ -59,6 +55,9 @@ class BaseTest(ABC):
 
         expected = {f.name.lower(): str(f.dataType) for f in expected_schema.fields}
         actual = {f.name.lower(): str(f.dataType) for f in self.dataframe.schema.fields}
+
+        print(f"Expected schema: {expected}")
+        print(f"Actual schema: {actual}")
 
         assert expected == actual
 

@@ -105,13 +105,13 @@ def initialize_table(spark: SparkSession):
             seat_number STRING,
             status STRING,
             departure_date STRING,
-            extra_info STRUCT
+            extra_info STRUCT<
                 child_discount: BOOLEAN,
                 family_members: INT,
                 promo_code: STRING,
                 source: STRING
             >,
-            payment STRUCT
+            payment STRUCT<
                 method: STRING,
                 bank: STRING,
                 provider: STRING

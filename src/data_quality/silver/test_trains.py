@@ -4,10 +4,7 @@ from src.data_quality import BaseTest
 
 
 class TestTrains(BaseTest):
-
-    stage = "silver"
-    table_name = "trains"
-
+    
     def test_completeness(self):
         check = (
             Check(

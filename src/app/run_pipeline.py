@@ -66,7 +66,7 @@ class PipelineOrchestrator:
 
         DataQualityContext.set(transform_result=inputs)
         try:
-            exit_code = pytest.main(["-q", "--tb=short", str(dq_path)])
+            exit_code = pytest.main(["-q", "-v", str(dq_path)])
         except Exception as e:
             raise RuntimeError(
                 f"Data Quality Tests Failed for Stage: {stage} | Error: {e}"
