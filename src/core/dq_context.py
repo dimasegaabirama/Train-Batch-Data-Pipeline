@@ -1,4 +1,6 @@
 from typing import Optional
+
+from pyspark.sql import SparkSession
 from src.models.etl_config import TransformResult
 
 
@@ -9,16 +11,23 @@ class DataQualityContext:
     Aman karena pytest.main() dijalankan in-process (sama interpreter,
     sama SparkContext).
     """
-    _current: Optional[TransformResult] = None
+    _transform_result: Optional[TransformResult] = None
+    _session: Optional[SparkSession] = None
 
     @classmethod
-    def set(cls, transform_result: TransformResult) -> None:
-        cls._current = transform_result
+    def set(cls, session: SparkSession, transform_result: TransformResult) -> None:
+        cls._transform_result = transform_result
+        cls._session = session
 
     @classmethod
-    def get(cls) -> Optional[TransformResult]:
-        return cls._current
+    def get_transform_result(cls) -> Optional[TransformResult]:
+        return cls._transform_result
+
+    @classmethod
+    def get_session(cls) -> Optional[SparkSession]:
+        return cls._session
 
     @classmethod
     def clear(cls) -> None:
-        cls._current = None
+        cls._transform_result = None
+        cls._session = None

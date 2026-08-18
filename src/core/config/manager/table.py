@@ -103,18 +103,24 @@ class TableManager:
 
         return TableMetadata(
             name=table_ref, 
-            catalog=catalog, 
-            schema_name=schema_name,                                        #schema_name is the schema/namespace of the current stage, which is used for loading the table.
+            catalog=catalog,
+
+            #schema_name is the schema/namespace of the current stage, which is used for loading the table.
+            schema_name=schema_name,
             write_mode=self.get_table_write_mode(table_ref, stage),
-            
-            fullname=self.get_table_fullname(table_ref, upstream_stage),    #For Extract, we need to get the full name of the table from the upstream stage, not the current stage. 
-            location=self.get_table_fullname(table_ref, stage),             #For load, we need to get the full name of the table from the current stage, not the upstream stage.
-            
-            schema=self.get_table_schema(table_ref, upstream_stage),        #schema is structure of the table, which is used for validaton schema when extracting data from the upstream stage.
+
+            #For Extract, we need to get the full name of the table from the upstream stage, not the current stage.
+            fullname=self.get_table_fullname(table_ref, upstream_stage), 
+
+            #For load, we need to get the full name of the table from the current stage, not the upstream stage.
+            location=self.get_table_fullname(table_ref, stage),
+
+            #schema is structure of the table, which is used for validaton schema when extracting data from the upstream stage.
+            schema=self.get_table_schema(table_ref, upstream_stage),
             queries=self.get_formated_query(table_ref, **(query_params or {})),
             query_params=query_params
         )
        
 if __name__ == "__main__":
-    table_manager = TableManager().get_table_deps("routes", "silver")
+    table_manager = SchemaManager().get_stage_upstream("bronze")
     print(table_manager)

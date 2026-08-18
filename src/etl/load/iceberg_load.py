@@ -23,7 +23,7 @@ class IcebergLoad(BaseLoad):
 
         except Exception as e:
             raise RuntimeError(
-                f"Failed to load data for table '{self.transform_result.fullname}': {e}"
+                f"Failed to load data for table '{self.location}': {e}"
             ) from e
 
     def _resolve_write_mode(self, write_mode: WriteType, writer: object) -> Callable:

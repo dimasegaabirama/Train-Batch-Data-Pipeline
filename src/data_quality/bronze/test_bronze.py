@@ -11,13 +11,11 @@ SCOPE_BRONZE = "function"
 class TestBronze(BaseTest):
     """Data quality checks that run against every table in the bronze layer."""
 
-    stage = "bronze"
-
     @pytest.fixture(scope=SCOPE_BRONZE, autouse=True)
-    def setup(self, session: SparkSession):
-        self.session = session
+    def setup(self):
+        self.session = DataQualityContext.get_session()
 
-        context = DataQualityContext.get()
+        context = DataQualityContext.get_transform_result()
 
         self.table_name = context.name
         self.dataframe = context.cleaned_dataframe

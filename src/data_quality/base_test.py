@@ -25,25 +25,15 @@ class BaseTest(ABC):
     and/or call `run_tests` with a pydeequ `Check`.
     """
 
-    stage: Optional[str] = None
-
     _table_manager = TableManager()
     _source_manager = SourceManager()
     _schema_manager = SchemaManager()
 
-    @pytest.fixture(scope="class")
-    def session(self):
-        logger = AppLogger("BaseTest")
+    @pytest.fixture(scope="module", autouse=True)
+    def setup(self):
+        self.session = DataQualityContext.get_session()
 
-        with logger.log_context("Running Train Batch Pipeline", self.stage) as logger:
-            with Session(stage=self.stage, logger=logger) as session:
-                yield session
-
-    @pytest.fixture(scope="package", autouse=True)
-    def setup(self, session: SparkSession):
-        self.session = session
-
-        context = DataQualityContext.get()
+        context = DataQualityContext.get_transform_result()
 
         self.table_name = context.name
         self.dataframe = context.cleaned_dataframe
@@ -79,9 +69,8 @@ class BaseTest(ABC):
 
         failures = [
             constraint
-            for check_result in result["checkResults"]
-            for constraint in check_result["constraintResults"]
-            if constraint["status"] == "Failure"
+            for constraint in result
+            if constraint["constraint_status"] == "Failure"
         ]
 
         assert not failures, failures
