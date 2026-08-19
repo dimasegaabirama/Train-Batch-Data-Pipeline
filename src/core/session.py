@@ -3,7 +3,7 @@ from typing import Optional
 
 from pyspark.sql import SparkSession
 
-from src.core import SparkManager, AppLogger
+from src.core import SparkManager
 from src.models.data_config import StageType
 
 

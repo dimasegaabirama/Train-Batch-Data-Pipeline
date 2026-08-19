@@ -25,6 +25,7 @@ class IcebergExtract(BaseExtract):
             df = self._read_table(full_table_name) if extract_main else None
 
             return ExtractResult(
+                stage=self.stage,
                 name=self.table_name,
                 catalog=self.main_table.catalog,
                 schema_name=self.main_table.schema_name,

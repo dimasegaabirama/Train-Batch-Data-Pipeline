@@ -121,6 +121,11 @@ class PipelineRunner:
         self.end_date = self.get_arg_or_env("end_date", "END_DATE")
         self.run_bootstrap = self.args.run_bootstrap
 
+        print("START DATE:", self.start_date)
+        print("END DATE:", self.end_date)
+        print("STAGE:", self.stage)
+        print("RUN BOOTSTRAP:", self.run_bootstrap)
+
         if self.run_bootstrap:
             self.stage = "bootstrap"
             self.required_date = False

@@ -15,6 +15,7 @@ class BaseExtract(ABC):
 
     def __init__(
         self,
+        stage: StageType,
         session: SparkSession,
         main_table: TableMetadata,
         table_deps: Dict[str, List[TableDependency]],
@@ -24,6 +25,8 @@ class BaseExtract(ABC):
             raise ValueError("main_table must be provided.")
 
         self._source_manager = SourceManager()
+
+        self.stage = stage
 
         self.session = session
         self.condition = condition

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from src.core.config.config import Config
 from src.models.data_config import (
-    DateConfig,
+    DateConfig
 )
 
 

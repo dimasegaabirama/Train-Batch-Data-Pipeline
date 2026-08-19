@@ -30,6 +30,7 @@ class MongoExtract(BaseExtract):
             )
 
             return ExtractResult(
+                stage=self.stage,
                 name=self.table_name,
                 catalog=self.main_table.catalog,
                 schema_name=self.main_table.schema_name,

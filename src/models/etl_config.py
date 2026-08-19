@@ -7,6 +7,7 @@ from src.models.data_config import WriteType
 # Base (shared contract)
 # =========================
 class PipelineResult(BaseModel):
+    stage: str
     name: str
     fullname: str
     location: str
