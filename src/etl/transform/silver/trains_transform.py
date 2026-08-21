@@ -27,45 +27,36 @@ class TrainsTransform(BaseTransform):
         RuntimeError
             If an error occurs during transformation.
         """
+
+        # sk_id BIGINT,
+        # id INT,
+        # name STRING,
+        # type STRING,
+        # capacity INT,
+        # is_active BOOLEAN,
+        # start_date TIMESTAMP,
+        # end_date TIMESTAMP
+
         try:
             transformed_df = (
                 self.dataframe
-                .withColumn(
-                    "sk_id",
-                    F.abs(
-                        F.xxhash64(
-                            F.col("id"),
-                            F.col("updated_at"),
-                        )
-                    ),
-                )
-                .withColumn(
-                    "name",
-                    F.trim(
-                        F.lower(
-                            F.col("name"),
-                        )
-                    ),
-                )
-                .withColumn(
-                    "type",
-                    F.coalesce(
-                        F.trim(
-                            F.lower(
-                                F.col("type"),
-                            )
-                        ),
-                        F.lit("unknown"),
-                    ),
-                )
-                .withColumn(
-                    "capacity",
-                    F.coalesce(
-                        F.col("capacity"),
-                        F.lit(0),
-                    ),
-                )
+                .withColumn("sk_id",F.abs(F.xxhash64(F.col("id"),F.col("updated_at"))))
+                .withColumn("name",F.trim(F.lower(F.col("name"))))
+                .withColumn("type", F.coalesce(F.trim(F.lower(F.col("type"))), F.lit("unknown")))
+                .withColumn("capacity", F.coalesce(F.col("capacity"), F.lit(0)))
+                .withColumn("is_active", F.lit(True).cast("boolean"))
+                .withColumn("start_date", F.to_timestamp(F.col("updated_at")))
+                .withColumn("end_date", F.lit(None))
                 .dropDuplicates(["sk_id"])
+            ).select(
+                "sk_id",
+                "id",
+                "name",
+                "type",
+                "capacity",
+                "is_active",
+                "start_date",
+                "end_date"
             )
 
             return TransformResult.from_extract(

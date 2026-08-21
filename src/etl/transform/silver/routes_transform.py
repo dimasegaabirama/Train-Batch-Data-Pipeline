@@ -41,6 +41,7 @@ class RoutesTransform(BaseTransform):
                 .withColumn(
                     "duration_minutes", F.coalesce(F.col("duration_minutes"), F.lit(0))
                 )
+                .withColumn("is_deleted", F.lit(False).cast("boolean"))
             )
 
             stations_df = F.broadcast(self.dependencies["stations"])
@@ -68,6 +69,7 @@ class RoutesTransform(BaseTransform):
                 r.join(s1, F.col("s1.code") == F.col("r.origin"))
                 .join(s2, F.col("s2.code") == F.col("r.destination"))
                 .join(tr, F.col("tr.id") == F.col("r.train_id"))
+                .dropDuplicates(["sk_id"])
                 .select(
                     F.col("r.sk_id"),
                     F.col("r.id"),
@@ -76,8 +78,8 @@ class RoutesTransform(BaseTransform):
                     F.col("tr.sk_train_id"),
                     F.col("r.distance_km"),
                     F.col("r.duration_minutes"),
+                    F.col("r.is_deleted")
                 )
-                .dropDuplicates(["sk_id"])
             )
 
             return TransformResult.from_extract(self.extract_result, df_joined)

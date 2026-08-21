@@ -21,7 +21,7 @@ class StationsTransform(BaseTransform):
         -------
         TransformResult
             The extract result's metadata paired with the transformed DataFrame,
-            containing: 'sk_id', 'id', 'name', 'city', 'code'.
+            containing: 'sk_id', 'id', 'name', 'city', 'code', 'is_deleted'.
 
         Notes
         -----
@@ -29,25 +29,25 @@ class StationsTransform(BaseTransform):
           `self.dependencies["stations"]`), so its output columns should stay
           in sync with what that join expects.
         """
+
         try:
             stations_dataframe = (
                 self.dataframe.withColumn(
                     "sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at")))
                 )
-                .withColumn("station_id", F.col("id").cast("string"))
                 .withColumn("name", F.trim(F.lower("name")))
                 .withColumn(
                     "city", F.coalesce(F.trim(F.lower("city")), F.lit("unknown"))
                 )
                 .withColumn("code", F.trim(F.lower("code")))
-                .select(
-                    F.col("sk_id"),
-                    F.col("station_id").cast("int").alias("id"),
-                    F.col("name"),
-                    F.col("city"),
-                    F.col("code"),
-                )
+                .withColumn("is_deleted", F.lit(False).cast("boolean"))
                 .dropDuplicates(["sk_id"])
+            ).select(
+                "sk_id",
+                "name",
+                "city",
+                "code",
+                "is_deleted"
             )
 
             return TransformResult.from_extract(self.extract_result, stations_dataframe)

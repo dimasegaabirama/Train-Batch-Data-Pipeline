@@ -21,6 +21,7 @@ class PassengersTransform(BaseTransform):
         TransformResult
             The extract result's metadata paired with the transformed DataFrame.
         """
+
         try:
             transformed_df = (
                 self.dataframe.withColumn(
@@ -31,7 +32,21 @@ class PassengersTransform(BaseTransform):
                     "gender", F.coalesce(F.trim(F.lower("gender")), F.lit("unknown"))
                 )
                 .withColumn("email", F.trim(F.lower("email")))
+                .withColumn("phone", F.trim(F.col("phone")))
+                .withColumn("is_active", F.lit(True).cast("boolean"))
+                .withColumn("start_date", F.to_timestamp("updated_at"))
+                .withColumn("end_date", F.lit(None))
                 .dropDuplicates(["sk_id"])
+            ).select(
+                "sk_id",
+                "id",
+                "name",
+                "gender",
+                "phone",
+                "email",
+                "is_active",
+                "start_date",
+                "end_date"
             )
 
             return TransformResult.from_extract(self.extract_result, transformed_df)

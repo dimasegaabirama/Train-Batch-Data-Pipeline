@@ -47,7 +47,7 @@ class BaseTest(ABC):
             cls._schema_manager_instance = SchemaManager()
         return cls._schema_manager_instance
 
-    @pytest.fixture(scope="module", autouse=True)
+    @pytest.fixture(scope="function", autouse=True)
     def setup(self):
         self.session = DataQualityContext.get_session()
 

@@ -35,6 +35,7 @@ class TransformResult(PipelineResult):
     @classmethod
     def from_extract(cls, extract: ExtractResult, cleaned_dataframe: object) -> "TransformResult":
         return cls(
+            stage=extract.stage,
             name=extract.name,
             fullname=extract.fullname,
             location=extract.location,

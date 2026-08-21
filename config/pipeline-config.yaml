@@ -237,13 +237,13 @@ tables:
           t.phone <> s.phone OR 
           t.email <> s.email
         )
-        THEN UPDATE SET 
+        THEN UPDATE SET
           t.is_active = false,
-          t.end_date = s.updated_at
+          t.end_date = s.start_date
 
         WHEN NOT MATCHED THEN 
         INSERT (sk_id, id, name, gender, phone, email, is_active, start_date, end_date)
-        VALUES(s.sk_id, s.id, s.name, s.gender, s.phone, s.email, true, s.updated_at, null)
+        VALUES(s.sk_id, s.id, s.name, s.gender, s.phone, s.email, s.is_active, s.start_date, null)
 
       - |
         WITH CURRENT_RECORD AS (
@@ -260,8 +260,8 @@ tables:
             pc.gender,
             pc.phone,
             pc.email,
-            true as is_active,
-            pc.updated_at as start_date,
+            pc.is_active as is_active,
+            pc.start_date as start_date,
             NULL as end_date 
         FROM {table_view} pc 
         LEFT ANTI JOIN 
@@ -297,7 +297,7 @@ tables:
         city STRING,
         code STRING,
         is_deleted BOOLEAN
-    
+
     query:
       - |
         MERGE INTO {full_table_name} t
@@ -314,7 +314,7 @@ tables:
             t.name = s.name,
             t.city = s.city,
             t.code = s.code,
-            t.is_deleted = false
+            t.is_deleted = s.is_deleted
 
         WHEN NOT MATCHED THEN
         INSERT (
@@ -331,7 +331,7 @@ tables:
             s.name,
             s.city,
             s.code,
-            false
+            s.is_deleted
         )
 
       - |
@@ -390,11 +390,11 @@ tables:
         )
         THEN UPDATE SET 
             t.is_active = false,
-            t.end_date = s.updated_at
+            t.end_date = s.start_date
 
         WHEN NOT MATCHED THEN 
         INSERT (sk_id, id, name, type, capacity, is_active, start_date, end_date)
-        VALUES(s.sk_id, s.id, s.name, s.type, s.capacity, true, s.updated_at, null)
+        VALUES(s.sk_id, s.id, s.name, s.type, s.capacity, s.is_active, s.start_date, null)
       
       - |
         WITH CURRENT_RECORD AS (
@@ -411,8 +411,8 @@ tables:
             sc.name,
             sc.type,
             sc.capacity,
-            true as is_active,
-            sc.updated_at as start_date,
+            sc.is_active,
+            sc.start_date,
             NULL as end_date
         FROM {table_view} sc 
         LEFT ANTI JOIN CURRENT_RECORD cr 
@@ -444,13 +444,13 @@ tables:
         duration_minutes INT,
         updated_at TIMESTAMP,
         created_at TIMESTAMP
-      
+
       silver: |
         sk_id BIGINT,
         id INT,
-        org_station_id INT,
-        dest_station_id INT,
-        train_id INT,
+        sk_org_station_id BIGINT,
+        sk_dest_station_id BIGINT,
+        sk_train_id BIGINT,
         distance_km INT,
         duration_minutes INT,
         is_deleted BOOLEAN
@@ -475,7 +475,7 @@ tables:
             sk_train_id = s.sk_train_id,
             distance_km = s.distance_km,
             duration_minutes = s.duration_minutes,
-            is_deleted = false
+            is_deleted = s.is_deleted
 
         WHEN NOT MATCHED THEN 
         INSERT (
@@ -497,7 +497,7 @@ tables:
           s.sk_train_id, 
           s.distance_km, 
           s.duration_minutes, 
-          false
+          s.is_deleted
         )
 
       - |
