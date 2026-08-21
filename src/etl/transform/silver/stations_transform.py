@@ -43,11 +43,11 @@ class StationsTransform(BaseTransform):
                 .withColumn("is_deleted", F.lit(False).cast("boolean"))
                 .dropDuplicates(["sk_id"])
             ).select(
-                "sk_id",
-                "name",
-                "city",
-                "code",
-                "is_deleted"
+                F.col("sk_id"),
+                F.col("name"),
+                F.col("city"),
+                F.col("code"),
+                F.col("is_deleted")
             )
 
             return TransformResult.from_extract(self.extract_result, stations_dataframe)

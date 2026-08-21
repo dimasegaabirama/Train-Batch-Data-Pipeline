@@ -38,15 +38,15 @@ class PassengersTransform(BaseTransform):
                 .withColumn("end_date", F.lit(None))
                 .dropDuplicates(["sk_id"])
             ).select(
-                "sk_id",
-                "id",
-                "name",
-                "gender",
-                "phone",
-                "email",
-                "is_active",
-                "start_date",
-                "end_date"
+                F.col("sk_id"),
+                F.col("id"),
+                F.col("name"),
+                F.col("gender"),
+                F.col("phone"),
+                F.col("email"),
+                F.col("is_active"),
+                F.col("start_date"),
+                F.col("end_date")
             )
 
             return TransformResult.from_extract(self.extract_result, transformed_df)
