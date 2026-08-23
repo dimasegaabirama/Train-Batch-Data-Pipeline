@@ -140,6 +140,7 @@ spark:
       <<: *spark_catalog_only
       spark.sql.shuffle.partitions: 8
       spark.sql.adaptive.enabled: true
+      spark.sql.codegen.wholeStage: false
 
   gold:
     app_name: "Gold_Pipeline"
@@ -147,7 +148,6 @@ spark:
       <<: *spark_catalog_only
       spark.sql.shuffle.partitions: 8
       spark.sql.adaptive.enabled: true
-      spark.sql.codegen.fallback: true
 
 # =====================================================
 # SCHEMAS / NAMESPACES

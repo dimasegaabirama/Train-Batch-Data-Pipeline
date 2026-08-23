@@ -79,7 +79,7 @@ class FilterContext(BaseModel):
 class FilterConfig(BaseModel):
     bronze: FilterContext
     silver: FilterContext
-
+    gold: FilterContext
 
 # =========================
 # Schema
@@ -151,7 +151,7 @@ class StoragesConfig(BaseModel):
 class TableDependency(BaseModel):
     name: str
     catalog: str
-    schema_name: str
+    namespace: str
 
 
 class TableContext(BaseModel):
@@ -180,11 +180,12 @@ class TablesConfig(BaseModel):
 class TableMetadata(BaseModel):
     name: str
     catalog: str
-    schema_name: str
+    namespace: str
     write_mode: WriteType
     fullname: str
     location: str
-    schema: str
+    source_schema: str
+    target_schema: str
     queries: List[str]
     query_params: Optional[Dict[str, str]] = None
 

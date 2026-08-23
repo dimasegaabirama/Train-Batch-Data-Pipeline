@@ -33,10 +33,11 @@ class MongoExtract(BaseExtract):
                 stage=self.stage,
                 name=self.table_name,
                 catalog=self.main_table.catalog,
-                schema_name=self.main_table.schema_name,
+                namespace=self.main_table.namespace,
                 fullname=self.main_table.fullname,
                 location=self.main_table.location,
                 write_mode=self.main_table.write_mode,
+                target_schema=self.main_table.target_schema,
                 dataframe=df,
                 queries=self.main_table.queries,
                 query_params=self.main_table.query_params,
@@ -49,7 +50,7 @@ class MongoExtract(BaseExtract):
             ) from e
 
     def _read_collection(self, database: str, table: str):
-        schema = self.main_table.schema
+        schema = self.main_table.source_schema
         if not schema:
             raise ValueError(f"Schema not found for table '{table}'")
 

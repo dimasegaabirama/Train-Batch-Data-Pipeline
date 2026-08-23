@@ -12,6 +12,7 @@ class PipelineResult(BaseModel):
     fullname: str
     location: str
     write_mode: WriteType
+    target_schema: Optional[str] = None
     queries: List[str] = []
     query_params: Optional[Dict[str, str]] = None
 
@@ -21,7 +22,7 @@ class PipelineResult(BaseModel):
 # =========================
 class ExtractResult(PipelineResult):
     catalog: str
-    schema_name: str
+    namespace: str
     dataframe: Optional[object] = None
     dependencies: Optional[Dict[str, object]] = None
 

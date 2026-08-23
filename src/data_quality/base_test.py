@@ -26,33 +26,19 @@ class BaseTest(ABC):
     and/or call `run_tests` with a pydeequ `Check`.
     """
 
-    _table_manager_instance = None
-    _source_manager_instance = None
-    _schema_manager_instance = None
+    _dq_context = None
 
     @classmethod
-    def table_manager(cls) -> TableManager:
-        if cls._table_manager_instance is None:
-            cls._table_manager_instance = TableManager()
-        return cls._table_manager_instance
-
-    @classmethod
-    def source_manager(cls) -> SourceManager:
-        if cls._source_manager_instance is None:
-            cls._source_manager_instance = SourceManager()
-        return cls._source_manager_instance
-
-    @classmethod
-    def schema_manager(cls) -> SchemaManager:
-        if cls._schema_manager_instance is None:
-            cls._schema_manager_instance = SchemaManager()
-        return cls._schema_manager_instance
+    def dq_context(cls) -> DataQualityContext:
+        if cls._dq_context is None:
+            cls._dq_context = DataQualityContext()
+        return cls._dq_context
 
     @pytest.fixture(scope="function", autouse=True)
     def setup(self):
-        self.session = DataQualityContext.get_session()
+        self.session = self.dq_context.get_session()
 
-        context = DataQualityContext.get_transform_result()
+        context = self.dq_context.get_transform_result()
 
         self.table_name = context.name
         self.dataframe = context.cleaned_dataframe
@@ -61,7 +47,7 @@ class BaseTest(ABC):
     def test_schema_table(self):
         """Assert the dataframe's schema matches the registered table schema."""
         expected_schema = _parse_datatype_string(
-            self.table_manager().get_table_schema(self.table_name, self.stage)
+            self._dq_context.get_transform_result().target_schema
         )
 
         expected = {f.name.lower(): str(f.dataType) for f in expected_schema.fields}

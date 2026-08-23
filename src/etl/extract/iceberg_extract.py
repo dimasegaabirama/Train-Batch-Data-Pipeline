@@ -16,7 +16,7 @@ class IcebergExtract(BaseExtract):
             dependencies = self.table_deps[self.table_name]
             for dep in dependencies:
                 self.table_deps_dataframe[dep.name] = self._read_table(
-                    create_table_fullname(dep.catalog, dep.schema_name, dep.name)
+                    create_table_fullname(dep.catalog, dep.namespace, dep.name)
                 )
 
             # Validate dependencies and main table before proceeding with extraction
@@ -28,10 +28,11 @@ class IcebergExtract(BaseExtract):
                 stage=self.stage,
                 name=self.table_name,
                 catalog=self.main_table.catalog,
-                schema_name=self.main_table.schema_name,
+                namespace=self.main_table.namespace,
                 fullname=full_table_name,
                 location=self.main_table.location,
                 write_mode=self.main_table.write_mode,
+                target_schema=self.main_table.target_schema,
                 dataframe=df,
                 queries=self.main_table.queries,
                 query_params=self.main_table.query_params,

@@ -101,12 +101,15 @@ class TableManager:
         schema_name = self._schema_manager.get_stage_schema_name(stage)
         upstream_stage = self._schema_manager.get_stage_upstream(stage)
 
+        source_schema = self.get_table_schema(table_ref, upstream_stage)
+        target_schema = self.get_table_schema(table_ref, stage)
+
         return TableMetadata(
             name=table_ref, 
             catalog=catalog,
 
-            #schema_name is the schema/namespace of the current stage, which is used for loading the table.
-            schema_name=schema_name,
+            #namespace is the schema/namespace of the current stage, which is used for loading the table.
+            namespace=schema_name,
             write_mode=self.get_table_write_mode(table_ref, stage),
 
             #For Extract, we need to get the full name of the table from the upstream stage, not the current stage.
@@ -116,7 +119,8 @@ class TableManager:
             location=self.get_table_fullname(table_ref, stage),
 
             #schema is structure of the table, which is used for validaton schema when extracting data from the upstream stage.
-            schema=self.get_table_schema(table_ref, upstream_stage),
+            source_schema=source_schema,
+            target_schema=target_schema,
             queries=self.get_formated_query(table_ref, **(query_params or {})),
             query_params=query_params
         )
