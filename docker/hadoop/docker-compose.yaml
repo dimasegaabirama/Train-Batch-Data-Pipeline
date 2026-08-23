@@ -7,6 +7,7 @@ x-datanode-base: &datanode-base
     HDFS_CONF_dfs_replication: 2
     HDFS_CONF_dfs_namenode_name_dir: ${HADOOP_NAMENODE_DIR}
     HDFS_CONF_dfs_datanode_name_dir: ${HADOOP_DATANODE_DIR}
+    HDFS_CONF_dfs_datanode_du_reserved: 3221225472
   networks:
     - hadoop_net
     - data_eng_net
