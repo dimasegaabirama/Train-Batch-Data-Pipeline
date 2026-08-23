@@ -69,4 +69,5 @@ for net in hadoop_net spark_net airflow_net mongo_net nessie_net data_eng_net; d
   else
     log "Failed to remove $net (mungkin masih ada container yang pakai)"
   fi
+done
 echo "✅ All services stopped and cleaned!"

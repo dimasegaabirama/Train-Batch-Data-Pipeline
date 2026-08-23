@@ -147,6 +147,7 @@ spark:
       <<: *spark_catalog_only
       spark.sql.shuffle.partitions: 8
       spark.sql.adaptive.enabled: true
+      spark.sql.codegen.fallback: true
 
 # =====================================================
 # SCHEMAS / NAMESPACES
