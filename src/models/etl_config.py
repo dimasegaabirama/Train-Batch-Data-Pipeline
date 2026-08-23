@@ -9,8 +9,8 @@ from src.models.data_config import WriteType
 class PipelineResult(BaseModel):
     stage: str
     name: str
-    fullname: str
-    location: str
+    source_fullname: str
+    target_fullname: str
     write_mode: WriteType
     target_schema: Optional[str] = None
     queries: List[str] = []
@@ -38,9 +38,10 @@ class TransformResult(PipelineResult):
         return cls(
             stage=extract.stage,
             name=extract.name,
-            fullname=extract.fullname,
-            location=extract.location,
+            source_fullname=extract.source_fullname,
+            target_fullname=extract.target_fullname,
             write_mode=extract.write_mode,
+            target_schema=extract.target_schema,
             queries=extract.queries,
             query_params=extract.query_params,
             cleaned_dataframe=cleaned_dataframe

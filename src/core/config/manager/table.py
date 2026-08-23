@@ -81,7 +81,7 @@ class TableManager:
                 TableDependency(
                     name=dep.name,
                     catalog=dep.catalog,
-                    schema_name=dep.schema_name,
+                    namespace=dep.namespace,
                 )
                 for dep in deps.get(stage, [])
             ]
@@ -90,15 +90,15 @@ class TableManager:
 
     def get_table_fullname(self, table_name: str, stage: StageType) -> str:
         catalog = self._catalog_manager.get_catalog_name()
-        schema = self._schema_manager.get_stage_schema_name(stage)
-        return create_table_fullname(catalog, schema, table_name)
+        namespace = self._schema_manager.get_stage_namespace(stage)
+        return create_table_fullname(catalog, namespace, table_name)
 
     def get_table_metadata(self, table_ref: str, stage: StageType, query_params: Optional[Dict[str, str]] = None) -> TableMetadata:
         if stage is None:
             raise ValueError("Stage must be provided to get table metadata.")
 
         catalog = self._catalog_manager.get_catalog_name()
-        schema_name = self._schema_manager.get_stage_schema_name(stage)
+        namespace = self._schema_manager.get_stage_namespace(stage)
         upstream_stage = self._schema_manager.get_stage_upstream(stage)
 
         source_schema = self.get_table_schema(table_ref, upstream_stage)
@@ -109,14 +109,14 @@ class TableManager:
             catalog=catalog,
 
             #namespace is the schema/namespace of the current stage, which is used for loading the table.
-            namespace=schema_name,
+            namespace=namespace,
             write_mode=self.get_table_write_mode(table_ref, stage),
 
             #For Extract, we need to get the full name of the table from the upstream stage, not the current stage.
-            fullname=self.get_table_fullname(table_ref, upstream_stage), 
+            source_fullname=self.get_table_fullname(table_ref, upstream_stage), 
 
             #For load, we need to get the full name of the table from the current stage, not the upstream stage.
-            location=self.get_table_fullname(table_ref, stage),
+            target_fullname=self.get_table_fullname(table_ref, stage),
 
             #schema is structure of the table, which is used for validaton schema when extracting data from the upstream stage.
             source_schema=source_schema,
@@ -126,5 +126,5 @@ class TableManager:
         )
        
 if __name__ == "__main__":
-    table_manager = SchemaManager().get_stage_upstream("bronze")
+    table_manager = SchemaManager().get_stage_namespace("silver")
     print(table_manager)

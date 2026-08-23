@@ -10,7 +10,7 @@ class IcebergLoad(BaseLoad):
 
     def load(self) -> None:
         try:
-            writer = self.dataframe.writeTo(self.location)
+            writer = self.dataframe.writeTo(self.target_fullname)
             writer_action = self._resolve_write_mode(self.write_mode, writer)
 
             if self.write_mode == "custom":
@@ -23,7 +23,7 @@ class IcebergLoad(BaseLoad):
 
         except Exception as e:
             raise RuntimeError(
-                f"Failed to load data for table '{self.location}': {e}"
+                f"Failed to load data for table '{self.target_fullname}': {e}"
             ) from e
 
     def _resolve_write_mode(self, write_mode: WriteType, writer: object) -> Callable:

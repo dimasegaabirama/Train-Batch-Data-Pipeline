@@ -23,7 +23,8 @@ class BaseLoad(ABC):
 
         self.dataframe: DataFrame = self.transform_result.cleaned_dataframe
         self.write_mode: str = self.transform_result.write_mode
-        self.location: str = self.transform_result.location
+        self.target_fullname: str = self.transform_result.target_fullname
+        
         self.queries: List[str] = self.transform_result.queries
         self.query_params: Optional[Dict[str, str]] = self.transform_result.query_params
 

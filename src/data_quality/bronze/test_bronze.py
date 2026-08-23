@@ -21,6 +21,8 @@ class TestBronze(BaseTest):
         self.dataframe = context.cleaned_dataframe
         self.stage = context.stage
 
+        self.target_schema = context.target_schema
+
     def test_completeness(self):
         check = Check(
             self.session, CheckLevel.Warning, "Bronze Completeness Check"

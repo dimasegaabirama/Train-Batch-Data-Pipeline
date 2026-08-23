@@ -515,11 +515,11 @@ tables:
       silver:
         - name: stations
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
         - name: trains
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
   tickets:
     type: fact
@@ -661,31 +661,31 @@ tables:
       silver:
         - name: stations
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
         - name: routes
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
         - name: trains
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
         - name: passengers
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
         - name: class
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
         - name: status
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
         - name: payment
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
   cancellation_summary:
     type: aggregate
@@ -782,7 +782,7 @@ tables:
       gold:
         - name: tickets
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
   revenue_daily:
     type: aggregate
@@ -864,7 +864,7 @@ tables:
       gold:
         - name: tickets
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
   refund_loss:
     type: aggregate
@@ -951,7 +951,7 @@ tables:
       gold:
         - name: tickets
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
   train_performance:
     type: aggregate
@@ -1053,11 +1053,11 @@ tables:
       gold:
         - name: tickets
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
         - name: trains
           catalog: nessie
-          schema_name: silver
+          namespace: silver
 
 
 # =====================================================

@@ -182,8 +182,8 @@ class TableMetadata(BaseModel):
     catalog: str
     namespace: str
     write_mode: WriteType
-    fullname: str
-    location: str
+    source_fullname: str
+    target_fullname: str
     source_schema: str
     target_schema: str
     queries: List[str]

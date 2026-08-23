@@ -9,7 +9,7 @@ from .base_extract import BaseExtract
 class IcebergExtract(BaseExtract):
     def extract(self, extract_main: Optional[bool] = True) -> ExtractResult:
 
-        full_table_name = self.main_table.fullname
+        full_table_name = self.main_table.source_fullname
 
         try:
             # Extract dependencies first
@@ -29,8 +29,8 @@ class IcebergExtract(BaseExtract):
                 name=self.table_name,
                 catalog=self.main_table.catalog,
                 namespace=self.main_table.namespace,
-                fullname=full_table_name,
-                location=self.main_table.location,
+                source_fullname=self.main_table.source_fullname,
+                target_fullname=self.main_table.target_fullname,
                 write_mode=self.main_table.write_mode,
                 target_schema=self.main_table.target_schema,
                 dataframe=df,
@@ -54,6 +54,6 @@ class IcebergExtract(BaseExtract):
         return df
 
     def _resolve_condition(self, table: str):
-        if self.condition is not None and table == self.main_table.fullname:
+        if self.condition is not None and table == self.main_table.source_fullname:
             return self.condition
         return None

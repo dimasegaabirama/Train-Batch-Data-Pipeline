@@ -26,29 +26,28 @@ class BaseTest(ABC):
     and/or call `run_tests` with a pydeequ `Check`.
     """
 
-    _dq_context = None
+    _dq_context: Optional[DataQualityContext] = None
 
     @classmethod
     def dq_context(cls) -> DataQualityContext:
         if cls._dq_context is None:
-            cls._dq_context = DataQualityContext()
+            cls._dq_context = DataQualityContext
         return cls._dq_context
 
     @pytest.fixture(scope="function", autouse=True)
     def setup(self):
-        self.session = self.dq_context.get_session()
+        self.session = self.dq_context().get_session()
 
-        context = self.dq_context.get_transform_result()
+        context = self.dq_context().get_transform_result()
 
         self.table_name = context.name
         self.dataframe = context.cleaned_dataframe
         self.stage = context.stage
+        self.target_schema = context.target_schema
 
     def test_schema_table(self):
         """Assert the dataframe's schema matches the registered table schema."""
-        expected_schema = _parse_datatype_string(
-            self._dq_context.get_transform_result().target_schema
-        )
+        expected_schema = _parse_datatype_string(self.target_schema)
 
         expected = {f.name.lower(): str(f.dataType) for f in expected_schema.fields}
         actual = {f.name.lower(): str(f.dataType) for f in self.dataframe.schema.fields}
@@ -81,3 +80,6 @@ class BaseTest(ABC):
         ]
 
         assert not failures, failures
+
+if __name__ == "__main__":
+    pass
