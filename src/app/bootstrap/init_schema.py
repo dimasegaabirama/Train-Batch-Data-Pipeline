@@ -3,8 +3,12 @@ from pyspark.sql.session import SparkSession
 
 def initialize_namespace(spark: SparkSession):
     namespaces = ["nessie.bronze", "nessie.silver", "nessie.gold"]
-    for ns in namespaces:
-        spark.sql(f"CREATE NAMESPACE IF NOT EXISTS {ns}")
+
+    try:
+        for ns in namespaces:
+            spark.sql(f"CREATE NAMESPACE IF NOT EXISTS {ns}")
+    except Exception as e:
+        raise RuntimeError(f"Failed to initialize namespace: {e}")
 
 
 def initialize_seed(spark: SparkSession):
@@ -13,29 +17,33 @@ def initialize_seed(spark: SparkSession):
         VALUES 
             (1, 'paid'),
             (2, 'unpaid'),
-            (3, 'cancelled'),
-            (4, 'refunded')
-        """,
-        """
-        INSERT INTO nessie.silver.class (id, class_name)
-        VALUES 
-            (1, 'vip'),
-            (2, 'family'),
-            (3, 'regular'),
-            (4, 'promo')
-        """,
-        """
-        INSERT INTO nessie.silver.payment (id, method)
-        VALUES 
-            (1, 'credit_card'),
-            (2, 'debit_card'),
-            (3, 'e_wallet'),
-            (4, 'bank_transfer'),
-            (5, 'cash')
-        """
+        (3, 'cancelled'),
+        (4, 'refunded')
+    """,
+    """
+    INSERT INTO nessie.silver.class (id, class_name)
+    VALUES 
+        (1, 'vip'),
+        (2, 'family'),
+        (3, 'regular'),
+        (4, 'promo')
+    """,
+    """
+    INSERT INTO nessie.silver.payment (id, method)
+    VALUES 
+        (1, 'credit_card'),
+        (2, 'debit_card'),
+        (3, 'e_wallet'),
+        (4, 'bank_transfer'),
+        (5, 'cash')
+    """
     ]
-    for seed in seeds:
-        spark.sql(seed)
+
+    try: 
+        for seed in seeds:
+            spark.sql(seed)
+    except Exception as e:
+        raise RuntimeError(f"Failed to initialize seed data: {e}")
 
 
 def initialize_table(spark: SparkSession):
@@ -373,5 +381,10 @@ def initialize_table(spark: SparkSession):
         PARTITIONED BY (month(departure_date))
         """
     ]
-    for table in tables:
-        spark.sql(table)
+
+    try:
+        for table in tables:
+            spark.sql(table)
+
+    except Exception as e:
+        raise RuntimeError(f"Failed to initialize tables: {e}")
