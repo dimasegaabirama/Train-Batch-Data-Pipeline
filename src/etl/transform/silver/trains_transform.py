@@ -46,7 +46,7 @@ class TrainsTransform(BaseTransform):
                 .withColumn("capacity", F.coalesce(F.col("capacity"), F.lit(0)))
                 .withColumn("is_active", F.lit(True).cast("boolean"))
                 .withColumn("start_date", F.to_timestamp(F.col("updated_at")))
-                .withColumn("end_date", F.lit(None))
+                .withColumn("end_date", F.lit(None).cast("timestamp"))
                 .dropDuplicates(["sk_id"])
             ).select(
                 F.col("sk_id"),

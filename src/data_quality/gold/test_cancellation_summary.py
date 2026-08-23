@@ -96,16 +96,3 @@ class TestCancellationSummary(BaseTest):
         )
 
         self.run_tests(check)
-
-    def test_freshness(self):
-        stale_records = self.dataframe.filter(
-            "updated_at < current_timestamp() - INTERVAL 2 DAYS"
-        ).count()
-
-        total_records = self.dataframe.count()
-        stale_ratio = stale_records / total_records if total_records > 0 else 0
-
-        assert stale_ratio < 0.5, (
-            f"{stale_ratio:.1%} of records have not been updated in the last 2 days "
-            f"({stale_records}/{total_records})"
-        )

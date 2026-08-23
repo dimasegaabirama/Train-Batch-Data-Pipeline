@@ -110,7 +110,7 @@ spark:
     spark.driver.port: 4040
     spark.driver.memory: "512m"
     spark.serializer: "org.apache.spark.serializer.KryoSerializer"
-    spark.jars.packages: org.apache.iceberg:iceberg-spark-runtime-3.2_2.12:1.4.3,org.projectnessie.nessie-integrations:nessie-spark-extensions-3.2_2.12:0.67.0
+    spark.jars.packages: org.apache.iceberg:iceberg-spark-runtime-3.2_2.12:1.4.3,org.projectnessie.nessie-integrations:nessie-spark-extensions-3.2_2.12:0.67.0,com.amazon.deequ:deequ:2.0.8-spark-3.2
     spark.sql.extensions: org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions,org.projectnessie.spark.extensions.NessieSparkSessionExtensions
     spark.sql.catalog.nessie: org.apache.iceberg.spark.SparkCatalog
     spark.sql.catalog.nessie.catalog-impl: org.apache.iceberg.nessie.NessieCatalog

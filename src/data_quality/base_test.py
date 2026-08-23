@@ -1,5 +1,6 @@
 import json
 from abc import ABC
+import pydeequ
 from typing_extensions import Optional
 
 import pytest
@@ -73,6 +74,7 @@ class BaseTest(ABC):
 
     def run_tests(self, check: Check):
         """Run a pydeequ `Check` against the dataframe and assert no constraint failed."""
+
         verification_result = (
             VerificationSuite(self.session).onData(self.dataframe).addCheck(check).run()
         )

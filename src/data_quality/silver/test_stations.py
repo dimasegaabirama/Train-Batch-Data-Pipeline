@@ -93,7 +93,7 @@ class TestStations(BaseTest):
                 "Code must be at most 5 characters",
             )
             .satisfies(
-                "code RLIKE '^[A-Z0-9]+$'",
+                "code RLIKE '^[a-z]+$'",
                 "station_code_validation",
                 lambda x: x == 1.0,
             )

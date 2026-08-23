@@ -77,10 +77,12 @@ class TestRoutes(BaseTest):
             )
             .isPositive(
                 "distance_km",
+                lambda x: x == 1,
                 "Distance must be greater than 0",
             )
             .isPositive(
                 "duration_minutes",
+                lambda x: x == 1,
                 "Duration must be greater than 0",
             )
             .hasMax(

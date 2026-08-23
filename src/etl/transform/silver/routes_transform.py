@@ -72,7 +72,7 @@ class RoutesTransform(BaseTransform):
                 .dropDuplicates(["sk_id"])
                 .select(
                     F.col("r.sk_id"),
-                    F.col("r.id"),
+                    F.col("r.id").cast("int"),
                     F.col("s1.sk_org_station_id"),
                     F.col("s2.sk_dest_station_id"),
                     F.col("tr.sk_train_id"),

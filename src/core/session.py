@@ -46,9 +46,13 @@ class Session:
     def stop_session(self) -> None:
         """Stop the active Spark session, if any."""
         if self._session is not None:
+            sc = self._session.sparkContext
             self._session.stop()
             self._session = None
 
+            if sc._gateway is not None:
+                sc._gateway.shutdown()
+                sc._gateway = None
 
     def __enter__(self) -> SparkSession:
         return self.get_session()

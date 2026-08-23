@@ -31,13 +31,15 @@ class TicketsTransform(BaseTransform):
         """
         try:
             tickets_dataframe = (
-                self.dataframe.withColumn(
+                self.dataframe
+                .withColumn(
                     "ticket_id", F.lower(F.trim(F.col("ticket_id")))
                 )
-                .withColumn("price", F.coalesce("price", F.lit(0.0)))
-                .withColumn("discount", F.coalesce("discount", F.lit(0.0)))
+                .withColumn("departure_date", F.to_timestamp(F.col("departure_date")))
+                .withColumn("price", F.coalesce("price", F.lit(0.0)).cast("decimal(18, 2)"))
+                .withColumn("discount", F.coalesce("discount", F.lit(0.0)).cast("decimal(18, 2)"))
                 .withColumn(
-                    "final_price", F.round(F.col("price") * (1 - F.col("discount")), 2)
+                    "final_price", F.round(F.col("price") * (1 - F.col("discount")), 2).cast("decimal(18, 2)")
                 )
                 .withColumn(
                     "class",
@@ -64,7 +66,7 @@ class TicketsTransform(BaseTransform):
                         F.col("extra_info.promo_code").isNotNull(), F.lit(True)
                     ).otherwise(F.lit(False)),
                 )
-                .withColumn("day_of_week", F.dayofweek(F.col("departure_date")))
+                .withColumn("day_of_week", F.dayofweek(F.col("departure_date")).cast("byte"))
                 .withColumn("is_weekend", F.col("day_of_week").isin([1, 7]))
                 .withColumn(
                     "booking_lead_days",
@@ -141,6 +143,7 @@ class TicketsTransform(BaseTransform):
                     status_df, F.col("st.status") == F.col("td.active_status"), "left"
                 )
                 .join(payment_df, F.col("py.method") == F.col("td.payment"), "left")
+
                 .select(
                     F.col("td.ticket_id"),
                     F.col("r.sk_id").alias("route_sk_id"),
@@ -163,6 +166,7 @@ class TicketsTransform(BaseTransform):
                     F.col("td.has_child"),
                     F.col("td.has_promo"),
                     F.col("td.is_weekend"),
+
                 )
             )
 

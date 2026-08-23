@@ -44,6 +44,7 @@ class StationsTransform(BaseTransform):
                 .dropDuplicates(["sk_id"])
             ).select(
                 F.col("sk_id"),
+                F.col("id").cast("int"),
                 F.col("name"),
                 F.col("city"),
                 F.col("code"),

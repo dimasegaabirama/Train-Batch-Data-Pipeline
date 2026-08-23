@@ -40,9 +40,6 @@ class PipelineOrchestrator:
     def _prepared_inputs(self, stage: StageType, table_name: str) -> BaseExtract:
         """Build a ready-to-run extractor instance for the given stage/table."""
 
-        print("START DATE:", self._date_manager.get_start_date())
-        print("END DATE:", self._date_manager.get_end_date())
-
         query_params = {
             "full_table_name": self._table_manager.get_table_fullname(table_name, stage),
             "table_view": f"{table_name}_view",
@@ -140,7 +137,6 @@ class PipelineOrchestrator:
     def run_table(self, stage: StageType, table_name: str) -> None:
         """Run extract -> transform -> (optional) DQ checks -> load for one table."""
         extract_result = self.extract(stage, table_name)
-        extract_result.dataframe.show()
 
         if not extract_result.dataframe.take(1):
             self.logger.info(
