@@ -22,15 +22,15 @@ class BronzeTransform(BaseTransform):
             The extract result's metadata paired with the transformed DataFrame.
         """
         try:
-            transformed_df = self.dataframe.withColumnRenamed("_id", "id")
+            result_df = self.dataframe.withColumnRenamed("_id", "id")
 
             for column in DATE_COLUMNS:
-                if column in transformed_df.columns:
-                    transformed_df = transformed_df.withColumn(
+                if column in result_df.columns:
+                    result_df = result_df.withColumn(
                         column, F.to_timestamp(column)
                     )
 
-            return TransformResult.from_extract(self.extract_result, transformed_df)
+            return self._build_result(result_df)
 
         except Exception as e:
             raise RuntimeError(f"Error during bronze transformation: {e}") from e

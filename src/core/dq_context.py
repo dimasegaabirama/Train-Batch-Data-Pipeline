@@ -6,12 +6,7 @@ from src.models.etl_config import TransformResult
 from pyspark.sql.dataframe import DataFrame
 
 class DataQualityContext:
-    """
-    Shared in-process context untuk oper TransformResult dari
-    PipelineOrchestrator ke pytest BaseTest, tanpa lewat disk/SQL view.
-    Aman karena pytest.main() dijalankan in-process (sama interpreter,
-    sama SparkContext).
-    """
+
     _transform_result: Optional[TransformResult] = None
     _session: Optional[SparkSession] = None
     _dataframe: Optional[DataFrame] = None

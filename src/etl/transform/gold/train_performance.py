@@ -60,7 +60,7 @@ class TrainPerformance(BaseTransform):
                 ).alias("cancelled_after_departure_flag"),
             )
 
-            train_performance_dataframe = (
+            result_df = (
                 train_performance_dataframe.withColumn(
                     "occupancy_rate",
                     F.round((F.col("net_tickets_sold") / F.col("capacity")) * 100, 2),
@@ -71,9 +71,8 @@ class TrainPerformance(BaseTransform):
                 .withColumn("updated_at", F.current_timestamp())
             )
 
-            return TransformResult.from_extract(
-                self.extract_result, train_performance_dataframe
-            )
+            return self._build_result(result_df)
+        
         except Exception as e:
             raise RuntimeError(
                 f"Error during train performance transformation: {e}"

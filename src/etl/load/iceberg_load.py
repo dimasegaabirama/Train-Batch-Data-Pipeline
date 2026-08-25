@@ -1,4 +1,4 @@
-from typing_extensions import Callable, Dict
+from typing_extensions import Dict, List
 
 from src.models.data_config import WriteType
 
@@ -8,31 +8,40 @@ from .base_load import BaseLoad
 class IcebergLoad(BaseLoad):
     """Loader that writes the transformed dataframe to an Iceberg table."""
 
+    def _resolve_write_action(self, writer: any, write_mode: WriteType) -> str:
+        write_actions = {
+            "custom": self._write_custom_queries,
+            "replace": writer.createOrReplace,
+            "append": writer.append,
+            "overwrite": writer.overwrite,
+            "overwrite_partition": writer.overwritePartition,
+        }
+
+        write_action = write_actions.get(write_mode)
+        if write_action is None:
+            raise ValueError(f"Unsupported write mode: '{write_mode}'")
+
+        return write_action
+
+    def _write_custom_queries(self, queries: List[str]) -> None:
+        view_name = self.transform_result.view_name
+        if view_name:
+            self.dataframe.createOrReplaceTempView(view_name)
+
+        for query in queries:
+            self.session.sql(query)
+
     def load(self) -> None:
         try:
             writer = self.dataframe.writeTo(self.target_fullname)
-            writer_action = self._resolve_write_mode(self.write_mode, writer)
+            write_action = self._resolve_write_action(writer, self.write_mode)
 
             if self.write_mode == "custom":
-                view_name = self.transform_result.query_params["table_view"]
-                self.dataframe.createOrReplaceTempView(view_name)
-                for query in self.queries:
-                    writer_action(query)
+                write_action(self.queries)
             else:
-                writer_action()
+                write_action()
 
         except Exception as e:
             raise RuntimeError(
                 f"Failed to load data for table '{self.target_fullname}': {e}"
             ) from e
-
-    def _resolve_write_mode(self, write_mode: WriteType, writer: object) -> Callable:
-        """Map a write mode to the writer action that performs it."""
-        dispatch: Dict[str, Callable] = {
-            "custom": self.session.sql,
-            "append": writer.append,
-            "overwrite": writer.replace,
-            "overwrite_partitions": writer.overwritePartitions,
-        }
-
-        return dispatch.get(write_mode)

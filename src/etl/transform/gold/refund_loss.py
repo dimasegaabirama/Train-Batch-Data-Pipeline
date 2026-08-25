@@ -55,7 +55,7 @@ class RefundLoss(BaseTransform):
                 )
             )
 
-            refund_loss_dataframe = (
+            result_df = (
                 refund_loss_dataframe.withColumn(
                     "avg_refund_amount", F.round(F.col("avg_refund_amount"), 2)
                 )
@@ -73,8 +73,7 @@ class RefundLoss(BaseTransform):
                 .withColumn("updated_at", F.current_timestamp())
             )
 
-            return TransformResult.from_extract(
-                self.extract_result, refund_loss_dataframe
-            )
+            return self._build_result(result_df)
+        
         except Exception as e:
             raise RuntimeError(f"Error during refund loss transformation: {e}") from e

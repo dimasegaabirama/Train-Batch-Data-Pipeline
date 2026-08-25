@@ -65,7 +65,7 @@ class RoutesTransform(BaseTransform):
                 .alias("tr")
             )
 
-            df_joined = (
+            result_df = (
                 r.join(s1, F.col("s1.code") == F.col("r.origin"))
                 .join(s2, F.col("s2.code") == F.col("r.destination"))
                 .join(tr, F.col("tr.id") == F.col("r.train_id"))
@@ -82,7 +82,7 @@ class RoutesTransform(BaseTransform):
                 )
             )
 
-            return TransformResult.from_extract(self.extract_result, df_joined)
+            return self._build_result(result_df)
 
         except Exception as e:
             raise RuntimeError(f"Error during routes transformation: {e}") from e

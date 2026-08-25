@@ -65,7 +65,7 @@ class CancellationSummary(BaseTransform):
                 ).alias("avg_hours_to_cancel"),
             )
 
-            cancellation_summary_dataframe = (
+            result_df = (
                 cancellation_summary_dataframe.withColumn(
                     "cancellation_rate",
                     F.round(
@@ -84,9 +84,7 @@ class CancellationSummary(BaseTransform):
                 .withColumn("updated_at", F.current_timestamp())
             )
 
-            return TransformResult.from_extract(
-                self.extract_result, cancellation_summary_dataframe
-            )
+            return self._build_result(result_df)
         except Exception as e:
             raise RuntimeError(
                 f"Error during cancellation summary transformation: {e}"

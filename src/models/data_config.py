@@ -14,7 +14,7 @@ StageType = Literal["bootstrap", "source", "bronze", "silver", "gold"]
 # Write Type
 # =========================
 
-WriteType = Literal["append", "overwrite", "overwrite_partitions", "custom"]
+WriteType = Literal["append", "replace", "overwrite", "overwrite_partitions", "custom"]
 
 
 # =========================
@@ -148,6 +148,7 @@ class StoragesConfig(BaseModel):
 # Tables
 # =========================
 
+
 class TableDependency(BaseModel):
     name: str
     catalog: str
@@ -174,7 +175,6 @@ class TablesConfig(BaseModel):
     refund_loss: TableContext
     revenue_daily: TableContext
     train_performance: TableContext
-
 
 
 class TableMetadata(BaseModel):

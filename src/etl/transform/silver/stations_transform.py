@@ -31,7 +31,7 @@ class StationsTransform(BaseTransform):
         """
 
         try:
-            stations_dataframe = (
+            result_df = (
                 self.dataframe.withColumn(
                     "sk_id", F.abs(F.xxhash64(F.col("id"), F.col("updated_at")))
                 )
@@ -51,7 +51,7 @@ class StationsTransform(BaseTransform):
                 F.col("is_deleted")
             )
 
-            return TransformResult.from_extract(self.extract_result, stations_dataframe)
+            return self._build_result(result_df)
 
         except Exception as e:
             raise RuntimeError(f"Error during stations transformation: {e}") from e

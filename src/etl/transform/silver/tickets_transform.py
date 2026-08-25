@@ -114,7 +114,7 @@ class TicketsTransform(BaseTransform):
             status_df = F.broadcast(self.dependencies["status"]).alias("st")
             payment_df = F.broadcast(self.dependencies["payment"]).alias("py")
 
-            tickets_cleaned = (
+            result_df = (
                 tickets_deduped.join(
                     routes_df, (F.col("r.id") == F.col("td.route_id")), "left"
                 )
@@ -170,7 +170,7 @@ class TicketsTransform(BaseTransform):
                 )
             )
 
-            return TransformResult.from_extract(self.extract_result, tickets_cleaned)
+            return self._build_result(result_df)
 
         except Exception as e:
             raise RuntimeError(f"Error during tickets transformation: {e}") from e

@@ -3,13 +3,21 @@ from abc import ABC, abstractmethod
 
 from pyspark.sql.session import SparkSession
 from pyspark.sql.column import Column
+from pyspark.sql import DataFrame
 
 from src.models.data_config import StageType, TableMetadata, TableDependency
 from src.models.etl_config import ExtractResult
-from src.core import TableManager, SourceManager, SchemaManager
+from src.core import SourceManager
 
 
 class BaseExtract(ABC):
+    """Base class for all extractors.
+
+    Subclasses only need to implement how a single table/collection is read
+    (`_read_dependency` and `_read_main_table`). The extract flow itself
+    (dependencies -> main table -> build ExtractResult) lives here so it's
+    defined in exactly one place.
+    """
 
     SOURCE_TYPE: Optional[str] = None
 
@@ -20,42 +28,72 @@ class BaseExtract(ABC):
         main_table: TableMetadata,
         table_deps: Dict[str, List[TableDependency]],
         condition: Optional[Union[str, Column]] = None,
+        extract_main: bool = True,
     ):
         if main_table is None:
             raise ValueError("main_table must be provided.")
 
         self._source_manager = SourceManager()
 
-        self.stage = stage
+        self.stage: StageType = stage
+        self.session: SparkSession = session
+        self.condition: Optional[Union[str, Column]] = condition
 
-        self.session = session
-        self.condition = condition
+        self.main_table: TableMetadata = main_table
+        self.table_name: str = self.main_table.name
+        self.extract_main: bool = extract_main
 
-        self.main_table = main_table
-        self.table_deps = table_deps
+        self.dependencies: List[TableDependency] = table_deps.get(self.table_name, [])
 
-        self.table_name = self.main_table.name
-        self.table_deps_dataframe: Dict[str, "DataFrame"] = {}
+        self.dependency_dataframes: Dict[str, DataFrame] = {}
 
-        if self.SOURCE_TYPE:
-            self.source_config = self._source_manager.get_source_config(
-                self.SOURCE_TYPE
-            )
-        else:
-            self.source_config = None
+        self.source_config = (
+            self._source_manager.get_source_config(self.SOURCE_TYPE)
+            if self.SOURCE_TYPE
+            else None
+        )
+
+    def extract(self) -> ExtractResult:
+        """Extract dependencies, then the main table (if applicable), and build the result."""
+        try:
+            self._extract_dependencies()
+            df = self._read_main_table() if self.extract_main else None
+            return self._build_result(df)
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to extract data for table '{self.table_name}': {e}"
+            ) from e
+
+    def _extract_dependencies(self) -> None:
+        try:
+            for dep in self.dependencies:
+                self.dependency_dataframes[dep.name] = self._read_dependency(dep)
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to extract dependencies for table '{self.table_name}': {e}"
+            ) from e
+
+    def _build_result(self, df: Optional[DataFrame]) -> ExtractResult:
+        return ExtractResult(
+            stage=self.stage,
+            name=self.table_name,
+            catalog=self.main_table.catalog,
+            namespace=self.main_table.namespace,
+            source_fullname=self.main_table.source_fullname,
+            target_fullname=self.main_table.target_fullname,
+            write_mode=self.main_table.write_mode,
+            target_schema=self.main_table.target_schema,
+            dataframe=df,
+            queries=self.main_table.queries,
+            query_params=self.main_table.query_params,
+            dependencies=self.dependency_dataframes,
+            extract_main=self.extract_main
+        )
 
     @abstractmethod
-    def extract(self, extract_main: Optional[bool] = True) -> ExtractResult:
-        pass
+    def _read_dependency(self, dep: TableDependency) -> DataFrame:
+        """Read a single dependency table/collection."""
 
-    def validate_deps_and_main_table(self, extract_main: bool = True):
-        """
-        Validates that if extract_main is False, there are dependencies defined for the table.
-        Raises a ValueError if the validation fails.
-        """
-        if not extract_main and not self.table_deps.get(self.table_name):
-            raise ValueError(
-                f"Cannot extract table '{self.table_name}': extract_main is set to False, "
-                f"but no dependencies are defined for this table."
-            )
-
+    @abstractmethod
+    def _read_main_table(self) -> DataFrame:
+        """Read the main table/collection for this extractor."""

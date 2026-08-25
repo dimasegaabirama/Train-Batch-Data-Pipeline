@@ -19,7 +19,7 @@ class RevenueDaily(BaseTransform):
                 )
             )
 
-            revenue_daily_dataframe = (
+            result_df = (
                 tickets_with_check.groupBy("revenue_date", "route_sk_id", "class_id")
                 .agg(
                     F.count("ticket_id").alias("total_tickets"),
@@ -43,8 +43,7 @@ class RevenueDaily(BaseTransform):
                 .withColumn("updated_at", F.current_timestamp())
             )
 
-            return TransformResult.from_extract(
-                self.extract_result, revenue_daily_dataframe
-            )
+            return self._build_result(result_df)
+        
         except Exception as e:
             raise RuntimeError(f"Error during revenue daily transformation: {e}") from e

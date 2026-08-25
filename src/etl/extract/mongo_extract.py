@@ -1,6 +1,6 @@
-from typing_extensions import Optional
+from pyspark.sql import DataFrame
 
-from src.models.etl_config import ExtractResult
+from src.models.data_config import TableDependency
 
 from .base_extract import BaseExtract
 
@@ -8,51 +8,13 @@ from .base_extract import BaseExtract
 class MongoExtract(BaseExtract):
     SOURCE_TYPE = "mongo"
 
-    def extract(self, extract_main: Optional[bool] = True) -> ExtractResult:
+    def _read_dependency(self, dep: TableDependency) -> DataFrame:
+        return self._read_collection(self.source_config.database, dep.name)
 
-        database = self.source_config.database
+    def _read_main_table(self) -> DataFrame:
+        return self._read_collection(self.source_config.database, self.table_name)
 
-        try:
-            # Extract dependencies first
-            dependencies = self.table_deps[self.table_name]
-            for dep in dependencies:
-                self.table_deps_dataframe[dep.name] = self._read_collection(
-                    database, dep.name
-                )
-
-            # Validate dependencies and main table before proceeding with extraction
-            self.validate_deps_and_main_table(extract_main)
-
-            df = (
-                self._read_collection(database, self.table_name)
-                if extract_main
-                else None
-            )
-
-            return ExtractResult(
-                stage=self.stage,
-                name=self.table_name,
-                catalog=self.main_table.catalog,
-                namespace=self.main_table.namespace,
-
-                source_fullname=self.main_table.source_fullname,
-                target_fullname=self.main_table.target_fullname,
-
-                write_mode=self.main_table.write_mode,
-                target_schema=self.main_table.target_schema,
-                dataframe=df,
-                
-                queries=self.main_table.queries,
-                query_params=self.main_table.query_params,
-                dependencies=self.table_deps_dataframe,
-            )
-
-        except Exception as e:
-            raise RuntimeError(
-                f"Failed to extract data for table '{self.table_name}': {e}"
-            ) from e
-
-    def _read_collection(self, database: str, table: str):
+    def _read_collection(self, database: str, table: str) -> DataFrame:
         schema = self.main_table.source_schema
         if not schema:
             raise ValueError(f"Schema not found for table '{table}'")
@@ -74,7 +36,3 @@ class MongoExtract(BaseExtract):
         if table == self.table_name:
             return self.condition
         return None
-
-
-if __name__ == "__main__":
-    pass

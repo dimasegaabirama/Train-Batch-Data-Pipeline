@@ -34,11 +34,11 @@ class PipelineOrchestrator:
             logger=logger, session=session, custom_dq_path=custom_dq_path
         )
 
-    # =========================
-    # SHARED SETUP
-    # =========================
+    @staticmethod
+    def _resolve_extract_main(stage: StageType) -> bool:
+        return stage in ("bronze", "silver")
+
     def _prepared_inputs(self, stage: StageType, table_name: str) -> BaseExtract:
-        """Build a ready-to-run extractor instance for the given stage/table."""
 
         query_params = {
             "full_table_name": self._table_manager.get_table_fullname(table_name, stage),
@@ -51,6 +51,7 @@ class PipelineOrchestrator:
         table_deps: Dict[str, List[TableDependency]] = self._table_manager.get_table_deps(
             table_name, stage
         )
+        extract_main = self._resolve_extract_main(stage)
 
         extractor_cls: Type[BaseExtract] = resolve_registry_class(
             stage=stage, table_name=table_name, component_name="extract", required=False
@@ -79,6 +80,7 @@ class PipelineOrchestrator:
         self.logger.debug("Using extractor: %s", extractor_cls)
         self.logger.debug("Using condition: %s", condition)
         self.logger.debug("Using field: %s", field)
+        self.logger.debug("Using extract_main: %s", extract_main)
 
         return extractor_cls(
             stage=stage,
@@ -86,6 +88,7 @@ class PipelineOrchestrator:
             main_table=table_metadata,
             table_deps=table_deps,
             condition=condition,
+            extract_main=extract_main
         )
 
     # =========================

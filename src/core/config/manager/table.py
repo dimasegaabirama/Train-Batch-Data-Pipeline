@@ -56,12 +56,8 @@ class TableManager:
     def get_formated_query(self, table_name: str, **kwargs):
         return [query.format(**kwargs) for query in self.get_table_query(table_name)]
 
-    def get_table_schema(self, table_name: str, stage: StageType) -> str:
+    def get_table_schema(self, table_name: str, stage: StageType) -> Optional[str]:
         cfg = self.get_table_config(table_name).schema.get(stage)
-        if cfg is None:
-            raise ValueError(
-                f"Schema for table '{table_name}' stage '{stage}' not found"
-            )
         return cfg
 
     def get_table_deps(self, table_names: Union[str, List[str]], stage: StageType) -> Dict[str, Optional[List[TableDependency]]]:
@@ -121,8 +117,7 @@ class TableManager:
             #schema is structure of the table, which is used for validaton schema when extracting data from the upstream stage.
             source_schema=source_schema,
             target_schema=target_schema,
-            queries=self.get_formated_query(table_ref, **(query_params or {})),
-            query_params=query_params
+            queries=self.get_formated_query(table_ref, **(query_params or {}))
         )
        
 if __name__ == "__main__":

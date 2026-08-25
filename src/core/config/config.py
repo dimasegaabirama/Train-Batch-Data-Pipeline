@@ -40,11 +40,15 @@ class Config:
 
     @classmethod
     def _load_config(cls) -> BaseConfig:
-        load_dotenv(os.getenv("ENV_PATH"))
         config_path = os.getenv("CONFIG_PATH")
+        env_path = os.getenv("ENV_PATH")
 
+        if env_path is None:
+            raise ValueError("ENV_PATH environment variable is not set.")
         if config_path is None:
-            raise ValueError("Config Path is not set!")
+            raise ValueError("CONFIG_PATH environment variable is not set!")
+
+        load_dotenv(env_path)
 
         with open(config_path) as f:
             raw = yaml.safe_load(f)

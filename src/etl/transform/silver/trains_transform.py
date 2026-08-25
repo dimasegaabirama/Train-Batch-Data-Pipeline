@@ -38,7 +38,7 @@ class TrainsTransform(BaseTransform):
         # end_date TIMESTAMP
 
         try:
-            transformed_df = (
+            result_df = (
                 self.dataframe
                 .withColumn("sk_id",F.abs(F.xxhash64(F.col("id"),F.col("updated_at"))))
                 .withColumn("name",F.trim(F.lower(F.col("name"))))
@@ -59,10 +59,7 @@ class TrainsTransform(BaseTransform):
                 F.col("end_date")
             )
 
-            return TransformResult.from_extract(
-                self.extract_result,
-                transformed_df
-            )
+            return self._build_result(result_df)
 
         except Exception as e:
             raise RuntimeError(
