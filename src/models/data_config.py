@@ -1,8 +1,7 @@
 from datetime import datetime
 
-from pydantic import BaseModel, PositiveInt, field_validator, model_validator
-from pyspark.sql.dataframe import DataFrame
-from typing_extensions import Dict, List, Literal, Optional
+from pydantic import BaseModel, Field, PositiveInt, field_validator, model_validator
+from typing_extensions import Annotated, Dict, List, Literal, Optional, Union
 
 # =========================
 # Stage Type
@@ -20,7 +19,6 @@ WriteType = Literal["append", "replace", "overwrite", "overwrite_partitions", "c
 # =========================
 # Catalog
 # =========================
-
 
 class CatalogContext(BaseModel):
     name: str
@@ -43,7 +41,6 @@ class CatalogsConfig(BaseModel):
 # Date
 # =========================
 
-
 class DateConfig(BaseModel):
     start_date: datetime
     end_date: datetime
@@ -65,6 +62,7 @@ class DateConfig(BaseModel):
             )
         return self
 
+
 # =========================
 # Filter
 # =========================
@@ -73,9 +71,11 @@ class FilterField(BaseModel):
     table: str
     field: str
 
+
 class StageFilters(BaseModel):
     type: str
     tables: Dict[str, List[FilterField]]
+
 
 class FiltersConfig(BaseModel):
     bronze: StageFilters
@@ -107,7 +107,6 @@ class SchemasConfig(BaseModel):
 # Source
 # =========================
 
-
 class SourceContext(BaseModel):
     database: str
     username: str
@@ -130,7 +129,6 @@ class SourcesConfig(BaseModel):
 # Storage
 # =========================
 
-
 class StorageContext(BaseModel):
     host: str
     port: int
@@ -147,9 +145,8 @@ class StoragesConfig(BaseModel):
 
 
 # =========================
-# Tables
+# Tables (static config, from YAML)
 # =========================
-
 
 class TableDependency(BaseModel):
     name: str
@@ -161,7 +158,7 @@ class TableContext(BaseModel):
     type: str
     partitioned_by: str
     write_mode: Dict[StageType, WriteType]
-    schema: Dict[StageType, str]
+    table_schema: Dict[StageType, str]
     query: List[str]
     depends_on: Optional[Dict[StageType, List[TableDependency]]] = None
 
@@ -179,34 +176,38 @@ class TablesConfig(BaseModel):
     train_performance: TableContext
 
 
-class TableMetadata(BaseModel):
-    name: str
-    catalog: str
-    namespace: str
-    write_mode: WriteType
-    source_fullname: str
-    target_fullname: str
-    source_schema: Optional[str] = None
-    target_schema: str
-    queries: List[str]
-    extract_main: Optional[bool] = None
-
-    @model_validator(mode="after")
-    def check_extract_main(self):
-        if self.extract_main is None:
-            self.extract_main = self.stage in ("bronze", "silver")
-        return self
-
-    @model_validator(mode="after")
-    def check_source_schema(self):
-        if self.source_schema is None and self.stage in ("bronze", "silver"):
-            raise ValueError(
-                f"Source schema is required for stage '{self.stage}' and table '{self.name}'."
-            )   
-        return self
-
-
 class TableNames(BaseModel):
     names: List[Literal["passengers", "routes", "stations", "trains", "tickets"]]
 
 
+# =========================
+# Table Metadata (runtime, per pipeline stage)
+# =========================
+
+class BaseTableMetadata(BaseModel):
+    name: str
+    catalog: str
+    write_mode: WriteType
+    target_fullname: str
+    target_schema: str
+    queries: List[str]
+
+
+class BronzeSilverTableMetadata(BaseTableMetadata):
+    namespace: Literal["bronze", "silver"]
+    source_schema: str
+    source_fullname: str
+    extract_main: bool = True
+
+
+class GoldTableMetadata(BaseTableMetadata):
+    namespace: Literal["gold"]
+    source_schema: Optional[str] = None
+    source_fullname: Optional[str] = None
+    extract_main: bool = False
+
+
+TableMetadata = Annotated[
+    Union[BronzeSilverTableMetadata, GoldTableMetadata],
+    Field(discriminator="namespace"),
+]

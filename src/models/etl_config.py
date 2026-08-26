@@ -1,33 +1,27 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 from pyspark.sql import DataFrame
-from typing_extensions import Dict, List, Optional
+from typing_extensions import Dict, List, Optional, Union, Annotated, Literal
 
 from src.models.data_config import StageType, WriteType
 
 
-class PipelineResult(BaseModel):
+class BasePipelineResult(BaseModel):
     name: str
     catalog: str
-    namespace: str
-    source_fullname: Optional[str] = None
     target_fullname: str
     write_mode: WriteType
-    target_schema: Optional[str] = None
+    target_schema: str
     queries: List[str] = []
 
-    @model_validator(mode="after")
-    def check_source_fullname(self):
-        if self.namespace in ("bronze", "silver") and self.source_fullname is None:
-            raise ValueError(
-                f"Source fullname is required for namespace '{self.namespace}' and table '{self.name}'."
-            )
-        return self
 
+# EXTRACT
 
-class ExtractResult(PipelineResult):
-    dataframe: Optional[object] = None
+class BronzeSilverExtractResult(BasePipelineResult):
+    namespace: Literal["bronze", "silver"]
+    source_fullname: str
+    extract_main: bool
+    dataframe: object
     dependencies: Optional[Dict[str, object]] = None
-    extract_main: bool = True
 
     @model_validator(mode="after")
     def validate_deps_and_main_table(self):
@@ -38,39 +32,54 @@ class ExtractResult(PipelineResult):
             )
         return self
 
-    @model_validator(mode="after")
-    def validate_dataframe(self):
 
-        if self.dataframe is None and self.namespace in ["silver", "bronze"]:
-            raise ValueError(
-                f"{self.namespace.capitalize()} stage requires a non-empty dataframe "
-                f"from the extract result."
-            )
-
-        return self
+class GoldExtractResult(BasePipelineResult):
+    namespace: Literal["gold"]
+    source_fullname: Optional[str] = None
+    extract_main: bool = False
+    dataframe: Optional[object] = None
+    dependencies: Optional[Dict[str, object]] = None
 
 
-class TransformResult(PipelineResult):
+ExtractResult = Annotated[
+    Union[BronzeSilverExtractResult, GoldExtractResult],
+    Field(discriminator="namespace"),
+]
+
+
+# TRANSFORM 
+
+class BronzeSilverTransformResult(BasePipelineResult):
+    namespace: Literal["bronze", "silver"]
+    source_fullname: str
     cleaned_dataframe: object
-    view_name: Optional[str] = None
-    
-    @model_validator(mode="after")
-    def resolve_view_name(self):
-        if self.write_mode == "custom" and self.view_name is None:
-            self.view_name = f"{self.name}_view"
-        return self
 
     @classmethod
-    def from_extract(cls, extract: ExtractResult, cleaned_dataframe: object, view_name: Optional[str] = None) -> "TransformResult":
+    def from_extract(
+        cls, extract: BronzeSilverExtractResult, cleaned_dataframe: object
+    ) -> "BronzeSilverTransformResult":
         return cls(
-            namespace=extract.namespace,
-            name=extract.name,
-            source_fullname=extract.source_fullname,
-            target_fullname=extract.target_fullname,
-            write_mode=extract.write_mode,
-            target_schema=extract.target_schema,
-            queries=extract.queries,
+            **extract.model_dump(exclude={"dataframe", "dependencies", "extract_main"}),
             cleaned_dataframe=cleaned_dataframe,
-            view_name=view_name
         )
 
+
+class GoldTransformResult(BasePipelineResult):
+    namespace: Literal["gold"]
+    source_fullname: Optional[str] = None
+    cleaned_dataframe: object
+
+    @classmethod
+    def from_extract(
+        cls, extract: GoldExtractResult, cleaned_dataframe: object
+    ) -> "GoldTransformResult":
+        return cls(
+            **extract.model_dump(exclude={"dataframe", "dependencies", "extract_main"}),
+            cleaned_dataframe=cleaned_dataframe,
+        )
+
+
+TransformResult = Annotated[
+    Union[BronzeSilverTransformResult, GoldTransformResult],
+    Field(discriminator="namespace"),
+]

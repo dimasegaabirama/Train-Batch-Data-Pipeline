@@ -6,7 +6,7 @@ from pyspark.sql.column import Column
 from pyspark.sql import DataFrame
 
 from src.models.data_config import TableMetadata, TableDependency
-from src.models.etl_config import ExtractResult
+from src.models.etl_config import ExtractResult, BronzeSilverExtractResult, GoldExtractResult
 from src.core import SourceManager
 
 
@@ -71,20 +71,34 @@ class BaseExtract(ABC):
             ) from e
 
     def _build_result(self, df: Optional[DataFrame]) -> ExtractResult:
-        return ExtractResult(
-            name=self.table_name,
-            catalog=self.main_table.catalog,
-            namespace=self.main_table.namespace,
-            source_fullname=self.main_table.source_fullname,
-            target_fullname=self.main_table.target_fullname,
-            write_mode=self.main_table.write_mode,
-            target_schema=self.main_table.target_schema,
-            dataframe=df,
-            queries=self.main_table.queries,
-            query_params=self.main_table.query_params,
-            dependencies=self.dependency_dataframes,
-            extract_main=self.extract_main
-        )
+        if self.main_table.namespace in ["bronze", "silver"]:
+            return BronzeSilverExtractResult(
+                name=self.table_name,
+                catalog=self.main_table.catalog,
+                target_fullname=self.main_table.target_fullname,
+                write_mode=self.main_table.write_mode,
+                target_schema=self.main_table.target_schema,
+                queries=self.main_table.queries,
+                namespace=self.main_table.namespace,
+                source_fullname=self.main_table.source_fullname,
+                extract_main=self.main_table.extract_main,
+                dataframe=df,
+                dependencies=self.dependency_dataframes
+            )
+        else:
+            return GoldExtractResult(
+                name=self.table_name,
+                catalog=self.main_table.catalog,
+                target_fullname=self.main_table.target_fullname,
+                write_mode=self.main_table.write_mode,
+                target_schema=self.main_table.target_schema,
+                queries=self.main_table.queries,
+                namespace=self.main_table.namespace,
+                source_fullname=self.main_table.source_fullname,
+                extract_main=self.main_table.extract_main,
+                dataframe=df,
+                dependencies=self.dependency_dataframes
+            )
 
     @abstractmethod
     def _read_dependency(self, dep: TableDependency) -> DataFrame:

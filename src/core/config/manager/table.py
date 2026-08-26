@@ -4,6 +4,8 @@ from typing_extensions import Dict, List, Union
 
 from src.core.config.config import Config
 from src.models.data_config import (
+    BronzeSilverTableMetadata,
+    GoldTableMetadata,
     StageType,
     TableContext,
     TableDependency,
@@ -89,7 +91,12 @@ class TableManager:
         namespace = self._schema_manager.get_stage_namespace(stage)
         return create_table_fullname(catalog, namespace, table_name)
 
-    def get_table_metadata(self, table_ref: str, stage: StageType, query_params: Optional[Dict[str, str]] = None) -> TableMetadata:
+    def get_table_metadata(
+        self,
+        table_ref: str,
+        stage: StageType,
+        query_params: Optional[Dict[str, str]] = None,
+    ) -> TableMetadata:
         if stage is None:
             raise ValueError("Stage must be provided to get table metadata.")
 
@@ -97,29 +104,35 @@ class TableManager:
         namespace = self._schema_manager.get_stage_namespace(stage)
         upstream_stage = self._schema_manager.get_stage_upstream(stage)
 
-        source_schema = self.get_table_schema(table_ref, upstream_stage)
+        target_fullname = self.get_table_fullname(table_ref, stage)
         target_schema = self.get_table_schema(table_ref, stage)
+        write_mode = self.get_table_write_mode(table_ref, stage)
+        queries = self.get_formated_query(table_ref, **(query_params or {}))
 
-        return TableMetadata(
-            name=table_ref, 
-            catalog=catalog,
+        common_kwargs = {
+            "name": table_ref,
+            "catalog": catalog,
+            "target_fullname": target_fullname,
+            "target_schema": target_schema,
+            "write_mode": write_mode,
+            "queries": queries,
+        }
 
-            #namespace is the schema/namespace of the current stage, which is used for loading the table.
+        if namespace in ("bronze", "silver"):
+            return BronzeSilverTableMetadata(
+                **common_kwargs,
+                namespace=namespace,
+                source_fullname=self.get_table_fullname(table_ref, upstream_stage),
+                source_schema=self.get_table_schema(table_ref, upstream_stage),
+            )
+
+        return GoldTableMetadata(
+            **common_kwargs,
             namespace=namespace,
-            write_mode=self.get_table_write_mode(table_ref, stage),
-
-            #For Extract, we need to get the full name of the table from the upstream stage, not the current stage.
-            source_fullname=self.get_table_fullname(table_ref, upstream_stage), 
-
-            #For load, we need to get the full name of the table from the current stage, not the upstream stage.
-            target_fullname=self.get_table_fullname(table_ref, stage),
-
-            #schema is structure of the table, which is used for validaton schema when extracting data from the upstream stage.
-            source_schema=source_schema,
-            target_schema=target_schema,
-            queries=self.get_formated_query(table_ref, **(query_params or {}))
         )
 
 if __name__ == "__main__":
-    table_manager = TableManager().get_table_schema("cancellation_summary", "silver")
-    print(table_manager)
+    from pprint import pprint
+    table_manager = TableManager().get_table_metadata("cancellation_summary", "gold", {"full_table_name": "bronze.cancellation_summary", "table_view": "cancellation_summary_view"})
+    pprint(table_manager)
+

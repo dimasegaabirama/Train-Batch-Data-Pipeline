@@ -11,6 +11,7 @@ from src.etl.transform import BaseTransform
 from src.models.data_config import StageType, TableDependency, TableMetadata
 from src.models.etl_config import ExtractResult, TransformResult
 from src.utils.nessie_utils import pipeline_branch
+from src.utils.table_utils import create_table_view_name
 
 
 class PipelineOrchestrator:
@@ -34,9 +35,13 @@ class PipelineOrchestrator:
             logger=logger, session=session, custom_dq_path=custom_dq_path
         )
 
+
+    # HELPER METHODS
+
     def _resolve_table_metadata(self, stage: StageType, table_name: str) -> TableMetadata:
         query_params = {
-            "full_table_name": self._table_manager.get_table_fullname(table_name, stage)
+            "full_table_name": self._table_manager.get_table_fullname(table_name, stage),
+            "table_view": create_table_view_name(table_name)
         }
         return self._table_manager.get_table_metadata(
             table_name, stage, query_params

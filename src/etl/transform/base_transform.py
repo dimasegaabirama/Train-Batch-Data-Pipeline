@@ -5,7 +5,7 @@ from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
 from src.models.data_config import StageType, TableDependency
-from src.models.etl_config import ExtractResult, TransformResult
+from src.models.etl_config import ExtractResult, BronzeSilverExtractResult, GoldTransformResult, BronzeSilverTransformResult, GoldTransformResult, TransformResult
 
 
 class BaseTransform(ABC):
@@ -13,8 +13,7 @@ class BaseTransform(ABC):
     def __init__(
         self, 
         session: SparkSession, 
-        extract_result: ExtractResult,
-        view_name: Optional[str] = None
+        extract_result: ExtractResult
     ):
         if extract_result is None:
             raise ValueError("extract_result must be provided.")
@@ -24,13 +23,17 @@ class BaseTransform(ABC):
 
         self.dataframe: Optional[DataFrame] = self.extract_result.dataframe
         self.dependencies: Dict[str, TableDependency] = self.extract_result.dependencies
-        self.view_name: Optional[str] = view_name
 
     def _build_result(self, cleaned_dataframe: Optional[DataFrame]) -> TransformResult:
-        return TransformResult.from_extract(
+        if isinstance(self.extract_result, BronzeSilverExtractResult):
+            return BronzeSilverTransformResult.from_extract(
+                extract=self.extract_result,
+                cleaned_dataframe=cleaned_dataframe
+            )
+
+        return GoldTransformResult.from_extract(
             extract=self.extract_result,
-            cleaned_dataframe=cleaned_dataframe,
-            view_name=self.view_name
+            cleaned_dataframe=cleaned_dataframe
         )
 
     @abstractmethod
