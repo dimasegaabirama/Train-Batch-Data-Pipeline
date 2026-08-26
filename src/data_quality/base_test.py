@@ -22,7 +22,7 @@ from src.core import (
 class BaseTest(ABC):
     """Base class for pydeequ-based data quality test suites.
 
-    Subclasses set `stage` and `table_name`, then define `test_*` methods
+    Subclasses set `table_name`, then define `test_*` methods
     and/or call `run_tests` with a pydeequ `Check`.
     """
 
@@ -42,7 +42,6 @@ class BaseTest(ABC):
 
         self.table_name = context.name
         self.dataframe = context.cleaned_dataframe
-        self.stage = context.stage
         self.target_schema = context.target_schema
 
     def test_schema_table(self):

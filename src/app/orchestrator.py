@@ -172,4 +172,4 @@ class PipelineOrchestrator:
     def run_all_tables(self, stage: StageType, table_names: List[str]) -> None:
         """Run the single-table pipeline sequentially for each table in the list."""
         for table_name in table_names:
-            self.run_table(stage, table_name)
+            self.run_table(stage=stage, table_name=table_name)

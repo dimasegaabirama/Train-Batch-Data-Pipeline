@@ -22,6 +22,7 @@ from src.etl.transform import (
 )
 
 from src.utils.filter_utils import (
+    build_iceberg_boolean_filter,
     build_iceberg_incremental_filter,
     build_mongo_incremental_filter,
 )
@@ -29,9 +30,13 @@ from src.utils.filter_utils import (
 Component = Literal["extract", "transform", "load", "filter"]
 
 _FILTER_REGISTRY = {
-    "bronze": {"default": build_mongo_incremental_filter},
-    "silver": {"default": build_iceberg_incremental_filter},
-    "gold": {"default": build_iceberg_incremental_filter}
+    "incremental": {
+        "mongo": build_mongo_incremental_filter,
+        "iceberg": build_iceberg_incremental_filter
+    },
+    "boolean": {
+        "iceberg": build_iceberg_boolean_filter
+    }
 }
 
 

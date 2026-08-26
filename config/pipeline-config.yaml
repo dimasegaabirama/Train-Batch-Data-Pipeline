@@ -1070,18 +1070,23 @@ filters:
       tickets:
         - table: tickets
           field: created_at
+          strategy: incremental
       passengers:
         - table: passengers
           field: updated_at
+          strategy: incremental
       routes:
         - table: routes
           field: updated_at
+          strategy: incremental
       trains:
         - table: trains
           field: updated_at
+          strategy: incremental
       stations:
         - table: stations
           field: updated_at
+          strategy: incremental
 
   silver:
     type: iceberg
@@ -1089,18 +1094,47 @@ filters:
       tickets:
         - table: tickets
           field: created_at
+          strategy: incremental
+
+        - table: passengers
+          field: is_active
+          strategy: boolean
+
+        - table: routes
+          field: is_deleted
+          strategy: boolean
+
+        - table: trains
+          field: is_active
+          strategy: boolean
+
       passengers:
         - table: passengers
           field: updated_at
+          strategy: incremental
+
       routes:
         - table: routes
           field: updated_at
+          strategy: incremental
+
+        - table: stations
+          field: is_deleted
+          strategy: boolean
+
+        - table: trains
+          field: is_active
+          strategy: boolean
+
       trains:
         - table: trains
           field: updated_at
+          strategy: incremental
+
       stations:
         - table: stations
           field: updated_at
+          strategy: incremental
 
   gold:
     type: iceberg
@@ -1108,20 +1142,26 @@ filters:
       cancellation_summary:
         - table: tickets
           field: created_at
+          strategy: incremental
 
       refund_loss:
         - table: tickets
           field: updated_at
+          strategy: incremental
 
       revenue_daily:
         - table: tickets
           field: updated_at
+          strategy: incremental
 
       train_performance:
         - table: tickets
           field: updated_at
+          strategy: incremental
+
         - table: trains
           field: updated_at
+          strategy: incremental
 
       
       

@@ -19,8 +19,6 @@ class TestBronze(BaseTest):
 
         self.table_name = context.name
         self.dataframe = context.cleaned_dataframe
-        self.stage = context.stage
-
         self.target_schema = context.target_schema
 
     def test_completeness(self):

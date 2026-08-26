@@ -1,5 +1,6 @@
 import json 
 from datetime import datetime
+from typing_extensions import Optional
 import pyspark.sql.functions as F
 from pyspark.sql.column import Column
 
@@ -85,3 +86,11 @@ def build_iceberg_incremental_filter(
     end_date = F.to_date(F.lit(end_date))
 
     return (F.col(field) >= F.lit(start_date)) & (F.col(field) < F.lit(end_date))
+
+def build_iceberg_boolean_filter(
+    field: str, value: Optional[bool] = True
+) -> Column:
+    """
+    Build a Spark filter expression for boolean fields.
+    """
+    return (F.col(field) == F.lit(value))
