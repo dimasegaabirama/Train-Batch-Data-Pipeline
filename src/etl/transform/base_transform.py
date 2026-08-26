@@ -22,7 +22,7 @@ class BaseTransform(ABC):
         self.session: SparkSession = session
         self.extract_result: ExtractResult = extract_result
 
-        self.dataframe: Optional[DataFrame] = None
+        self.dataframe: Optional[DataFrame] = self.extract_result.dataframe
         self.dependencies: Dict[str, TableDependency] = self.extract_result.dependencies
         self.view_name: Optional[str] = view_name
 

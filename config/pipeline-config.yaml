@@ -1068,43 +1068,60 @@ filters:
     type: mongo
     tables:
       tickets:
-        field: created_at
+        - table: tickets
+          field: created_at
       passengers:
-        field: updated_at
+        - table: passengers
+          field: updated_at
       routes:
-        field: updated_at
+        - table: routes
+          field: updated_at
       trains:
-        field: updated_at
+        - table: trains
+          field: updated_at
       stations:
-        field: updated_at
-        
+        - table: stations
+          field: updated_at
+
   silver:
     type: iceberg
     tables:
       tickets:
-        field: created_at
+        - table: tickets
+          field: created_at
       passengers:
-        field: updated_at
+        - table: passengers
+          field: updated_at
       routes:
-        field: updated_at
+        - table: routes
+          field: updated_at
       trains:
-        field: updated_at
+        - table: trains
+          field: updated_at
       stations:
-        field: updated_at
+        - table: stations
+          field: updated_at
 
   gold:
     type: iceberg
     tables:
-      tickets:
-        field: created_at
-      passengers:
-        field: updated_at
-      routes:
-        field: updated_at
-      trains:
-        field: updated_at
-      stations:
-        field: updated_at
+      cancellation_summary:
+        - table: tickets
+          field: created_at
+
+      refund_loss:
+        - table: tickets
+          field: updated_at
+
+      revenue_daily:
+        - table: tickets
+          field: updated_at
+
+      train_performance:
+        - table: tickets
+          field: updated_at
+        - table: trains
+          field: updated_at
 
       
       

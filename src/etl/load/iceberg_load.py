@@ -1,20 +1,21 @@
-from typing_extensions import Dict, List
+from typing_extensions import Dict, List, Callable
 
 from src.models.data_config import WriteType
 
 from .base_load import BaseLoad
 
+from pyspark.sql.readwriter import DataFrameWriterV2
 
 class IcebergLoad(BaseLoad):
     """Loader that writes the transformed dataframe to an Iceberg table."""
 
-    def _resolve_write_action(self, writer: any, write_mode: WriteType) -> str:
+    def _resolve_write_action(self, writer: DataFrameWriterV2, write_mode: WriteType) -> Callable:
         write_actions = {
             "custom": self._write_custom_queries,
             "replace": writer.createOrReplace,
             "append": writer.append,
             "overwrite": writer.overwrite,
-            "overwrite_partition": writer.overwritePartition,
+            "overwrite_partitions": writer.overwritePartitions,
         }
 
         write_action = write_actions.get(write_mode)

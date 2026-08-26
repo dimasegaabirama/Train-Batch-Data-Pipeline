@@ -26,13 +26,8 @@ class MongoExtract(BaseExtract):
             .schema(schema)
         )
 
-        condition = self._resolve_condition(table)
+        condition = self.conditions.get(table)
         if condition:
             reader = reader.option("aggregation.pipeline", condition)
 
         return reader.load()
-
-    def _resolve_condition(self, table: str):
-        if table == self.table_name:
-            return self.condition
-        return None

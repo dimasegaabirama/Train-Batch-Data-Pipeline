@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from .data_config import (
     CatalogsConfig,
     DateConfig,
-    FilterConfig,
+    FiltersConfig,
     SchemasConfig,
     SourcesConfig,
     StoragesConfig,
@@ -23,4 +23,4 @@ class BaseConfig(BaseModel):
     spark: SparkConfig
     schemas: SchemasConfig
     tables: TablesConfig
-    filters: FilterConfig
+    filters: FiltersConfig

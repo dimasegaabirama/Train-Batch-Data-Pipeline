@@ -18,13 +18,8 @@ class IcebergExtract(BaseExtract):
     def _read_table(self, table: str) -> DataFrame:
         df = self.session.read.table(table)
 
-        condition = self._resolve_condition(table)
+        condition = self.conditions.get(self.table_name)
         if condition is not None:
-            df = df.where(condition)
+            df = df.filter(condition)
 
         return df
-
-    def _resolve_condition(self, table: str):
-        if self.condition is not None and table == self.main_table.source_fullname:
-            return self.condition
-        return None

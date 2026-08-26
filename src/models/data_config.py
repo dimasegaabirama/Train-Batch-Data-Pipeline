@@ -65,21 +65,23 @@ class DateConfig(BaseModel):
             )
         return self
 
-
 # =========================
 # Filter
 # =========================
 
+class FilterField(BaseModel):
+    table: str
+    field: str
 
-class FilterContext(BaseModel):
-    type: Literal["mongo", "iceberg"]
-    tables: Dict[str, Dict[str, str]]
+class StageFilters(BaseModel):
+    type: str
+    tables: Dict[str, List[FilterField]]
 
+class FiltersConfig(BaseModel):
+    bronze: StageFilters
+    silver: StageFilters
+    gold: StageFilters
 
-class FilterConfig(BaseModel):
-    bronze: FilterContext
-    silver: FilterContext
-    gold: FilterContext
 
 # =========================
 # Schema
@@ -184,10 +186,24 @@ class TableMetadata(BaseModel):
     write_mode: WriteType
     source_fullname: str
     target_fullname: str
-    source_schema: str
+    source_schema: Optional[str] = None
     target_schema: str
     queries: List[str]
-    query_params: Optional[Dict[str, str]] = None
+    extract_main: Optional[bool] = None
+
+    @model_validator(mode="after")
+    def check_extract_main(self):
+        if self.extract_main is None:
+            self.extract_main = self.stage in ("bronze", "silver")
+        return self
+
+    @model_validator(mode="after")
+    def check_source_schema(self):
+        if self.source_schema is None and self.stage in ("bronze", "silver"):
+            raise ValueError(
+                f"Source schema is required for stage '{self.stage}' and table '{self.name}'."
+            )   
+        return self
 
 
 class TableNames(BaseModel):

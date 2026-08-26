@@ -5,7 +5,7 @@ from pyspark.sql.session import SparkSession
 from pyspark.sql.column import Column
 from pyspark.sql import DataFrame
 
-from src.models.data_config import StageType, TableMetadata, TableDependency
+from src.models.data_config import TableMetadata, TableDependency
 from src.models.etl_config import ExtractResult
 from src.core import SourceManager
 
@@ -23,25 +23,22 @@ class BaseExtract(ABC):
 
     def __init__(
         self,
-        stage: StageType,
         session: SparkSession,
         main_table: TableMetadata,
         table_deps: Dict[str, List[TableDependency]],
-        condition: Optional[Union[str, Column]] = None,
-        extract_main: bool = True,
+        conditions: Optional[Dict[str, Union[str, Column]]] = None
     ):
         if main_table is None:
             raise ValueError("main_table must be provided.")
 
         self._source_manager = SourceManager()
 
-        self.stage: StageType = stage
         self.session: SparkSession = session
-        self.condition: Optional[Union[str, Column]] = condition
+        self.conditions: Optional[Dict[str, Union[str, Column]]] = conditions
 
         self.main_table: TableMetadata = main_table
         self.table_name: str = self.main_table.name
-        self.extract_main: bool = extract_main
+        self.extract_main: bool = self.main_table.extract_main
 
         self.dependencies: List[TableDependency] = table_deps.get(self.table_name, [])
 
@@ -75,7 +72,6 @@ class BaseExtract(ABC):
 
     def _build_result(self, df: Optional[DataFrame]) -> ExtractResult:
         return ExtractResult(
-            stage=self.stage,
             name=self.table_name,
             catalog=self.main_table.catalog,
             namespace=self.main_table.namespace,

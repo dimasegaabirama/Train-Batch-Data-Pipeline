@@ -119,7 +119,7 @@ class TableManager:
             target_schema=target_schema,
             queries=self.get_formated_query(table_ref, **(query_params or {}))
         )
-       
+
 if __name__ == "__main__":
-    table_manager = SchemaManager().get_stage_namespace("silver")
+    table_manager = TableManager().get_table_schema("cancellation_summary", "silver")
     print(table_manager)
