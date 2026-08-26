@@ -59,7 +59,7 @@ class TableManager:
         return [query.format(**kwargs) for query in self.get_table_query(table_name)]
 
     def get_table_schema(self, table_name: str, stage: StageType) -> Optional[str]:
-        cfg = self.get_table_config(table_name).schema.get(stage)
+        cfg = self.get_table_config(table_name).table_schema.get(stage)
         return cfg
 
     def get_table_deps(self, table_names: Union[str, List[str]], stage: StageType) -> Dict[str, Optional[List[TableDependency]]]:
@@ -134,5 +134,5 @@ class TableManager:
 if __name__ == "__main__":
     from pprint import pprint
     table_manager = TableManager().get_table_metadata("cancellation_summary", "gold", {"full_table_name": "bronze.cancellation_summary", "table_view": "cancellation_summary_view"})
-    pprint(table_manager)
+    pprint(table_manager.queries)
 

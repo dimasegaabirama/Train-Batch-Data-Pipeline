@@ -196,7 +196,7 @@ tables:
     write_mode:
       bronze: overwrite_partitions
       silver: custom
-    schema:
+    table_schema:
       source: |
         _id INT,
         name STRING,
@@ -274,7 +274,7 @@ tables:
     write_mode:
       bronze: overwrite_partitions
       silver: custom
-    schema: 
+    table_schema: 
       source: |
         _id INT,
         name STRING,
@@ -351,7 +351,7 @@ tables:
     write_mode:
       bronze: overwrite_partitions
       silver: custom
-    schema: 
+    table_schema: 
       source: |
         _id INT,
         name STRING,
@@ -425,7 +425,7 @@ tables:
     write_mode:
       bronze: overwrite_partitions
       silver: custom
-    schema: 
+    table_schema: 
       source: |
         _id INT,
         origin STRING,
@@ -527,7 +527,7 @@ tables:
     write_mode:
       bronze: overwrite_partitions
       silver: custom
-    schema: 
+    table_schema: 
       source: |
         _id INT,
         ticket_id STRING,
@@ -692,7 +692,7 @@ tables:
     partitioned_by: booking_date
     write_mode:
       gold: custom
-    schema:
+    table_schema:
       gold: |
         booking_date DATE,
         route_sk_id BIGINT,
@@ -789,7 +789,7 @@ tables:
     partitioned_by: booking_date
     write_mode:
       gold: custom
-    schema:
+    table_schema:
       gold: |
         revenue_date DATE,
         route_sk_id BIGINT,
@@ -871,7 +871,7 @@ tables:
     partitioned_by: refund_date
     write_mode:
       gold: custom
-    schema:
+    table_schema:
       gold: |
         refund_date DATE,
         route_sk_id BIGINT,
@@ -958,7 +958,7 @@ tables:
     partitioned_by: departure_date
     write_mode:
       gold: custom
-    schema:
+    table_schema:
       gold: |
         departure_date DATE,
         train_sk_id BIGINT,

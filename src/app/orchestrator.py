@@ -80,17 +80,14 @@ class PipelineOrchestrator:
     def _prepared_inputs(self, stage: StageType, table_name: str) -> BaseExtract:
         table_metadata = self._resolve_table_metadata(stage, table_name)
         table_deps = self._resolve_table_dependencies(stage, table_name)
-        extract_main = self._resolve_extract_main(stage)
 
         extractor_cls = self._resolve_extractor_class(stage, table_name)
-
         conditions = self._resolve_conditions(stage, table_name)
 
         self.logger.debug("Using main table: %s", table_metadata)
         self.logger.debug("Using table deps: %s", table_deps)
         self.logger.debug("Using extractor: %s", extractor_cls)
         self.logger.debug("Using conditions: %s", conditions)
-        self.logger.debug("Using extract_main: %s", extract_main)
 
         return extractor_cls(
             session=self.session,
@@ -137,10 +134,7 @@ class PipelineOrchestrator:
         )
         self.logger.debug("Using loader: %s", loader_cls)
 
-        return loader_cls(
-            session=self.session, 
-            transform_result=inputs
-        ).load()
+        return loader_cls(self.session, inputs).load()
 
 
     # SINGLE TABLE PIPELINE
@@ -159,7 +153,7 @@ class PipelineOrchestrator:
             return
 
         transform_result = self.transform(
-            stage=stage, table_name=table_name, inputs=extract_result
+            stage, table_name, extract_result
         )
 
         if self.quality_check:
@@ -178,4 +172,4 @@ class PipelineOrchestrator:
     def run_all_tables(self, stage: StageType, table_names: List[str]) -> None:
         """Run the single-table pipeline sequentially for each table in the list."""
         for table_name in table_names:
-            self.run_table(stage=stage, table_name=table_name)
+            self.run_table(stage, table_name)

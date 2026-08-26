@@ -53,14 +53,16 @@ class BronzeSilverTransformResult(BasePipelineResult):
     namespace: Literal["bronze", "silver"]
     source_fullname: str
     cleaned_dataframe: object
+    view_name: str
 
     @classmethod
     def from_extract(
-        cls, extract: BronzeSilverExtractResult, cleaned_dataframe: object
+        cls, extract: BronzeSilverExtractResult, cleaned_dataframe: object, view_name: str
     ) -> "BronzeSilverTransformResult":
         return cls(
             **extract.model_dump(exclude={"dataframe", "dependencies", "extract_main"}),
             cleaned_dataframe=cleaned_dataframe,
+            view_name=view_name
         )
 
 
@@ -68,14 +70,16 @@ class GoldTransformResult(BasePipelineResult):
     namespace: Literal["gold"]
     source_fullname: Optional[str] = None
     cleaned_dataframe: object
+    view_name: str
 
     @classmethod
     def from_extract(
-        cls, extract: GoldExtractResult, cleaned_dataframe: object
+        cls, extract: GoldExtractResult, cleaned_dataframe: object, view_name: str
     ) -> "GoldTransformResult":
         return cls(
             **extract.model_dump(exclude={"dataframe", "dependencies", "extract_main"}),
             cleaned_dataframe=cleaned_dataframe,
+            view_name=view_name
         )
 
 

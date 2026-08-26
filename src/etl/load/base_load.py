@@ -27,7 +27,6 @@ class BaseLoad(ABC):
         self.target_fullname: str = self.transform_result.target_fullname
 
         self.queries: List[str] = self.transform_result.queries
-        self.query_params: Optional[Dict[str, str]] = self.transform_result.query_params
 
     @abstractmethod
     def load(self) -> None:

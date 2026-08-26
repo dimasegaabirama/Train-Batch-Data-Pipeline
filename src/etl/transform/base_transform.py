@@ -6,6 +6,7 @@ from pyspark.sql.session import SparkSession
 
 from src.models.data_config import StageType, TableDependency
 from src.models.etl_config import ExtractResult, BronzeSilverExtractResult, GoldTransformResult, BronzeSilverTransformResult, GoldTransformResult, TransformResult
+from src.utils.table_utils import create_table_view_name
 
 
 class BaseTransform(ABC):
@@ -28,12 +29,14 @@ class BaseTransform(ABC):
         if isinstance(self.extract_result, BronzeSilverExtractResult):
             return BronzeSilverTransformResult.from_extract(
                 extract=self.extract_result,
-                cleaned_dataframe=cleaned_dataframe
+                cleaned_dataframe=cleaned_dataframe,
+                view_name=create_table_view_name(self.extract_result.name)
             )
 
         return GoldTransformResult.from_extract(
             extract=self.extract_result,
-            cleaned_dataframe=cleaned_dataframe
+            cleaned_dataframe=cleaned_dataframe,
+            view_name=create_table_view_name(self.extract_result.name)
         )
 
     @abstractmethod
