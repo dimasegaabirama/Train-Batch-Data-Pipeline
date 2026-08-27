@@ -100,27 +100,23 @@ _REGISTRY_MAP = {
 
 
 def resolve_registry_class(
-    stage: str,
-    table_name: str,
+    key1: str,
+    key2: str,
     component_name: Component,
     required: bool = True,
 ):
-
-    get_component = _REGISTRY_MAP[component_name]
-
-    if not get_component:
+    registry = _REGISTRY_MAP.get(component_name)
+    if registry is None:
         raise ValueError(
-            f"Stage '{stage}' is not registered for behavior {component_name}"
+            f"Component '{component_name}' is not a registered component type"
         )
 
-    stage_component = get_component.get(stage, {})
-    component_cls = stage_component.get(table_name) or stage_component.get("default")
+    sub_registry = registry.get(key1, {})
+    component_cls = sub_registry.get(key2, sub_registry.get("default"))
 
-    if not component_cls and required:
+    if component_cls is None and required:
         raise ValueError(
-            f"{component_name} for table "
-            f"'{table_name}' in stage "
-            f"'{stage}' does not exist"
+            f"{component_name} for '{key2}' under '{key1}' does not exist"
         )
 
     return component_cls

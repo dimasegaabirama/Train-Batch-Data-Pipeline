@@ -70,6 +70,7 @@ class DateConfig(BaseModel):
 class FilterField(BaseModel):
     table: str
     field: str
+    strategy: Literal["incremental", "boolean"]
 
 
 class StageFilters(BaseModel):

@@ -8,7 +8,7 @@ from src.data_quality.dq_runner import DataQualityRunner
 from src.etl.extract import BaseExtract
 from src.etl.load import BaseLoad
 from src.etl.transform import BaseTransform
-from src.models.data_config import StageType, TableDependency, TableMetadata
+from src.models.data_config import FilterField, StageType, TableDependency, TableMetadata
 from src.models.etl_config import ExtractResult, TransformResult
 from src.utils.nessie_utils import pipeline_branch
 from src.utils.table_utils import create_table_view_name
@@ -52,7 +52,7 @@ class PipelineOrchestrator:
 
     def _resolve_extractor_class(self, stage: StageType, table_name: str) -> Type[BaseExtract]:
         extractor_cls: Type[BaseExtract] = resolve_registry_class(
-            stage=stage, table_name=table_name, component_name="extract", required=False
+            stage, table_name, "extract", False
         )
         if extractor_cls is None:
             raise RuntimeError(
@@ -60,22 +60,37 @@ class PipelineOrchestrator:
             )
         return extractor_cls
 
-    def _resolve_conditions(self, stage: StageType, table_name: str) -> Optional[Type]:
-        condition_cls = resolve_registry_class(
-            stage=stage, table_name=table_name, component_name="filter", required=False
-        )
-        if condition_cls is None:
+    def _resolve_conditions(
+        self, stage: StageType, table_name: str
+    ) -> Dict[str, object]:
+
+        table_filters: List[FilterField] = self._filter_manager.get_table_filters(stage, table_name)
+        type_filter = self._filter_manager.get_stage_type(stage)
+
+        valid_filters = [f for f in table_filters if f.strategy and type_filter]
+
+        condition_cls = {
+            f.table: resolve_registry_class(f.strategy, type_filter, "filter", False)
+            for f in valid_filters
+        }
+
+        if not condition_cls:
             return {}
 
-        filter_fields = self._filter_manager.get_fields(stage, table_name)
-        return {
-            f.table: condition_cls(
+        conditions = {}
+        for f in valid_filters:
+            cls = condition_cls.get(f.table)
+            if cls is None:
+                continue
+
+            conditions[f.table] = cls(
                 field=f.field,
                 start_date=self._date_manager.get_start_date(),
                 end_date=self._date_manager.get_end_date(),
+                value=getattr(f, "value", None),
             )
-            for f in filter_fields
-        }
+
+        return conditions
 
     def _prepared_inputs(self, stage: StageType, table_name: str) -> BaseExtract:
         table_metadata = self._resolve_table_metadata(stage, table_name)
