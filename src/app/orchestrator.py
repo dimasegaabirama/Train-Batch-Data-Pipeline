@@ -87,7 +87,7 @@ class PipelineOrchestrator:
                 field=f.field,
                 start_date=self._date_manager.get_start_date(),
                 end_date=self._date_manager.get_end_date(),
-                value=getattr(f, "value", None),
+                value=getattr(f, "value", None)
             )
 
         return conditions

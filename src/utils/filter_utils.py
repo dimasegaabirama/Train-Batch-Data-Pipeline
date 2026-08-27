@@ -5,7 +5,7 @@ import pyspark.sql.functions as F
 from pyspark.sql.column import Column
 
 
-def build_mongo_incremental_filter(field: str, start_date: datetime, end_date: datetime):
+def build_mongo_incremental_filter(field: str, start_date: datetime, end_date: datetime, **kwargs):
     """
     Build a MongoDB aggregation filter for bronze-stage extraction.
 
@@ -53,7 +53,7 @@ def build_mongo_incremental_filter(field: str, start_date: datetime, end_date: d
 
 
 def build_iceberg_incremental_filter(
-    field: str, start_date: str, end_date: str
+    field: str, start_date: str, end_date: str, **kwargs
 ) -> Column:
     """
     Build a Spark filter expression for silver-stage incremental extraction.
@@ -88,7 +88,7 @@ def build_iceberg_incremental_filter(
     return (F.col(field) >= F.lit(start_date)) & (F.col(field) < F.lit(end_date))
 
 def build_iceberg_boolean_filter(
-    field: str, value: Optional[bool] = True
+    field: str, value: Optional[bool] = True, **kwargs
 ) -> Column:
     """
     Build a Spark filter expression for boolean fields.
