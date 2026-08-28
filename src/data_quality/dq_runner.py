@@ -31,10 +31,10 @@ class DataQualityRunner:
             return Path(self.custom_dq_path)
 
         test_filename = resolve_registry_class(
-            stage=stage,
-            table_name=table_name,
-            component_name="data_quality",
-            required=False,
+            stage,
+            table_name,
+            "data_quality",
+            False,
         )
         if test_filename is None:
             self.logger.debug(

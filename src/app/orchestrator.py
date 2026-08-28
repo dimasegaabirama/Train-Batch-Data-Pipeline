@@ -131,7 +131,7 @@ class PipelineOrchestrator:
             "[TRANSFORM] Transforming data for table: %s | Stage: %s", table_name, stage
         )
         transformer_cls: Type[BaseTransform] = resolve_registry_class(
-            stage=stage, table_name=table_name, component_name="transform"
+            stage, table_name, "transform"
         )
         self.logger.debug("Using transformer: %s", transformer_cls)
 
@@ -145,7 +145,7 @@ class PipelineOrchestrator:
             "[LOAD] Loading data for table: %s | Stage: %s", table_name, stage
         )
         loader_cls: Type[BaseLoad] = resolve_registry_class(
-            stage=stage, table_name=table_name, component_name="load"
+            stage, table_name, "load"
         )
         self.logger.debug("Using loader: %s", loader_cls)
 

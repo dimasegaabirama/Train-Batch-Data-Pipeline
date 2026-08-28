@@ -1099,14 +1099,17 @@ filters:
         - table: passengers
           field: is_active
           strategy: boolean
+          value: true
 
         - table: routes
           field: is_deleted
           strategy: boolean
+          value: false
 
         - table: trains
           field: is_active
           strategy: boolean
+          value: true
 
       passengers:
         - table: passengers
@@ -1121,10 +1124,12 @@ filters:
         - table: stations
           field: is_deleted
           strategy: boolean
+          value: false
 
         - table: trains
           field: is_active
           strategy: boolean
+          value: true
 
       trains:
         - table: trains
@@ -1146,22 +1151,23 @@ filters:
 
       refund_loss:
         - table: tickets
-          field: updated_at
+          field: created_at
           strategy: incremental
 
       revenue_daily:
         - table: tickets
-          field: updated_at
+          field: created_at
           strategy: incremental
 
       train_performance:
         - table: tickets
-          field: updated_at
+          field: created_at
           strategy: incremental
 
         - table: trains
-          field: updated_at
-          strategy: incremental
+          field: is_active
+          strategy: boolean
+          value: true
 
       
       

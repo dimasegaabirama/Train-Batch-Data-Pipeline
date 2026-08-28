@@ -17,8 +17,8 @@ def initialize_seed(spark: SparkSession):
         VALUES 
             (1, 'paid'),
             (2, 'unpaid'),
-        (3, 'cancelled'),
-        (4, 'refunded')
+            (3, 'cancelled'),
+            (4, 'refunded')
     """,
     """
     INSERT INTO nessie.silver.class (id, class_name)

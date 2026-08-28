@@ -71,6 +71,7 @@ class FilterField(BaseModel):
     table: str
     field: str
     strategy: Literal["incremental", "boolean"]
+    value: Optional[Union[str, bool]] = None
 
 
 class StageFilters(BaseModel):
