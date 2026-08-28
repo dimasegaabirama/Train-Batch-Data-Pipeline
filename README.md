@@ -391,6 +391,26 @@ This config-driven approach enables a generic pipeline that reads table definiti
 └── README.md
 ```
 
+## Preview
+
+<table>
+  <tr>
+    <td><img src="image/hadoop.png" width="250"></td>
+    <td><img src="image/spark.png" width="250"></td>
+    <td><img src="image/mongo.png" width="250"></td>
+    <td><img src="image/airflow.png" width="250"></td>
+    <td><img src="image/nessie.png" width="250"></td>
+  </tr>
+  <tr>
+    <td align="center">Hadoop UI</td>
+    <td align="center">Spark Master UI</td>
+    <td align="center">Mongo UI</td>
+    <td align="center">Airflow UI</td>
+    <td align="center">Nessie Rest UI</td>
+  </tr>
+</table>
+
+
 ## Installation & Setup
 
 **Prerequisites:**
