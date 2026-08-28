@@ -395,11 +395,11 @@ This config-driven approach enables a generic pipeline that reads table definiti
 
 <table>
   <tr>
-    <td><img src="images/hadoop.png" width="250"></td>
-    <td><img src="images/spark.png" width="250"></td>
-    <td><img src="images/mongo.png" width="250"></td>
-    <td><img src="images/airflow.png" width="250"></td>
-    <td><img src="images/nessie.png" width="250"></td>
+    <td><img src="images/hadoop.png" width="450"></td>
+    <td><img src="images/spark.png" width="450"></td>
+    <td><img src="images/mongo.png" width="450"></td>
+    <td><img src="images/airflow.png" width="450"></td>
+    <td><img src="images/nessie.png" width="450"></td>
   </tr>
   <tr>
     <td align="center">Hadoop UI</td>
