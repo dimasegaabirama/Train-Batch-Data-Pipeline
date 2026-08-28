@@ -453,24 +453,14 @@ The entry point is `main.py` at the project root, backed by `PipelineRunner` (ar
 
 **One-time bootstrap** (creates Nessie branches/namespaces and base schemas — no dates/tables needed):
 ```bash
-python main.py -stg bronze -cfg config/pipeline-config.yaml -env .env --run_bootstrap
+python -m src.app.run_pipeline -stg bronze -cfg config/pipeline-config.yaml -env .env.global --run_bootstrap
 ```
 
-**Run a stage for all its configured tables, with DQ checks:**
+**Run a stage for specific tables only with DQ checks:**
 ```bash
-python main.py -stg bronze \
+python -m src.app.run_pipeline -stg silver \
   -cfg config/pipeline-config.yaml \
-  -env .env \
-  -start 2026-01-01 \
-  -end 2026-01-01 \
-  --data_quality
-```
-
-**Run a stage for specific tables only:**
-```bash
-python main.py -stg silver \
-  -cfg config/pipeline-config.yaml \
-  -env .env \
+  -env .env.global \
   -start 2026-01-01 \
   -end 2026-01-01 \
   -tbl stations trains \
