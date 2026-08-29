@@ -9,16 +9,20 @@ from .base_extract import BaseExtract
 class IcebergExtract(BaseExtract):
 
     def _read_dependency(self, dep: TableDependency) -> DataFrame:
-        fullname = create_table_fullname(dep.catalog, dep.namespace, dep.name)
-        return self._read_table(fullname)
+        return self._read_table(dep.catalog, dep.namespace, dep.name)
 
     def _read_main_table(self) -> DataFrame:
-        return self._read_table(self.main_table.source_fullname)
+        return self._read_table(
+            self.main_table.catalog,
+            self.main_table.namespace,
+            self.main_table.name
+        )
 
-    def _read_table(self, table: str) -> DataFrame:
-        df = self.session.read.table(table)
+    def _read_table(self, catalog: str, namespace: str, name: str) -> DataFrame:
+        fullname = create_table_fullname(catalog, namespace, name)
+        df = self.session.read.table(fullname)
 
-        condition = self.conditions.get(self.table_name)
+        condition = self.conditions.get(name) if self.conditions else None
         if condition is not None:
             df = df.filter(condition)
 

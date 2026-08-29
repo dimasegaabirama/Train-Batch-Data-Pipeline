@@ -90,6 +90,8 @@ class PipelineOrchestrator:
                 value=getattr(f, "value", None)
             )
 
+        print(f"Resolved conditions for Stage: {stage} | Table: {table_name}: {conditions}")
+
         return conditions
 
     def _prepared_inputs(self, stage: StageType, table_name: str) -> BaseExtract:
