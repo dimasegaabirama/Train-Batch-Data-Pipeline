@@ -62,12 +62,12 @@ rm -rf ./docker/airflow/data/*
 # CLEAN NETWORK (OPTIONAL)
 # =========================
 echo "=== CLEAN NETWORK ==="
-log "Cleaning networks..."
+echo "Cleaning networks..."
 for net in hadoop_net spark_net airflow_net mongo_net nessie_net data_eng_net; do
   if docker network rm "$net" 2>/dev/null; then
-    log "Removed $net"
+    echo "Removed $net"
   else
-    log "Failed to remove $net (mungkin masih ada container yang pakai)"
+    echo "Failed to remove $net (mungkin masih ada container yang pakai)"
   fi
 done
 echo "✅ All services stopped and cleaned!"

@@ -132,9 +132,12 @@ class PipelineOrchestrator:
         self.logger.info(
             "[TRANSFORM] Transforming data for table: %s | Stage: %s", table_name, stage
         )
+
         transformer_cls: Type[BaseTransform] = resolve_registry_class(
             stage, table_name, "transform"
         )
+
+        # self.logger.debug("Dataframe before transformation: %s", inputs.dataframe.show(2))
         self.logger.debug("Using transformer: %s", transformer_cls)
 
         return transformer_cls(self.session, inputs).transform()
@@ -149,6 +152,8 @@ class PipelineOrchestrator:
         loader_cls: Type[BaseLoad] = resolve_registry_class(
             stage, table_name, "load"
         )
+
+        # self.logger.debug("Dataframe after transformation: %s", inputs.cleaned_dataframe.show(2))
         self.logger.debug("Using loader: %s", loader_cls)
 
         return loader_cls(self.session, inputs).load()
@@ -161,13 +166,12 @@ class PipelineOrchestrator:
         """Run extract -> transform -> (optional) DQ checks -> load for one table."""
         extract_result = self.extract(stage, table_name)
 
-        if not extract_result.dataframe.take(1):
+        if not extract_result.dataframe:
             self.logger.info(
                 "[EXTRACT] No data found for table: %s | Stage: %s. "
                 "Skipping transform, data quality, and load.",
                 table_name, stage,
             )
-            return
 
         transform_result = self.transform(
             stage, table_name, extract_result

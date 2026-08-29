@@ -287,14 +287,14 @@ def initialize_table(spark: SparkSession):
             route_sk_id BIGINT,
             class_id INT,
 
-            total_tickets_created BIGINT,
-            total_tickets_paid BIGINT,
-            total_tickets_cancelled BIGINT,
-            total_tickets_refunded BIGINT,
+            total_tickets INT,
+            total_tickets_paid INT,
+            total_tickets_cancelled INT,
+            total_tickets_refunded INT,
 
-            cancelled_before_payment BIGINT,
-            cancelled_after_payment BIGINT,
-            cancelled_not_yet_refunded BIGINT,
+            cancelled_before_payment INT,
+            cancelled_after_payment INT,
+            cancelled_not_yet_refunded INT,
 
             total_revenue_lost DECIMAL(18, 2),
             avg_hours_to_cancel DOUBLE,
