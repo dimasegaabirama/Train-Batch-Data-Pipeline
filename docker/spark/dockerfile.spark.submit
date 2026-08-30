@@ -38,4 +38,6 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV PYSPARK_PYTHON=/app/.venv/bin/python
 ENV PYSPARK_DRIVER_PYTHON=/app/.venv/bin/python
 
+# RUN python -m src.app.run_pipeline --run_bootstrap
+
 CMD ["tail", "-f", "/dev/null"]
