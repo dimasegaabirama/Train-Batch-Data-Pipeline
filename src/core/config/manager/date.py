@@ -13,11 +13,11 @@ class DateManager:
     def get_date(self) -> DateConfig:
         return self._config.run_date
 
-    def get_start_date(self) -> datetime:
-        return self.get_date().start_date
+    def get_start_date(self, format_str: str = "%Y-%m-%d %H:%M:%S") -> datetime:
+        return datetime.strptime(self.get_date().start_date, format_str)
 
-    def get_end_date(self) -> datetime:
-        return self.get_date().end_date
+    def get_end_date(self, format_str: str = "%Y-%m-%d %H:%M:%S") -> datetime:
+        return datetime.strptime(self.get_date().end_date, format_str)
 
 if __name__ == "__main__":
     date_manager = DateManager()

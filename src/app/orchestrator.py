@@ -42,8 +42,8 @@ class PipelineOrchestrator:
         query_params = {
             "full_table_name": self._table_manager.get_table_fullname(table_name, stage),
             "table_view": create_table_view_name(table_name),
-            "start_date": self._date_manager.get_start_date(),
-            "end_date": self._date_manager.get_end_date()
+            "start_date": self._date_manager.get_start_date(format_str="%Y-%m-%d"),
+            "end_date": self._date_manager.get_end_date(format_str="%Y-%m-%d")
         }
         return self._table_manager.get_table_metadata(
             table_name, stage, query_params

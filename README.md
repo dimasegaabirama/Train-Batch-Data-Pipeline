@@ -252,10 +252,10 @@ DQ checks run as their **own Airflow task and image**, separate from the Spark l
 ```bash
 git clone <repo-url> && cd train_batch_pipeline
 uv sync                        # install dependencies
-./start-all.sh                 # up: mongo, hdfs, nessie, spark, airflow
+source ./start-all.sh                 # up: mongo, hdfs, nessie, spark, airflow
 ```
 
-### CLI (`main.py`)
+### CLI
 
 | Flag | Env fallback | Required? | Description |
 |---|---|---|---|
