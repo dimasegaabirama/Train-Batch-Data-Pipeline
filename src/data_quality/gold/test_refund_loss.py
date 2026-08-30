@@ -23,7 +23,7 @@ class TestRefundLoss(BaseTest):
             Check(self.session, CheckLevel.Error, "RefundLoss - Grain Uniqueness")
             .isUnique(
                 ["refund_date", "route_sk_id", "class_id"],
-                "Combination of refund_date, route_sk_id, class_id must be unique",
+                "Combination of refund_date, route_sk_id, class_id must be unique"
             )
         )
 
@@ -32,14 +32,14 @@ class TestRefundLoss(BaseTest):
     def test_non_negative_values(self):
         check = (
             Check(self.session, CheckLevel.Error, "RefundLoss - Non-Negative Values")
-            .isNonNegative("total_tickets_refunded")
-            .isNonNegative("total_refund_amount")
-            .isNonNegative("avg_refund_amount")
-            .isNonNegative("avg_days_cancel_to_refund")
-            .isNonNegative("avg_hours_to_refund")
-            .isNonNegative("avg_days_created_to_refund")
-            .isNonNegative("total_refunded_with_promo")
-            .isNonNegative("total_refunded_with_family_flag")
+            .isNonNegative(column="total_tickets_refunded", hint="TOTAL_TICKETS_REFUNDED must be non-negative")
+            .isNonNegative(column="total_refund_amount", hint="TOTAL_REFUND_AMOUNT must be non-negative")
+            .isNonNegative(column="avg_refund_amount", hint="AVG_REFUND_AMOUNT must be non-negative")
+            .isNonNegative(column="avg_days_cancel_to_refund", hint = "AVG_DAYS_CANCEL_TO_REFUND must be non-negative")
+            .isNonNegative(column="avg_hours_to_refund", hint="AVG_HOURS_TO_REFUND must be non-negative")
+            .isNonNegative(column="avg_days_created_to_refund", hint="AVG_DAYS_CREATED_TO_REFUND must be non-negative")
+            .isNonNegative(column="total_refunded_with_promo", hint="TOTAL_REFUNDED_WITH_PROMO must be non-negative")
+            .isNonNegative(column="total_refunded_with_family_flag", hint="TOTAL_REFUNDED_WITH_FAMILY_FLAG must be non-negative")
         )
 
         self.run_tests(check)
@@ -52,11 +52,13 @@ class TestRefundLoss(BaseTest):
                 "total_refunded_with_promo <= total_tickets_refunded",
                 "promo_refund_not_exceed_total",
                 lambda x: x == 1.0,
+                "TOTAL_REFUNDED_WITH_PROMO should not exceed TOTAL_TICKETS_REFUNDED",
             )
             .satisfies(
                 "total_refunded_with_family_flag <= total_tickets_refunded",
                 "family_refund_not_exceed_total",
                 lambda x: x == 1.0,
+                "TOTAL_REFUNDED_WITH_FAMILY_FLAG should not exceed TOTAL_TICKETS_REFUNDED",
             )
         )
 
@@ -73,6 +75,7 @@ class TestRefundLoss(BaseTest):
                 """,
                 "avg_refund_amount_matches_calculation",
                 lambda x: x == 1.0,
+                "AVG_REFUND_AMOUNT should equal TOTAL_REFUND_AMOUNT divided by TOTAL_TICKETS_REFUNDED",
             )
         )
 
@@ -86,6 +89,7 @@ class TestRefundLoss(BaseTest):
                 "avg_days_created_to_refund >= avg_days_cancel_to_refund",
                 "created_to_refund_gte_cancel_to_refund",
                 lambda x: x == 1.0,
+                "AVG_DAYS_CREATED_TO_REFUND should be greater than or equal to AVG_DAYS_CANCEL_TO_REFUND",
             )
         )
 
@@ -96,7 +100,7 @@ class TestRefundLoss(BaseTest):
             Check(self.session, CheckLevel.Error, "RefundLoss - Dataset Validation")
             .hasSize(
                 lambda x: x > 0,
-                "Dataset must not be empty",
+                "Dataset must not be empty"
             )
         )
 

@@ -4,8 +4,26 @@ from pyspark.sql.dataframe import DataFrame
 from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
 
+from pyspark.sql.types import DecimalType
+
 
 class RevenueDaily(BaseTransform):
+
+            # revenue_date DATE,
+            # route_sk_id BIGINT,
+            # class_id INT,
+
+            # total_tickets BIGINT,
+            # gross_revenue DECIMAL(18, 2),
+            # total_discount_calculated DECIMAL(18, 2),
+            # net_revenue DECIMAL(18, 2),
+            # refunded_revenue DECIMAL(18, 2),
+
+            # net_revenue_after_refund DECIMAL(18, 2),
+            # avg_ticket_price DECIMAL(18, 2),
+
+            # updated_at TIMESTAMP
+
     def transform(self):
         try:
             tickets_dataframe = self.dependencies["tickets"]
@@ -30,15 +48,15 @@ class RevenueDaily(BaseTransform):
                         F.when(
                             F.col("refunded_at").isNotNull(), F.col("final_price")
                         ).otherwise(0)
-                    ).alias("refunded_revenue"),
+                    ).cast(DecimalType(18, 2)).alias("refunded_revenue"),
                 )
                 .withColumn(
                     "net_revenue_after_refund",
-                    F.col("net_revenue") - F.col("refunded_revenue"),
+                    (F.col("net_revenue") - F.col("refunded_revenue")).cast(DecimalType(18, 2))
                 )
                 .withColumn(
                     "avg_ticket_price",
-                    F.round(F.col("net_revenue") / F.col("total_tickets"), 2),
+                    (F.col("net_revenue") / F.col("total_tickets")).cast(DecimalType(18, 2)),
                 )
                 .withColumn("updated_at", F.current_timestamp())
             )

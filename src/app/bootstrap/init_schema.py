@@ -283,7 +283,7 @@ def initialize_table(spark: SparkSession):
         """,
         """
         CREATE TABLE IF NOT EXISTS nessie.gold.cancellation_summary(
-            booking_date TIMESTAMP,
+            booking_date DATE,
             route_sk_id BIGINT,
             class_id INT,
 
@@ -313,7 +313,7 @@ def initialize_table(spark: SparkSession):
         """,
         """
         CREATE TABLE IF NOT EXISTS nessie.gold.revenue_daily(
-            revenue_date TIMESTAMP,
+            revenue_date DATE,
             route_sk_id BIGINT,
             class_id INT,
 
@@ -336,19 +336,20 @@ def initialize_table(spark: SparkSession):
         WRITE ORDERED BY revenue_date
         """,
 
+
         """
         CREATE TABLE IF NOT EXISTS nessie.gold.refund_loss(
-            refund_date TIMESTAMP,
+            refund_date DATE,
             route_sk_id BIGINT,
             class_id INT,
-            total_tickets_refunded BIGINT,
+            total_tickets_refunded INT,
             total_refund_amount DECIMAL(18, 2),
             avg_refund_amount DECIMAL(18, 2),
             avg_days_cancel_to_refund DOUBLE,
             avg_hours_to_refund DOUBLE,
             avg_days_created_to_refund DOUBLE,
-            total_refunded_with_promo BIGINT,
-            total_refunded_with_family_flag BIGINT,
+            total_refunded_with_promo INT,
+            total_refunded_with_family_flag INT,
             updated_at TIMESTAMP
         )
         USING ICEBERG
@@ -361,17 +362,17 @@ def initialize_table(spark: SparkSession):
 
         """
         CREATE TABLE IF NOT EXISTS nessie.gold.train_performance(
-            departure_date TIMESTAMP,
+            departure_date DATE,
             train_sk_id BIGINT,
             name STRING,
             type STRING,
             capacity INT,
-            total_tickets_sold BIGINT,
-            total_cancelled_tickets BIGINT,
-            net_tickets_sold BIGINT,
+            total_tickets_sold INT,
+            total_cancelled_tickets INT,
+            net_tickets_sold INT,
             total_revenue DECIMAL(18, 2),
-            family_ticket_count BIGINT,
-            promo_ticket_count BIGINT,
+            family_ticket_count INT,
+            promo_ticket_count INT,
             cancelled_after_departure_flag BOOLEAN,
             occupancy_rate DOUBLE,
             is_fully_booked BOOLEAN,

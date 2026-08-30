@@ -78,12 +78,13 @@ class CancellationSummary(BaseTransform):
                     F.round(
                         F.col("cancelled_after_payment") / F.col("total_tickets_paid"),
                         4,
-                    ).cast(DecimalType(5, 2)),
+                    ),
                 )
                 .withColumn("updated_at", F.current_timestamp())
             )
 
             return self._build_result(result_df)
+        
         except Exception as e:
             raise RuntimeError(
                 f"Error during cancellation summary transformation: {e}"

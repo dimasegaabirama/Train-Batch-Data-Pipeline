@@ -34,13 +34,13 @@ class TestTrainPerformance(BaseTest):
     def test_non_negative_values(self):
         check = (
             Check(self.session, CheckLevel.Error, "TrainPerformance - Non-Negative Values")
-            .isNonNegative("capacity")
-            .isNonNegative("total_tickets_sold")
-            .isNonNegative("total_cancelled_tickets")
-            .isNonNegative("net_tickets_sold")
-            .isNonNegative("total_revenue")
-            .isNonNegative("family_ticket_count")
-            .isNonNegative("promo_ticket_count")
+            .isNonNegative(column="capacity", hint="CAPACITY must be non-negative")
+            .isNonNegative(column="total_tickets_sold", hint="TOTAL_TICKETS_SOLD must be non-negative")
+            .isNonNegative(column="total_cancelled_tickets", hint="TOTAL_CANCELLED_TICKETS must be non-negative")
+            .isNonNegative(column="net_tickets_sold", hint="NET_TICKETS_SOLD must be non-negative")
+            .isNonNegative(column="total_revenue", hint="TOTAL_REVENUE must be non-negative")
+            .isNonNegative(column="family_ticket_count", hint="FAMILY_TICKET_COUNT must be non-negative")
+            .isNonNegative(column="promo_ticket_count", hint="PROMO_TICKET_COUNT must be non-negative")
         )
 
         self.run_tests(check)
@@ -52,6 +52,7 @@ class TestTrainPerformance(BaseTest):
                 "capacity > 0",
                 "capacity_greater_than_zero",
                 lambda x: x == 1.0,
+                "CAPACITY should be greater than zero"
             )
         )
 
@@ -64,16 +65,19 @@ class TestTrainPerformance(BaseTest):
                 "net_tickets_sold = total_tickets_sold - total_cancelled_tickets",
                 "net_tickets_matches_calculation",
                 lambda x: x == 1.0,
+                "NET_TICKETS_SOLD should equal TOTAL_TICKETS_SOLD minus TOTAL_CANCELLED_TICKETS"
             )
             .satisfies(
                 "net_tickets_sold <= capacity",
                 "net_tickets_not_exceed_capacity",
                 lambda x: x == 1.0,
+                "NET_TICKETS_SOLD should not exceed CAPACITY"
             )
             .satisfies(
                 "total_cancelled_tickets <= total_tickets_sold",
                 "cancelled_not_exceed_total_sold",
                 lambda x: x == 1.0,
+                "TOTAL_CANCELLED_TICKETS should not exceed TOTAL_TICKETS_SOLD"
             )
         )
 
@@ -86,11 +90,13 @@ class TestTrainPerformance(BaseTest):
                 "family_ticket_count <= total_tickets_sold",
                 "family_count_not_exceed_total",
                 lambda x: x == 1.0,
+                "FAMILY_TICKET_COUNT should not exceed TOTAL_TICKETS_SOLD"
             )
             .satisfies(
                 "promo_ticket_count <= total_tickets_sold",
                 "promo_count_not_exceed_total",
                 lambda x: x == 1.0,
+                "PROMO_TICKET_COUNT should not exceed TOTAL_TICKETS_SOLD"
             )
         )
 
@@ -103,6 +109,7 @@ class TestTrainPerformance(BaseTest):
                 "occupancy_rate >= 0.0 AND occupancy_rate <= 1.0",
                 "occupancy_rate_in_range",
                 lambda x: x == 1.0,
+                "OCCUPANCY_RATE should be between 0.0 and 1.0"
             )
         )
 
@@ -118,6 +125,7 @@ class TestTrainPerformance(BaseTest):
                 """,
                 "occupancy_rate_matches_calculation",
                 lambda x: x == 1.0,
+                "OCCUPANCY_RATE should equal NET_TICKETS_SOLD divided by CAPACITY"
             )
         )
 
@@ -133,6 +141,7 @@ class TestTrainPerformance(BaseTest):
                 """,
                 "is_fully_booked_matches_ticket_count",
                 lambda x: x == 1.0,
+                "IS_FULLY_BOOKED should be true if NET_TICKETS_SOLD equals CAPACITY, and false otherwise"
             )
         )
 
@@ -161,6 +170,7 @@ class TestTrainPerformance(BaseTest):
             .hasSize(
                 lambda x: x > 0,
                 "Dataset must not be empty",
+                "TrainPerformance dataset should contain at least one record"
             )
         )
 

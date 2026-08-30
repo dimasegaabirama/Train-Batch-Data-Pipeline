@@ -25,7 +25,11 @@ class TrainPerformance(BaseTransform):
             )
 
             train_performance_dataframe = joined_dataframe.groupBy(
-                "f.departure_date", "f.train_sk_id", "t.name", "t.type", "t.capacity"
+                F.to_date(F.col("f.departure_date")).alias("departure_date"),
+                F.col("f.train_sk_id"),
+                F.col("t.name"),
+                F.col("t.type"),
+                F.col("t.capacity")
             ).agg(
                 F.count(
                     F.when(F.col("f.paid_at").isNotNull(), F.col("f.ticket_id"))

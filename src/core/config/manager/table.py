@@ -62,29 +62,26 @@ class TableManager:
         cfg = self.get_table_config(table_name).table_schema.get(stage)
         return cfg
 
-    def get_table_deps(self, table_names: Union[str, List[str]], stage: StageType) -> Dict[str, Optional[List[TableDependency]]]:
-        if isinstance(table_names, str):
-            table_names = [table_names]
+    def get_table_deps(self, table_name: str, stage: StageType) -> Optional[Dict[str, List[TableDependency]]]:
 
         dependencies: Dict[str, Optional[List[TableDependency]]] = {}
 
-        for table_name in table_names:
-            deps = self.get_table_config(table_name).depends_on
+        raw = getattr(self.get_table_config(table_name), 'depends_on', None) or {stage: None}
+        deps = raw.get(stage)
 
-            if deps is None:
-                dependencies[table_name] = []
-                continue
-
+        if deps is None:
+            return None
+        else:
             dependencies[table_name] = [
                 TableDependency(
                     name=dep.name,
                     catalog=dep.catalog,
                     namespace=dep.namespace,
                 )
-                for dep in deps.get(stage, [])
+                for dep in deps
             ]
-
         return dependencies
+
 
     def get_table_fullname(self, table_name: str, stage: StageType) -> str:
         catalog = self._catalog_manager.get_catalog_name()
@@ -133,6 +130,6 @@ class TableManager:
 
 if __name__ == "__main__":
     from pprint import pprint
-    table_manager = TableManager().get_table_metadata("cancellation_summary", "gold", {"full_table_name": "bronze.cancellation_summary", "table_view": "cancellation_summary_view"})
-    pprint(table_manager.queries)
+    table_manager = TableManager().get_table_schema("cancellation_summary", "bronze")
+    print(table_manager)
 

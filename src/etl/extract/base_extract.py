@@ -25,7 +25,7 @@ class BaseExtract(ABC):
         self,
         session: SparkSession,
         main_table: TableMetadata,
-        table_deps: Dict[str, List[TableDependency]],
+        table_deps: Optional[Dict[str, List[TableDependency]]] = None,
         conditions: Optional[Dict[str, Union[str, Column]]] = None
     ):
         if main_table is None:
@@ -40,7 +40,7 @@ class BaseExtract(ABC):
         self.table_name: str = self.main_table.name
         self.extract_main: bool = self.main_table.extract_main
 
-        self.dependencies: List[TableDependency] = table_deps.get(self.table_name, [])
+        self.dependencies: List[TableDependency] = table_deps.get(self.table_name, []) if table_deps else []
 
         self.dependency_dataframes: Dict[str, DataFrame] = {}
 

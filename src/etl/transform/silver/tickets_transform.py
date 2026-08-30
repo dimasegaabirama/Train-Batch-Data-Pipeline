@@ -170,6 +170,8 @@ class TicketsTransform(BaseTransform):
                 )
             )
 
+            # self.session.
+
             return self._build_result(result_df)
 
         except Exception as e:

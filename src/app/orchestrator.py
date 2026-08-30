@@ -41,7 +41,9 @@ class PipelineOrchestrator:
     def _resolve_table_metadata(self, stage: StageType, table_name: str) -> TableMetadata:
         query_params = {
             "full_table_name": self._table_manager.get_table_fullname(table_name, stage),
-            "table_view": create_table_view_name(table_name)
+            "table_view": create_table_view_name(table_name),
+            "start_date": self._date_manager.get_start_date(),
+            "end_date": self._date_manager.get_end_date()
         }
         return self._table_manager.get_table_metadata(
             table_name, stage, query_params

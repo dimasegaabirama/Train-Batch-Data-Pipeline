@@ -2,7 +2,6 @@ from pydeequ.checks import Check, CheckLevel
 
 from src.data_quality import BaseTest
 
-
 class TestRevenueDaily(BaseTest):
     
     def test_completeness(self):
@@ -32,12 +31,12 @@ class TestRevenueDaily(BaseTest):
     def test_non_negative_values(self):
         check = (
             Check(self.session, CheckLevel.Error, "RevenueDaily - Non-Negative Values")
-            .isNonNegative("total_tickets")
-            .isNonNegative("gross_revenue")
-            .isNonNegative("total_discount")
-            .isNonNegative("net_revenue")
-            .isNonNegative("refunded_revenue")
-            .isNonNegative("avg_ticket_price")
+            .isNonNegative(column="total_tickets", hint="TOTAL_TICKETS must be non-negative")
+            .isNonNegative(column="gross_revenue", hint="GROSS_REVENUE must be non-negative")
+            .isNonNegative(column="total_discount", hint="TOTAL_DISCOUNT must be non-negative")
+            .isNonNegative(column="net_revenue", hint="NET_REVENUE must be non-negative")
+            .isNonNegative(column="refunded_revenue", hint="REFUNDED_REVENUE must be non-negative")
+            .isNonNegative(column="avg_ticket_price", hint="AVG_TICKET_PRICE must be non-negative")
         )
 
         self.run_tests(check)
@@ -49,6 +48,7 @@ class TestRevenueDaily(BaseTest):
                 "net_revenue_after_refund >= 0",
                 "net_revenue_after_refund_non_negative",
                 lambda x: x == 1.0,
+                "NET_REVENUE_AFTER_REFUND should be non-negative",
             )
         )
 
@@ -61,11 +61,13 @@ class TestRevenueDaily(BaseTest):
                 "ABS(net_revenue - (gross_revenue - total_discount)) < 0.01",
                 "net_revenue_matches_gross_minus_discount",
                 lambda x: x == 1.0,
+                "NET_REVENUE should equal GROSS_REVENUE minus TOTAL_DISCOUNT"
             )
             .satisfies(
                 "ABS(net_revenue_after_refund - (net_revenue - refunded_revenue)) < 0.01",
                 "net_after_refund_matches_calculation",
                 lambda x: x == 1.0,
+                "NET_REVENUE_AFTER_REFUND should equal NET_REVENUE minus REFUNDED_REVENUE"
             )
         )
 
@@ -81,6 +83,7 @@ class TestRevenueDaily(BaseTest):
                 """,
                 "avg_ticket_price_matches_calculation",
                 lambda x: x == 1.0,
+                "AVG_TICKET_PRICE should equal GROSS_REVENUE divided by TOTAL_TICKETS"
             )
         )
 
@@ -93,11 +96,13 @@ class TestRevenueDaily(BaseTest):
                 "total_discount <= gross_revenue",
                 "discount_not_exceed_gross_revenue",
                 lambda x: x == 1.0,
+                "TOTAL_DISCOUNT should not exceed GROSS_REVENUE"
             )
             .satisfies(
                 "refunded_revenue <= net_revenue",
                 "refunded_not_exceed_net_revenue",
                 lambda x: x == 1.0,
+                "REFUNDED_REVENUE should not exceed NET_REVENUE"
             )
         )
 
@@ -109,6 +114,7 @@ class TestRevenueDaily(BaseTest):
             .hasSize(
                 lambda x: x > 0,
                 "Dataset must not be empty",
+                "RevenueDaily dataset should contain at least one record"
             )
         )
 
