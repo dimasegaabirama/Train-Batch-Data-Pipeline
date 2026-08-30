@@ -12,7 +12,7 @@ DEFAULT_ARGS = {
 }
 
 @dag(
-    dag_id="etl_pipeline",
+    dag_id="train_pipeline",
     schedule="@daily",
     start_date=datetime(2024, 1, 1),
     catchup=False,
@@ -23,27 +23,38 @@ DEFAULT_ARGS = {
 )
 def train_pipeline():
 
+    def _resolve_variable(var_name: str, default_value: str = None) -> str:
+        var_value = {
+            "spark_submit_image_name": Variable.get("spark_submit_image_name"),
+            "secret_env_path": Variable.get("secret_env_path"),
+            "secret_env_target": Variable.get("secret_env_target"),
+            "config_path": Variable.get("config_path"),
+            "data_quality_enabled": Variable.get("data_quality_enabled")
+        }
+        return var_value.get(var_name, default_value)
+
     def make_command(stage: str) -> list[str]:
         return [
             "python3", "-m", "main",
             "-stg", stage,
-            "-cfg", Variable.get("config_path"),
-            "-env", Variable.get("secret_env_target"),
+            "-cfg", _resolve_variable("config_path"),
+            "-env", _resolve_variable("secret_env_target"),
             "-start", "{{ data_interval_start | ds }}",
-            "-end",   "{{ data_interval_end   | ds }}"
+            "-end",   "{{ data_interval_end   | ds }}",
+            "--data_quality" if _resolve_variable("data_quality_enabled") == "true" else ""
         ]
 
     def make_mount() -> Mount:
         return Mount(
-            source=Variable.get("secret_env_path"),
-            target=Variable.get("secret_env_target"),
+            source=_resolve_variable("secret_env_path"),
+            target=_resolve_variable("secret_env_target"),
             type="bind"
         )
 
-    def make_docker_task(stage: str, spark_image_name: str) -> DockerOperator:
+    def make_spark_job(stage: str) -> DockerOperator:
         return DockerOperator(
             task_id=f"run_{stage}",
-            image=spark_image_name,
+            image=_resolve_variable("spark_submit_image_name"),
             command=make_command(stage),
             container_name=f"spark_submit_{stage}",
             docker_url="tcp://socat-docker:2375",
@@ -54,12 +65,11 @@ def train_pipeline():
         )
 
     # ── DAG Structure ──────────────────────────────────────────────
-    spark_image = Variable.get("spark_submit")
-    stages = Variable.get("stages", deserialize_json=True)
+    stages = ["bronze", "silver", "gold"]
     previous_group = None
 
     for stage in stages:
-        current_group = make_docker_task(stage=stage, spark_image_name=spark_image)
+        current_group = make_spark_job(stage=stage)
 
         if previous_group:
             previous_group >> current_group

@@ -252,7 +252,7 @@ tables:
             t.end_date = {end_date}
         WHERE t.is_active = true
           AND NOT EXISTS (
-            SELECT 1 FROM {table_view} s WHERE t.sk_id = s.sk_id
+            SELECT 1 FROM {table_view} s WHERE t.id = s.id
           )
 
 
@@ -414,7 +414,7 @@ tables:
             t.end_date = {end_date}
         WHERE t.is_active = true
           AND NOT EXISTS (
-            SELECT 1 FROM {table_view} s WHERE t.sk_id = s.sk_id
+            SELECT 1 FROM {table_view} s WHERE t.id = s.id
           )
 
       - |
