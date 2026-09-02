@@ -221,7 +221,6 @@ DQ checks run as their **own Airflow task and image**, separate from the Spark l
 │   ├── etl/                  # extract (mongo/iceberg) → transform (bronze/silver/gold) → load
 │   ├── models/                # Pydantic models backing the config managers
 │   └── utils/                 # nessie branch wrapper, table/text/filter utils
-├── main.py                 # CLI entry point (PipelineRunner)
 ├── start-all.sh / stop-all.sh
 └── pyproject.toml / uv.lock / requirements.txt
 ```
