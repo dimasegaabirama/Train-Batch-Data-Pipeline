@@ -22,7 +22,7 @@ async def callback_function(**kwargs):
     alert_type = kwargs.get('alert_type')
     severity = kwargs.get('severity')
 
-    print(f"🚨 SEVERITY : {severity} | Dag {dag_run.dag_id} missed deadline. DagRun: {dag_run}, Alert Type: {alert_type} !!")
+    print(f"🚨 SEVERITY : {severity} | Dag {dag_run.dag_id} missed deadline | DagRun: {dag_run}, Alert Type: {alert_type} !!")
 
 @dag(
     dag_id="super_pipeline_komplit",
@@ -33,8 +33,8 @@ async def callback_function(**kwargs):
             callback_function,
             kwargs={"alert_type": "time_exceeded", "severity": "high"}
         )
-    )
-    schedule="0 6 * * *",
+    ),
+    schedule="@daily",
     start_date=datetime(2026, 1, 1),
     fail_fast=True,
     max_consecutive_failed_runs=3,
@@ -52,7 +52,7 @@ async def callback_function(**kwargs):
     # },
     
     tags=["pipeline", "batch", "train"],
-    description="Pipeline utama untuk penarikan data keuangan dan pelaporan harian."
+    description="Pipeline utama untuk penarikan data train batch, transformasi, dan load ke data warehouse"
 )
 
 def train_pipeline():
