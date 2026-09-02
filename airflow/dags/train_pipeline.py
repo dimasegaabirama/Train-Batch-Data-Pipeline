@@ -1,26 +1,60 @@
 from airflow.sdk import task_group, chain, dag, task
 from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
+from airflow.sdk import AsyncCallback, DAG, DeadlineAlert, DeadlineReference
 from docker.types import Mount
 from datetime import datetime, timedelta
 
 
 DEFAULT_ARGS = {
-    "owner": "data_team",
-    "retries": 2,
-    "retry_delay": timedelta(minutes=5),
+    'owner': 'Dimas Ega Abirama | Data Engineering',
+    'depends_on_past': False,
+    'start_date': datetime(2024, 1, 1),
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 3,
+    'retry_delay': timedelta(minutes=5),
+    'execution_timeout': timedelta(hours=1)
 }
 
+async def callback_function(**kwargs):
+    dag_run = kwargs.get('dag_run')
+    alert_type = kwargs.get('alert_type')
+    severity = kwargs.get('severity')
+
+    print(f"🚨 SEVERITY : {severity} | Dag {dag_run.dag_id} missed deadline. DagRun: {dag_run}, Alert Type: {alert_type} !!")
+
 @dag(
-    dag_id="train_pipeline",
-    schedule="@daily",
-    start_date=datetime(2024, 1, 1),
+    dag_id="super_pipeline_komplit",
+    deadline=DeadlineAlert(
+        reference=DeadlineReference.DAGRUN_QUEUED_AT,
+        interval=timedelta(minutes=20),
+        callback=AsyncCallback(
+            callback_function,
+            kwargs={"alert_type": "time_exceeded", "severity": "high"}
+        )
+    )
+    schedule="0 6 * * *",
+    start_date=datetime(2026, 1, 1),
+    fail_fast=True,
+    max_consecutive_failed_runs=3,
     catchup=False,
-    default_args=DEFAULT_ARGS,
-    tags=["etl"],
+    
     max_active_runs=1,
-    max_active_tasks=3,
+    max_active_tasks=5,
+
+    dagrun_timeout=timedelta(hours=3),
+
+    default_args=DEFAULT_ARGS,
+    # params={
+    #     "mode_testing": False,
+    #     "ukuran_batch": 100
+    # },
+    
+    tags=["pipeline", "batch", "train"],
+    description="Pipeline utama untuk penarikan data keuangan dan pelaporan harian."
 )
+
 def train_pipeline():
 
     def resolve_variable(var_name: str, default_value: str = None) -> str:
