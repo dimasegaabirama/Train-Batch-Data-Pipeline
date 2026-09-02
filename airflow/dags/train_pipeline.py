@@ -23,7 +23,7 @@ DEFAULT_ARGS = {
 )
 def train_pipeline():
 
-    def _resolve_variable(var_name: str, default_value: str = None) -> str:
+    def resolve_variable(var_name: str, default_value: str = None) -> str:
         var_value = {
             "spark_submit_image_name": Variable.get("spark_submit_image_name"),
             "secret_env_path": Variable.get("secret_env_path"),
@@ -37,24 +37,24 @@ def train_pipeline():
         return [
             "python3", "-m", "main",
             "-stg", stage,
-            "-cfg", _resolve_variable("config_path"),
-            "-env", _resolve_variable("secret_env_target"),
+            "-cfg", resolve_variable("config_path"),
+            "-env", resolve_variable("secret_env_target"),
             "-start", "{{ data_interval_start | ds }}",
             "-end",   "{{ data_interval_end   | ds }}",
-            "--data_quality" if _resolve_variable("data_quality_enabled") == "true" else ""
+            "--data_quality" if resolve_variable("data_quality_enabled") == "true" else ""
         ]
 
     def make_mount() -> Mount:
         return Mount(
-            source=_resolve_variable("secret_env_path"),
-            target=_resolve_variable("secret_env_target"),
+            source=resolve_variable("secret_env_path"),
+            target=resolve_variable("secret_env_target"),
             type="bind"
         )
 
     def make_spark_job(stage: str) -> DockerOperator:
         return DockerOperator(
             task_id=f"run_{stage}",
-            image=_resolve_variable("spark_submit_image_name"),
+            image=resolve_variable("spark_submit_image_name"),
             command=make_command(stage),
             container_name=f"spark_submit_{stage}",
             docker_url="tcp://socat-docker:2375",
@@ -64,7 +64,6 @@ def train_pipeline():
             auto_remove="force"
         )
 
-    # ── DAG Structure ──────────────────────────────────────────────
     stages = ["bronze", "silver", "gold"]
     previous_group = None
 
