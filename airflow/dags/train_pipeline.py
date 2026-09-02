@@ -3,18 +3,18 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.sdk import AsyncCallback, DAG, DeadlineAlert, DeadlineReference
 from docker.types import Mount
-from datetime import datetime, timedelta
+from pendulum import datetime, duration
 
 
 DEFAULT_ARGS = {
     'owner': 'Dimas Ega Abirama | Data Engineering',
     'depends_on_past': False,
-    'start_date': datetime(2024, 1, 1),
+    'start_date': datetime(2024, 1, 1, tz="Asia/Jakarta"),
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 3,
-    'retry_delay': timedelta(minutes=5),
-    'execution_timeout': timedelta(hours=1)
+    'retry_delay': duration(minutes=5),
+    'execution_timeout': duration(hours=1)
 }
 
 async def callback_function(**kwargs):
@@ -28,14 +28,14 @@ async def callback_function(**kwargs):
     dag_id="super_pipeline_komplit",
     deadline=DeadlineAlert(
         reference=DeadlineReference.DAGRUN_QUEUED_AT,
-        interval=timedelta(minutes=20),
+        interval=duration(minutes=20),
         callback=AsyncCallback(
             callback_function,
             kwargs={"alert_type": "time_exceeded", "severity": "high"}
         )
     ),
     schedule="@daily",
-    start_date=datetime(2026, 1, 1),
+    start_date=datetime(2026, 1, 1, tz="Asia/Jakarta"),
     fail_fast=True,
     max_consecutive_failed_runs=3,
     catchup=False,
@@ -43,13 +43,9 @@ async def callback_function(**kwargs):
     max_active_runs=1,
     max_active_tasks=5,
 
-    dagrun_timeout=timedelta(hours=3),
+    dagrun_timeout=duration(hours=3),
 
     default_args=DEFAULT_ARGS,
-    # params={
-    #     "mode_testing": False,
-    #     "ukuran_batch": 100
-    # },
     
     tags=["pipeline", "batch", "train"],
     description="Pipeline utama untuk penarikan data train batch, transformasi, dan load ke data warehouse"
