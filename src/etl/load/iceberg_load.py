@@ -27,6 +27,7 @@ class IcebergLoad(BaseLoad):
     def _write_custom_queries(self, queries: List[str]) -> None:
         view_name = self.transform_result.view_name
         if view_name:
+            self.session.sql(f"DROP VIEW IF EXISTS {view_name}")
             self.dataframe.createOrReplaceTempView(view_name)
 
         for query in queries:

@@ -5,7 +5,7 @@ import pyspark.sql.functions as F
 from pyspark.sql.column import Column
 
 
-def build_mongo_incremental_filter(field: str, start_date: datetime, end_date: datetime, **kwargs):
+def build_mongo_incremental_filter(field: str, start_date: str, end_date: str, **kwargs):
     """
     Build a MongoDB aggregation filter for bronze-stage extraction.
 
@@ -21,10 +21,10 @@ def build_mongo_incremental_filter(field: str, start_date: datetime, end_date: d
     field : str
         Name of the date field used for filtering.
 
-    start_date : datetime
+    start_date : str
         Start date (inclusive).
 
-    end_date : datetime
+    end_date : str
         End date (exclusive).
 
     Returns
@@ -32,9 +32,6 @@ def build_mongo_incremental_filter(field: str, start_date: datetime, end_date: d
     list
         MongoDB aggregation pipeline containing a ``$match`` stage.
     """
-
-    start_date = start_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-    end_date = end_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
     pipeline = [
         {

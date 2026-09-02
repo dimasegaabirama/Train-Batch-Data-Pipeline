@@ -130,6 +130,13 @@ class TableManager:
 
 if __name__ == "__main__":
     from pprint import pprint
-    table_manager = TableManager().get_table_schema("cancellation_summary", "bronze")
-    print(table_manager)
+    from src.utils.text_utils import clean_multiple_line
+    table_manager = TableManager().get_table_metadata("passengers", "silver", {
+        "full_table_name": "silver.passengers",
+        "table_view": "passengers_view",
+        "start_date": "2023-01-01",
+        "end_date": "2023-12-31"
+        })
+    clean = [clean_multiple_line(x) for x in table_manager.queries]
+    print(clean)
 

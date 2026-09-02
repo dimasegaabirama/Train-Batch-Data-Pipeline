@@ -140,7 +140,8 @@ spark:
       <<: *spark_catalog_only
       spark.sql.shuffle.partitions: 8
       spark.sql.adaptive.enabled: true
-      spark.sql.codegen.wholeStage: false
+      spark.sql.optimizer.expression.nestedPruning.enabled: false
+      spark.sql.optimizer.nestedSchemaPruning.enabled: false
 
   gold:
     app_name: "Gold_Pipeline"
@@ -148,6 +149,8 @@ spark:
       <<: *spark_catalog_only
       spark.sql.shuffle.partitions: 8
       spark.sql.adaptive.enabled: true
+      spark.sql.optimizer.expression.nestedPruning.enabled: false
+      spark.sql.optimizer.nestedSchemaPruning.enabled: false
 
 # =====================================================
 # SCHEMAS / NAMESPACES
@@ -247,14 +250,13 @@ tables:
         VALUES(s.sk_id, s.id, s.name, s.gender, s.phone, s.email, s.is_active, s.start_date, null)
 
       - |
-        UPDATE {full_table_name} t
-        SET t.is_active = false,
-            t.end_date = {end_date}
-        WHERE t.is_active = true
+        UPDATE {full_table_name} p
+        SET p.is_active = false,
+            p.end_date = CAST('{end_date}' AS TIMESTAMP)
+        WHERE p.is_active = true
           AND NOT EXISTS (
-            SELECT 1 FROM {table_view} s WHERE t.id = s.id
+            SELECT 1 FROM {table_view} v WHERE p.id = v.id
           )
-
 
       - |
         WITH CURRENT_RECORD AS (
@@ -265,18 +267,18 @@ tables:
         )
         INSERT INTO {full_table_name}
         SELECT 
-            pc.sk_id,
-            pc.id,
-            pc.name,
-            pc.gender,
-            pc.phone,
-            pc.email,
-            pc.is_active as is_active,
-            pc.start_date as start_date,
+            p.sk_id,
+            p.id,
+            p.name,
+            p.gender,
+            p.phone,
+            p.email,
+            p.is_active as is_active,
+            p.start_date as start_date,
             NULL as end_date 
-        FROM {table_view} pc 
+        FROM {table_view} p
         LEFT ANTI JOIN 
-            CURRENT_RECORD cr ON pc.id = cr.id 
+            CURRENT_RECORD cr ON p.id = cr.id 
 
   stations:
     type: scd1
@@ -411,10 +413,10 @@ tables:
       - |
         UPDATE {full_table_name} t
         SET t.is_active = false,
-            t.end_date = {end_date}
+            t.end_date = CAST('{end_date}' AS TIMESTAMP)
         WHERE t.is_active = true
           AND NOT EXISTS (
-            SELECT 1 FROM {table_view} s WHERE t.id = s.id
+            SELECT 1 FROM {table_view} v WHERE t.id = v.id
           )
 
       - |
