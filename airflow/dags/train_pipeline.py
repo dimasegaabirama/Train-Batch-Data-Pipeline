@@ -14,6 +14,7 @@ DEFAULT_ARGS = {
     'email_on_retry': False,
     'retries': 3,
     'retry_delay': duration(minutes=5),
+    'retry_exponential_backoff': 1.5,
     'execution_timeout': duration(hours=1)
 }
 
@@ -36,8 +37,8 @@ async def callback_function(**kwargs):
     ),
     schedule="@daily",
     start_date=datetime(2026, 1, 1, tz="Asia/Jakarta"),
+    max_consecutive_failed_dag_runs=3,
     fail_fast=True,
-    max_consecutive_failed_runs=3,
     catchup=False,
     
     max_active_runs=1,
