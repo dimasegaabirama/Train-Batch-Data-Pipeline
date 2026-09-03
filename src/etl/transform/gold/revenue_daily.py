@@ -4,25 +4,10 @@ from pyspark.sql.dataframe import DataFrame
 from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
 
-from pyspark.sql.types import DecimalType
+from pyspark.sql.types import DecimalType, IntegerType, TimestampType
 
 
 class RevenueDaily(BaseTransform):
-
-            # revenue_date DATE,
-            # route_sk_id BIGINT,
-            # class_id INT,
-
-            # total_tickets BIGINT,
-            # gross_revenue DECIMAL(18, 2),
-            # total_discount_calculated DECIMAL(18, 2),
-            # net_revenue DECIMAL(18, 2),
-            # refunded_revenue DECIMAL(18, 2),
-
-            # net_revenue_after_refund DECIMAL(18, 2),
-            # avg_ticket_price DECIMAL(18, 2),
-
-            # updated_at TIMESTAMP
 
     def transform(self):
         try:
@@ -61,7 +46,21 @@ class RevenueDaily(BaseTransform):
                 .withColumn("updated_at", F.current_timestamp())
             )
 
-            return self._build_result(result_df)
+            return self._build_result(
+                result_df.select(
+                    F.col("revenue_date")               .cast(TimestampType),
+                    F.col("route_sk_id")                .cast(IntegerType),
+                    F.col("class_id")                   .cast(IntegerType),
+                    F.col("total_tickets")              .cast(IntegerType),
+                    F.col("gross_revenue")              .cast(DecimalType(18, 2)),
+                    F.col("total_discount_calculated")  .cast(DecimalType(18, 2)),
+                    F.col("net_revenue")                .cast(DecimalType(18, 2)),
+                    F.col("refunded_revenue")           .cast(DecimalType(18, 2)),
+                    F.col("net_revenue_after_refund")   .cast(DecimalType(18, 2)),
+                    F.col("avg_ticket_price")           .cast(DecimalType(18, 2)),
+                    F.col("updated_at")                 .cast(TimestampType),
+                )
+            )
         
         except Exception as e:
             raise RuntimeError(f"Error during revenue daily transformation: {e}") from e

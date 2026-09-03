@@ -1,5 +1,6 @@
 import pyspark.sql.functions as F
 from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.types import DateType, DecimalType, DoubleType, IntegerType, LongType, TimestampType
 
 from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
@@ -73,7 +74,22 @@ class RefundLoss(BaseTransform):
                 .withColumn("updated_at", F.current_timestamp())
             )
 
-            return self._build_result(result_df)
+            return self._build_result(
+                result_df.select(
+                    F.col("refund_date")                     .cast(DateType),
+                    F.col("route_sk_id")                     .cast(LongType),
+                    F.col("class_id")                        .cast(IntegerType),
+                    F.col("total_tickets_refunded")          .cast(IntegerType),
+                    F.col("total_refund_amount")             .cast(DecimalType(18, 2)),
+                    F.col("avg_refund_amount")               .cast(DecimalType(18, 2)),
+                    F.col("avg_days_cancel_to_refund")       .cast(DoubleType),
+                    F.col("avg_hours_to_refund")             .cast(DoubleType),
+                    F.col("avg_days_created_to_refund")      .cast(DoubleType),
+                    F.col("total_refunded_with_promo")       .cast(IntegerType),
+                    F.col("total_refunded_with_family_flag") .cast(IntegerType),
+                    F.col("updated_at")                      .cast(TimestampType),
+                )
+            )
         
         except Exception as e:
             raise RuntimeError(f"Error during refund loss transformation: {e}") from e
