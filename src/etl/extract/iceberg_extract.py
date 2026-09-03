@@ -19,6 +19,7 @@ class IcebergExtract(BaseExtract):
     def _read_table(self, fullname: str) -> DataFrame:
         catalog, namespace, name = split_text(fullname, ".")
         df = self.session.read.table(fullname)
+
         condition = self.conditions.get(name) if self.conditions else None
         if condition is not None:
             df = df.filter(condition)

@@ -61,6 +61,19 @@ def initialize_table(spark: SparkSession):
         )
         USING ICEBERG
         PARTITIONED BY (days(updated_at))
+        TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+            'write.format.default'           = 'parquet',
+            'write.target-file-size-bytes'   = '134217728',
+            'write.distribution-mode'        = 'hash',
+            'history.expire.max-snapshot-age-ms' = '604800000',
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """,
         """
         CREATE TABLE IF NOT EXISTS nessie.bronze.trains(
@@ -73,6 +86,19 @@ def initialize_table(spark: SparkSession):
         )
         USING ICEBERG
         PARTITIONED BY (days(updated_at))
+        TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+            'write.format.default'           = 'parquet',
+            'write.target-file-size-bytes'   = '134217728',
+            'write.distribution-mode'        = 'hash',
+            'history.expire.max-snapshot-age-ms' = '604800000',
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """,
         """
         CREATE TABLE IF NOT EXISTS nessie.bronze.stations(
@@ -85,6 +111,19 @@ def initialize_table(spark: SparkSession):
         )
         USING ICEBERG
         PARTITIONED BY (days(updated_at))
+        TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+            'write.format.default'           = 'parquet',
+            'write.target-file-size-bytes'   = '134217728',
+            'write.distribution-mode'        = 'hash',
+            'history.expire.max-snapshot-age-ms' = '604800000',
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """,
         """
         CREATE TABLE IF NOT EXISTS nessie.bronze.routes(
@@ -99,6 +138,19 @@ def initialize_table(spark: SparkSession):
         )
         USING ICEBERG
         PARTITIONED BY (days(updated_at))
+            TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+            'write.format.default'           = 'parquet',
+            'write.target-file-size-bytes'   = '134217728',
+            'write.distribution-mode'        = 'hash',
+            'history.expire.max-snapshot-age-ms' = '604800000',
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """,
         """
         CREATE TABLE IF NOT EXISTS nessie.bronze.tickets(
@@ -129,6 +181,19 @@ def initialize_table(spark: SparkSession):
         )
         USING ICEBERG
         PARTITIONED BY (days(created_at))
+        TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+            'write.format.default'           = 'parquet',
+            'write.target-file-size-bytes'   = '134217728',
+            'write.distribution-mode'        = 'hash',
+            'history.expire.max-snapshot-age-ms' = '604800000',
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """,
 
         # ============ SILVER ============
@@ -147,7 +212,25 @@ def initialize_table(spark: SparkSession):
             end_date TIMESTAMP
         )
         USING ICEBERG
-        PARTITIONED BY (days(start_date), bucket(8, sk_id))
+        PARTITIONED BY (days(start_date))
+        TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+
+            'write.format.default'           = 'parquet',
+
+            'write.target-file-size-bytes'   = '134217728',  -- 128 MB
+
+            'write.distribution-mode'        = 'hash',
+
+            'history.expire.max-snapshot-age-ms' = '604800000',  -- 7 hari
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """,
         """
         ALTER TABLE nessie.silver.passengers
@@ -165,6 +248,24 @@ def initialize_table(spark: SparkSession):
             end_date TIMESTAMP
         )
         USING ICEBERG
+        TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+
+            'write.format.default'           = 'parquet',
+
+            'write.target-file-size-bytes'   = '134217728',  -- 128 MB
+
+            'write.distribution-mode'        = 'hash',
+
+            'history.expire.max-snapshot-age-ms' = '604800000',  -- 7 hari
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """,
         """
         ALTER TABLE nessie.silver.trains
@@ -180,6 +281,24 @@ def initialize_table(spark: SparkSession):
             is_deleted BOOLEAN
         )
         USING ICEBERG
+        TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+
+            'write.format.default'           = 'parquet',
+
+            'write.target-file-size-bytes'   = '134217728',  -- 128 MB
+
+            'write.distribution-mode'        = 'hash',
+
+            'history.expire.max-snapshot-age-ms' = '604800000',  -- 7 hari
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """,
         """
         ALTER TABLE nessie.silver.stations
@@ -199,6 +318,24 @@ def initialize_table(spark: SparkSession):
             is_deleted BOOLEAN
         )
         USING ICEBERG
+        TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+
+            'write.format.default'           = 'parquet',
+
+            'write.target-file-size-bytes'   = '134217728',  -- 128 MB
+
+            'write.distribution-mode'        = 'hash',
+
+            'history.expire.max-snapshot-age-ms' = '604800000',  -- 7 hari
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """,
         """
         ALTER TABLE nessie.silver.routes
@@ -275,7 +412,25 @@ def initialize_table(spark: SparkSession):
             is_weekend        BOOLEAN
         )
         USING ICEBERG
-        PARTITIONED BY (month(created_at), bucket(8, passenger_sk_id))
+        PARTITIONED BY (month(created_at))
+        TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+
+            'write.format.default'           = 'parquet',
+
+            'write.target-file-size-bytes'   = '134217728',
+
+            'write.distribution-mode'        = 'hash',
+
+            'history.expire.max-snapshot-age-ms' = '604800000',
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """,
         """
         ALTER TABLE nessie.silver.tickets
@@ -306,6 +461,19 @@ def initialize_table(spark: SparkSession):
         )
         USING ICEBERG
         PARTITIONED BY (month(booking_date))
+        TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+            'write.format.default'           = 'parquet',
+            'write.target-file-size-bytes'   = '134217728',
+            'write.distribution-mode'        = 'hash',
+            'history.expire.max-snapshot-age-ms' = '604800000',
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """,
         """
         ALTER TABLE nessie.gold.cancellation_summary
@@ -330,13 +498,24 @@ def initialize_table(spark: SparkSession):
         )
         USING ICEBERG
         PARTITIONED BY (month(revenue_date))
+        TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+            'write.format.default'           = 'parquet',
+            'write.target-file-size-bytes'   = '134217728',
+            'write.distribution-mode'        = 'hash',
+            'history.expire.max-snapshot-age-ms' = '604800000',
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """,
         """
         ALTER TABLE nessie.gold.revenue_daily
         WRITE ORDERED BY revenue_date
         """,
-
-
         """
         CREATE TABLE IF NOT EXISTS nessie.gold.refund_loss(
             refund_date DATE,
@@ -354,6 +533,19 @@ def initialize_table(spark: SparkSession):
         )
         USING ICEBERG
         PARTITIONED BY (month(refund_date))
+        TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+            'write.format.default'           = 'parquet',
+            'write.target-file-size-bytes'   = '134217728',
+            'write.distribution-mode'        = 'hash',
+            'history.expire.max-snapshot-age-ms' = '604800000',
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """,
         """
         ALTER TABLE nessie.gold.refund_loss
@@ -380,6 +572,19 @@ def initialize_table(spark: SparkSession):
         )
         USING ICEBERG
         PARTITIONED BY (month(departure_date))
+        TBLPROPERTIES (
+            'write.update.mode'              = 'merge-on-read',
+            'write.delete.mode'              = 'merge-on-read',
+            'write.merge.mode'               = 'merge-on-read',
+            'write.format.default'           = 'parquet',
+            'write.target-file-size-bytes'   = '134217728',
+            'write.distribution-mode'        = 'hash',
+            'history.expire.max-snapshot-age-ms' = '604800000',
+            'write.metadata.delete-after-commit.enabled' = 'true',
+            'write.metadata.previous-versions-max' = '10',
+            'write.delete.mode'              = 'merge-on-read',
+            'commit.manifest.target-size-bytes' = '8388608'
+        )
         """
     ]
 

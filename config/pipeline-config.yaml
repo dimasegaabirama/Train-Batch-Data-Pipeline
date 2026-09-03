@@ -249,14 +249,6 @@ tables:
         INSERT (sk_id, id, name, gender, phone, email, is_active, start_date, end_date)
         VALUES(s.sk_id, s.id, s.name, s.gender, s.phone, s.email, s.is_active, s.start_date, null)
 
-      - |
-        UPDATE {full_table_name} p
-        SET p.is_active = false,
-            p.end_date = CAST('{end_date}' AS TIMESTAMP)
-        WHERE p.is_active = true
-          AND NOT EXISTS (
-            SELECT 1 FROM {table_view} v WHERE p.id = v.id
-          )
 
       - |
         WITH CURRENT_RECORD AS (
@@ -279,6 +271,25 @@ tables:
         FROM {table_view} p
         LEFT ANTI JOIN 
             CURRENT_RECORD cr ON p.id = cr.id 
+
+      - |
+        WITH DEACTIVATED_RECORD AS (
+            SELECT t.id
+            FROM {full_table_name} t
+            LEFT ANTI JOIN {table_view} s
+                ON t.id = s.id
+            WHERE t.is_active = true AND t.id IS NOT NULL
+        )
+
+        UPDATE {full_table_name}
+        SET
+            is_active = false,
+            end_date = CAST('{end_date}' AS TIMESTAMP)
+        WHERE is_active = true
+          AND id IN (
+              SELECT id
+              FROM DEACTIVATED_RECORD
+          )
 
   stations:
     type: scd1
@@ -410,14 +421,6 @@ tables:
         INSERT (sk_id, id, name, type, capacity, is_active, start_date, end_date)
         VALUES(s.sk_id, s.id, s.name, s.type, s.capacity, s.is_active, s.start_date, null)
       
-      - |
-        UPDATE {full_table_name} t
-        SET t.is_active = false,
-            t.end_date = CAST('{end_date}' AS TIMESTAMP)
-        WHERE t.is_active = true
-          AND NOT EXISTS (
-            SELECT 1 FROM {table_view} v WHERE t.id = v.id
-          )
 
       - |
         WITH CURRENT_RECORD AS (
@@ -441,6 +444,25 @@ tables:
         LEFT ANTI JOIN CURRENT_RECORD cr 
         ON sc.id = cr.id
    
+      - |
+        WITH DEACTIVATED_RECORD AS (
+            SELECT t.id
+            FROM {full_table_name} t
+            LEFT ANTI JOIN {table_view} s
+                ON t.id = s.id
+            WHERE t.is_active = true AND t.id IS NOT NULL
+        )
+
+        UPDATE {full_table_name}
+        SET
+            is_active = false,
+            end_date = CAST('{end_date}' AS TIMESTAMP)
+        WHERE is_active = true
+          AND id IN (
+              SELECT id
+              FROM DEACTIVATED_RECORD
+          )
+
   routes:
     type: scd1
     partitioned_by: updated_at

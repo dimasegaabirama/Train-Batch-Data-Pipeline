@@ -168,12 +168,19 @@ class PipelineOrchestrator:
         """Run extract -> transform -> (optional) DQ checks -> load for one table."""
         extract_result = self.extract(stage, table_name)
 
-        if not extract_result.dataframe:
-            self.logger.info(
-                "[EXTRACT] No data found for table: %s | Stage: %s. "
-                "Skipping transform, data quality, and load.",
-                table_name, stage,
-            )
+        if not extract_result.dataframe.take(1):
+            if not extract_result.dependencies:
+                self.logger.warning(
+                    "[EXTRACT] No data found for table: %s | Stage: %s. "
+                    "Skipping transform, data quality, and load.",
+                    table_name, stage,
+                )
+                return
+            else:
+                self.logger.warning(
+                    "[EXTRACT] No data found for table: %s | Stage: %s. "
+                    "Dependencies were found, but no data was extracted."
+                )
 
         transform_result = self.transform(
             stage, table_name, extract_result

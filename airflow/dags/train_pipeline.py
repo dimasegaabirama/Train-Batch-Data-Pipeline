@@ -2,6 +2,8 @@ from airflow.sdk import task_group, chain, dag, task
 from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.sdk import AsyncCallback, DAG, DeadlineAlert, DeadlineReference
+from airflow.utils.types import DagRunType
+
 from docker.types import Mount
 from pendulum import datetime, duration
 
@@ -26,7 +28,7 @@ async def callback_function(**kwargs):
     print(f"🚨 SEVERITY : {severity} | Dag {dag_run.dag_id} missed deadline | DagRun: {dag_run}, Alert Type: {alert_type} !!")
 
 @dag(
-    dag_id="super_pipeline_komplit",
+    dag_id="Train_Batch_Pipeline",
     deadline=DeadlineAlert(
         reference=DeadlineReference.DAGRUN_QUEUED_AT,
         interval=duration(minutes=20),
@@ -40,6 +42,11 @@ async def callback_function(**kwargs):
     max_consecutive_failed_dag_runs=3,
     fail_fast=True,
     catchup=False,
+
+    allowed_run_types=[
+        DagRunType.SCHEDULED,
+        DagRunType.BACKFILL_JOB
+    ],
     
     max_active_runs=1,
     max_active_tasks=5,
