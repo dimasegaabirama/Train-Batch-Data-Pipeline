@@ -69,7 +69,7 @@ class CancellationSummary(BaseTransform):
                     "cancellation_rate",
                     F.round(
                         F.col("total_tickets_cancelled")
-                        / F.col("total_tickets_created"),
+                        / F.col("total_tickets"),
                         4,
                     ),
                 )

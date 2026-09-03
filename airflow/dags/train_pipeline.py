@@ -1,8 +1,7 @@
 from airflow.sdk import task_group, chain, dag, task
 from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
-from airflow.sdk import AsyncCallback, DAG, DeadlineAlert, DeadlineReference
-from airflow.utils.types import DagRunType
+from airflow.sdk.definitions.deadline import AsyncCallback, DeadlineAlert, DeadlineReference
 
 from docker.types import Mount
 from pendulum import datetime, duration
@@ -15,8 +14,9 @@ DEFAULT_ARGS = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 3,
-    'retry_delay': duration(minutes=5),
-    'retry_exponential_backoff': 1.5,
+    'retry_delay': duration(minutes=3),
+    'max_retry_delay': duration(minutes=40),
+    'retry_exponential_backoff': True,
     'execution_timeout': duration(hours=1)
 }
 
@@ -42,11 +42,6 @@ async def callback_function(**kwargs):
     max_consecutive_failed_dag_runs=3,
     fail_fast=True,
     catchup=False,
-
-    allowed_run_types=[
-        DagRunType.SCHEDULED,
-        DagRunType.BACKFILL_JOB
-    ],
     
     max_active_runs=1,
     max_active_tasks=5,
