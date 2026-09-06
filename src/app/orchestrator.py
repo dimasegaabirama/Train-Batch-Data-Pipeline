@@ -154,8 +154,6 @@ class PipelineOrchestrator:
         loader_cls: Type[BaseLoad] = resolve_registry_class(
             stage, table_name, "load"
         )
-
-        # self.logger.debug("Dataframe after transformation: %s", inputs.cleaned_dataframe.show(2))
         self.logger.debug("Using loader: %s", loader_cls)
 
         return loader_cls(self.session, inputs).load()
@@ -168,7 +166,8 @@ class PipelineOrchestrator:
         """Run extract -> transform -> (optional) DQ checks -> load for one table."""
         extract_result = self.extract(stage, table_name)
 
-        if not extract_result.dataframe.take(1):
+        get_data = getattr(extract_result.dataframe, 'take', None)
+        if get_data is None or not get_data(1):
             if not extract_result.dependencies:
                 self.logger.warning(
                     "[EXTRACT] No data found for table: %s | Stage: %s. "
@@ -179,14 +178,13 @@ class PipelineOrchestrator:
             else:
                 self.logger.warning(
                     "[EXTRACT] No data found for table: %s | Stage: %s. "
-                    "Dependencies were found, but no data was extracted."
+                    "Dependencies were found, but no data was extracted.",
+                    table_name, stage
                 )
 
         transform_result = self.transform(
             stage, table_name, extract_result
         )
-
-        transform_result.cleaned_dataframe.show()
 
         if self.quality_check:
             dq_passed = self._dq_runner.run(stage, table_name, transform_result)

@@ -21,15 +21,15 @@ class TestRoutes(BaseTest):
                 "ID shouldn't have null value",
             )
             .isComplete(
-                "sk_org_station_id",
+                "org_station_sk_id",
                 "Origin station shouldn't have null value",
             )
             .isComplete(
-                "sk_dest_station_id",
+                "dest_station_sk_id",
                 "Destination station shouldn't have null value",
             )
             .isComplete(
-                "sk_train_id",
+                "train_sk_id",
                 "Train shouldn't have null value",
             )
             .isComplete(
@@ -107,7 +107,7 @@ class TestRoutes(BaseTest):
                 "Business Rules Validation",
             )
             .satisfies(
-                "sk_org_station_id <> sk_dest_station_id",
+                "org_station_sk_id <> dest_station_sk_id",
                 "origin_destination_validation",
                 lambda x: x == 1.0,
             )

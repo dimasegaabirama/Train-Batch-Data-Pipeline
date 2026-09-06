@@ -139,9 +139,9 @@ class TicketsTransform(BaseTransform):
 
                 .select(
                     F.col("td.ticket_id"),
-                    F.col("r.sk_route_id"),
-                    F.col("p.sk_passenger_id"),
-                    F.col("tr.sk_train_id"),
+                    F.col("r.route_sk_id"),
+                    F.col("p.passenger_sk_id"),
+                    F.col("tr.train_sk_id"),
                     F.col("cl.id").alias("class_id"),
                     F.col("py.id").alias("payment_id"),
                     F.col("st.id").alias("active_status_id"),

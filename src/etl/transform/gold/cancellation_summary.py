@@ -85,21 +85,21 @@ class CancellationSummary(BaseTransform):
 
             return self._build_result(
                 result_df.select(
-                    F.col("booking_date")                   .cast(DateType),
-                    F.col("route_sk_id")                    .cast(LongType),
-                    F.col("class_id")                       .cast(IntegerType),
-                    F.col("total_tickets")                  .cast(IntegerType),
-                    F.col("total_tickets_paid")             .cast(IntegerType),
-                    F.col("total_tickets_cancelled")        .cast(IntegerType),
-                    F.col("total_tickets_refunded")         .cast(IntegerType),
-                    F.col("cancelled_before_payment")       .cast(IntegerType),
-                    F.col("cancelled_after_payment")        .cast(IntegerType),
-                    F.col("cancelled_not_yet_refunded")     .cast(IntegerType),
+                    F.col("booking_date")                   .cast(DateType()),
+                    F.col("route_sk_id")                    .cast(LongType()),
+                    F.col("class_id")                       .cast(IntegerType()),
+                    F.col("total_tickets")                  .cast(IntegerType()),
+                    F.col("total_tickets_paid")             .cast(IntegerType()),
+                    F.col("total_tickets_cancelled")        .cast(IntegerType()),
+                    F.col("total_tickets_refunded")         .cast(IntegerType()),
+                    F.col("cancelled_before_payment")       .cast(IntegerType()),
+                    F.col("cancelled_after_payment")        .cast(IntegerType()),
+                    F.col("cancelled_not_yet_refunded")     .cast(IntegerType()),
                     F.col("total_revenue_lost")             .cast(DecimalType(18, 2)),
-                    F.col("avg_hours_to_cancel")            .cast(DoubleType),
-                    F.col("cancellation_rate")              .cast(DoubleType),
-                    F.col("cancelled_after_payment_rate")   .cast(DoubleType),
-                    F.col("updated_at")                     .cast(TimestampType)
+                    F.col("avg_hours_to_cancel")            .cast(DoubleType()),
+                    F.col("cancellation_rate")              .cast(DoubleType()),
+                    F.col("cancelled_after_payment_rate")   .cast(DoubleType()),
+                    F.col("updated_at")                     .cast(TimestampType())
                 )
             )
         

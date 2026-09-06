@@ -79,15 +79,12 @@ def build_iceberg_incremental_filter(
         Spark SQL filter expression.
     """
 
-    start_date = F.to_date(F.lit(start_date))
-    end_date = F.to_date(F.lit(end_date))
+    start_date = F.to_timestamp(F.lit(start_date))
+    end_date = F.to_timestamp(F.lit(end_date))
 
-    coalesced_field = F.coalesce(
-        F.col(field).cast("timestamp"),
-        end_date - F.expr("INTERVAL 1 SECOND")
-    )
+    field = F.coalesce(F.col(field).cast("timestamp"), F.lit(end_date) - F.expr("INTERVAL 1 SECOND"))
 
-    return (coalesced_field >= start_date) & (coalesced_field < end_date)
+    return (field >= start_date) & (field < end_date)
 
 def build_iceberg_boolean_filter(
     field: str, value: Optional[bool] = True, **kwargs

@@ -78,21 +78,21 @@ class TrainPerformance(BaseTransform):
 
             return self._build_result(
                 result_df.select(
-                    F.col("departure_date")                 .cast(DateType),
-                    F.col("train_sk_id")                    .cast(LongType),
-                    F.col("name")                           .cast(StringType),
-                    F.col("type")                           .cast(StringType),
-                    F.col("capacity")                       .cast(IntegerType),
-                    F.col("total_tickets_sold")             .cast(IntegerType),
-                    F.col("total_cancelled_tickets")        .cast(IntegerType),
-                    F.col("net_tickets_sold")               .cast(IntegerType),
+                    F.col("departure_date")                 .cast(DateType()),
+                    F.col("train_sk_id")                    .cast(LongType()),
+                    F.col("name")                           .cast(StringType()),
+                    F.col("type")                           .cast(StringType()),
+                    F.col("capacity")                       .cast(IntegerType()),
+                    F.col("total_tickets_sold")             .cast(IntegerType()),
+                    F.col("total_cancelled_tickets")        .cast(IntegerType()),
+                    F.col("net_tickets_sold")               .cast(IntegerType()),
                     F.col("total_revenue")                  .cast(DecimalType(18, 2)),
-                    F.col("family_ticket_count")            .cast(IntegerType),
-                    F.col("promo_ticket_count")             .cast(IntegerType),
-                    F.col("cancelled_after_departure_flag") .cast(BooleanType),
-                    F.col("occupancy_rate")                 .cast(DoubleType),
-                    F.col("is_fully_booked")                .cast(BooleanType),
-                    F.col("updated_at")                     .cast(TimestampType)
+                    F.col("family_ticket_count")            .cast(IntegerType()),
+                    F.col("promo_ticket_count")             .cast(IntegerType()),
+                    F.col("cancelled_after_departure_flag") .cast(BooleanType()),
+                    F.col("occupancy_rate")                 .cast(DoubleType()),
+                    F.col("is_fully_booked")                .cast(BooleanType()),
+                    F.col("updated_at")                     .cast(TimestampType())
                 )
             )
         
