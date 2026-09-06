@@ -1,8 +1,13 @@
 import pyspark.sql.functions as F
-from pyspark.sql.dataframe import DataFrame
-from pyspark.sql.types import DateType, DecimalType, DoubleType, IntegerType, LongType, TimestampType
+from pyspark.sql.types import (
+    DateType,
+    DecimalType,
+    DoubleType,
+    IntegerType,
+    LongType,
+    TimestampType,
+)
 
-from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
 
 
@@ -23,35 +28,48 @@ class RefundLoss(BaseTransform):
                     (F.sum(F.col("final_price")) / F.count("ticket_id")).alias(
                         "avg_refund_amount"
                     ),
-                    F.avg(
-                        F.when(
-                            F.col("cancelled_at").isNotNull(),
+                    F.coalesce(
+                        F.avg(
+                            F.when(
+                                F.col("cancelled_at").isNotNull(),
+                                (
+                                    F.col("refunded_at").cast("long")
+                                    - F.col("cancelled_at").cast("long")
+                                )
+                                / 86400,
+                            )
+                        ),
+                        F.lit(0),
+                    ).alias("avg_days_cancel_to_refund"),
+                    F.coalesce(
+                        F.avg(
                             (
                                 F.col("refunded_at").cast("long")
-                                - F.col("cancelled_at").cast("long")
+                                - F.col("created_at").cast("long")
                             )
-                            / 86400,
-                        )
-                    ).alias("avg_days_cancel_to_refund"),
-                    F.avg(
-                        (
-                            F.col("refunded_at").cast("long")
-                            - F.col("created_at").cast("long")
-                        )
-                        / 3600
+                            / 3600
+                        ),
+                        F.lit(0)
                     ).alias("avg_hours_to_refund"),
-                    F.avg(
-                        (
-                            F.col("refunded_at").cast("long")
-                            - F.col("created_at").cast("long")
-                        )
-                        / 86400
+                    F.coalesce(
+                        F.avg(
+                            (
+                                F.col("refunded_at").cast("long")
+                                - F.col("created_at").cast("long")
+                            )
+                            / 86400
+                        ),
+                        F.lit(0)
                     ).alias("avg_days_created_to_refund"),
-                    F.count(
-                        F.when(F.col("has_promo") == True, F.col("ticket_id"))
+                    F.coalesce(
+                        F.count(F.when(F.col("has_promo") == True, F.col("ticket_id"))),
+                        F.lit(0)
                     ).alias("total_refunded_with_promo"),
-                    F.count(
-                        F.when(F.col("family_flag") == True, F.col("ticket_id"))
+                    F.coalesce(
+                        F.count(
+                            F.when(F.col("family_flag") == True, F.col("ticket_id"))
+                        ),
+                        F.lit(0)
                     ).alias("total_refunded_with_family_flag"),
                 )
             )
@@ -76,20 +94,20 @@ class RefundLoss(BaseTransform):
 
             return self._build_result(
                 result_df.select(
-                    F.col("refund_date")                     .cast(DateType()),
-                    F.col("route_sk_id")                     .cast(LongType()),
-                    F.col("class_id")                        .cast(IntegerType()),
-                    F.col("total_tickets_refunded")          .cast(IntegerType()),
-                    F.col("total_refund_amount")             .cast(DecimalType(18, 2)),
-                    F.col("avg_refund_amount")               .cast(DecimalType(18, 2)),
-                    F.col("avg_days_cancel_to_refund")       .cast(DoubleType()),
-                    F.col("avg_hours_to_refund")             .cast(DoubleType()),
-                    F.col("avg_days_created_to_refund")      .cast(DoubleType()),
-                    F.col("total_refunded_with_promo")       .cast(IntegerType()),
-                    F.col("total_refunded_with_family_flag") .cast(IntegerType()),
-                    F.col("updated_at")                      .cast(TimestampType()),
+                    F.col("refund_date").cast(DateType()),
+                    F.col("route_sk_id").cast(LongType()),
+                    F.col("class_id").cast(IntegerType()),
+                    F.col("total_tickets_refunded").cast(IntegerType()),
+                    F.col("total_refund_amount").cast(DecimalType(18, 2)),
+                    F.col("avg_refund_amount").cast(DecimalType(18, 2)),
+                    F.col("avg_days_cancel_to_refund").cast(DoubleType()),
+                    F.col("avg_hours_to_refund").cast(DoubleType()),
+                    F.col("avg_days_created_to_refund").cast(DoubleType()),
+                    F.col("total_refunded_with_promo").cast(IntegerType()),
+                    F.col("total_refunded_with_family_flag").cast(IntegerType()),
+                    F.col("updated_at").cast(TimestampType()),
                 )
             )
-        
+
         except Exception as e:
             raise RuntimeError(f"Error during refund loss transformation: {e}") from e

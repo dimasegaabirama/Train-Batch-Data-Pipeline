@@ -5,15 +5,24 @@ from src.data_quality import BaseTest
 
 class TestTrainPerformance(BaseTest):
 
+
+
+
     def test_completeness(self):
         check = (
             Check(self.session, CheckLevel.Error, "TrainPerformance - Completeness Check")
             .isComplete("departure_date", "DEPARTURE_DATE shouldn't have null value")
             .isComplete("train_sk_id", "TRAIN_SK_ID shouldn't have null value")
             .isComplete("name", "NAME shouldn't have null value")
+            .isComplete("type", "TYPE shouldn't have null value")
             .isComplete("capacity", "CAPACITY shouldn't have null value")
             .isComplete("total_tickets_sold", "TOTAL_TICKETS_SOLD shouldn't have null value")
+            .isComplete("total_cancelled_tickets", "TOTAL_CANCELLED_TICKETS shouldn't have null value")
             .isComplete("net_tickets_sold", "NET_TICKETS_SOLD shouldn't have null value")
+            .isComplete("total_revenue", "TOTAL_REVENUE shouldn't have null value")
+            .isComplete("family_ticket_count", "FAMILY_TICKET_COUNT shouldn't have null value")
+            .isComplete("promo_ticket_count", "PROMO_TICKET_COUNT shouldn't have null value")
+            .isComplete("cancelled_after_departure_flag", "CANCELLED_AFTER_DEPARTURE_FLAG shouldn't have null value")
             .isComplete("occupancy_rate", "OCCUPANCY_RATE shouldn't have null value")
             .isComplete("is_fully_booked", "IS_FULLY_BOOKED shouldn't have null value")
         )
@@ -30,7 +39,7 @@ class TestTrainPerformance(BaseTest):
         )
 
         self.run_tests(check)
-
+        
     def test_non_negative_values(self):
         check = (
             Check(self.session, CheckLevel.Error, "TrainPerformance - Non-Negative Values")

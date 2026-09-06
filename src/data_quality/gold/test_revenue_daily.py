@@ -2,6 +2,7 @@ from pydeequ.checks import Check, CheckLevel
 
 from src.data_quality import BaseTest
 
+
 class TestRevenueDaily(BaseTest):
     
     def test_completeness(self):
@@ -13,6 +14,10 @@ class TestRevenueDaily(BaseTest):
             .isComplete("total_tickets", "TOTAL_TICKETS shouldn't have null value")
             .isComplete("gross_revenue", "GROSS_REVENUE shouldn't have null value")
             .isComplete("net_revenue", "NET_REVENUE shouldn't have null value")
+            .isComplete("total_discount_calculated", "TOTAL_DISCOUNT_CALCULATED shouldn't have null value")
+            .isComplete("refunded_revenue", "REFUNDED_REVENUE shouldn't have null value")
+            .isComplete("net_revenue_after_refund", "NET_REVENUE_AFTER_REFUND shouldn't have null value")
+            .isComplete("avg_ticket_price", "AVG_TICKET_PRICE shouldn't have null value")
         )
 
         self.run_tests(check)
@@ -33,7 +38,7 @@ class TestRevenueDaily(BaseTest):
             Check(self.session, CheckLevel.Error, "RevenueDaily - Non-Negative Values")
             .isNonNegative(column="total_tickets", hint="TOTAL_TICKETS must be non-negative")
             .isNonNegative(column="gross_revenue", hint="GROSS_REVENUE must be non-negative")
-            .isNonNegative(column="total_discount", hint="TOTAL_DISCOUNT must be non-negative")
+            .isNonNegative(column="total_discount_calculated", hint="TOTAL_DISCOUNT_CALCULATED must be non-negative")
             .isNonNegative(column="net_revenue", hint="NET_REVENUE must be non-negative")
             .isNonNegative(column="refunded_revenue", hint="REFUNDED_REVENUE must be non-negative")
             .isNonNegative(column="avg_ticket_price", hint="AVG_TICKET_PRICE must be non-negative")
@@ -93,10 +98,10 @@ class TestRevenueDaily(BaseTest):
         check = (
             Check(self.session, CheckLevel.Error, "RevenueDaily - Discount and Refund Bounds")
             .satisfies(
-                "total_discount <= gross_revenue",
+                "total_discount_calculated <= gross_revenue",
                 "discount_not_exceed_gross_revenue",
                 lambda x: x == 1.0,
-                "TOTAL_DISCOUNT should not exceed GROSS_REVENUE"
+                "TOTAL_DISCOUNT_CALCULATED should not exceed GROSS_REVENUE"
             )
             .satisfies(
                 "refunded_revenue <= net_revenue",

@@ -2,7 +2,6 @@ from pydeequ.checks import Check, CheckLevel
 
 from src.data_quality import BaseTest
 
-
 class TestRefundLoss(BaseTest):
 
     def test_completeness(self):
@@ -13,6 +12,12 @@ class TestRefundLoss(BaseTest):
             .isComplete("class_id", "CLASS_ID shouldn't have null value")
             .isComplete("total_tickets_refunded", "TOTAL_TICKETS_REFUNDED shouldn't have null value")
             .isComplete("total_refund_amount", "TOTAL_REFUND_AMOUNT shouldn't have null value")
+            .isComplete("avg_refund_amount", "AVG_REFUND_AMOUNT shouldn't have null value")
+            .isComplete("avg_days_cancel_to_refund", "AVG_DAYS_CANCEL_TO_REFUND shouldn't have null value")
+            .isComplete("avg_hours_to_refund", "AVG_HOURS_TO_REFUND shouldn't have null value")
+            .isComplete("avg_days_created_to_refund", "AVG_DAYS_CREATED_TO_REFUND shouldn't have null value")
+            .isComplete("total_refunded_with_promo", "TOTAL_REFUNDED_WITH_PROMO shouldn't have null value")
+            .isComplete("total_refunded_with_family_flag", "TOTAL_REFUNDED_WITH_FAMILY_FLAG shouldn't have null value")
         )
 
         self.run_tests(check)

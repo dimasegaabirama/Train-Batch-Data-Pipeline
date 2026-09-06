@@ -531,6 +531,7 @@ def initialize_table(spark: SparkSession):
         ALTER TABLE nessie.gold.refund_loss
         WRITE ORDERED BY refund_date
         """,
+
         """
         CREATE TABLE IF NOT EXISTS nessie.gold.train_performance(
             departure_date DATE,
