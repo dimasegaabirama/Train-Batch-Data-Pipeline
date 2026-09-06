@@ -5,26 +5,6 @@ from src.data_quality import BaseTest
 
 class TestCancellationSummary(BaseTest):
 
-        # booking_date DATE,
-        # route_sk_id BIGINT,
-        # class_id INT,
-
-        # total_tickets INT,
-        # total_tickets_paid INT,
-        # total_tickets_cancelled INT,
-        # total_tickets_refunded INT,
-
-        # cancelled_before_payment INT,
-        # cancelled_after_payment INT,
-        # cancelled_not_yet_refunded INT,
-
-        # total_revenue_lost DECIMAL(18, 2),
-        # avg_hours_to_cancel DOUBLE,
-        # cancellation_rate DOUBLE,
-        # cancelled_after_payment_rate DOUBLE,
-        # updated_at TIMESTAMP
-
-
     def test_completeness(self):
         check = (
             Check(self.session, CheckLevel.Error, "CancellationSummary - Completeness Check")
@@ -32,7 +12,6 @@ class TestCancellationSummary(BaseTest):
             .isComplete("route_sk_id", "ROUTE_SK_ID shouldn't have null value")
             .isComplete("class_id", "CLASS_ID shouldn't have null value")
             .isComplete("total_tickets", "TOTAL_TICKETS shouldn't have null value")
-            .isComplete("total_tickets_created", "TOTAL_TICKETS_CREATED shouldn't have null value")
             .isComplete("total_tickets_paid", "TOTAL_TICKETS_PAID shouldn't have null value")
             .isComplete("total_tickets_cancelled", "TOTAL_TICKETS_CANCELLED shouldn't have null value")
             .isComplete("total_tickets_refunded", "TOTAL_TICKETS_REFUNDED shouldn't have null value")
@@ -51,8 +30,8 @@ class TestCancellationSummary(BaseTest):
         check = (
             Check(self.session, CheckLevel.Error, "CancellationSummary - Grain Uniqueness")
             .isUnique(
-                ["booking_date", "route_sk_id", "class_id"],
-                "Combination of booking_date, route_sk_id, class_id must be unique",
+                column=["booking_date", "route_sk_id", "class_id"], 
+                hint="Combination of BOOKING_DATE, ROUTE_SK_ID, and CLASS_ID must be unique"
             )
         )
 
@@ -62,7 +41,6 @@ class TestCancellationSummary(BaseTest):
         check = (
             Check(self.session, CheckLevel.Error, "CancellationSummary - Non-Negative Values")
             .isNonNegative(column="total_tickets", hint="TOTAL_TICKETS must be non-negative")
-            .isNonNegative(column="total_tickets_created", hint="TOTAL_TICKETS_CREATED must be non-negative")
             .isNonNegative(column="total_tickets_paid", hint="TOTAL_TICKETS_PAID must be non-negative")
             .isNonNegative(column="total_tickets_cancelled", hint="TOTAL_TICKETS_CANCELLED must be non-negative")
             .isNonNegative(column="total_tickets_refunded", hint="TOTAL_TICKETS_REFUNDED must be non-negative")
@@ -92,12 +70,12 @@ class TestCancellationSummary(BaseTest):
         check = (
             Check(self.session, CheckLevel.Error, "CancellationSummary - Metric Consistency")
             .satisfies(
-                "total_tickets_cancelled = (total_tickets_cancelled_before_payment + total_tickets_cancelled_after_payment)",
+                "total_tickets_cancelled = (cancelled_before_payment + cancelled_after_payment)",
                 "cancelled_breakdown_matches_total",
                 lambda x: x == 1.0,
             )
             .satisfies(
-                "total_tickets_created >= (total_tickets_paid + total_tickets_cancelled)",
+                "total_tickets >= (total_tickets_paid + total_tickets_cancelled)",
                 "created_not_exceeded_by_paid_plus_cancelled",
                 lambda x: x == 1.0,
             )

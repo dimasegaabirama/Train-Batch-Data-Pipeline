@@ -34,7 +34,7 @@ class Session:
                 builder = builder.config(key, str(value))
 
             self._session = builder.getOrCreate()
-            self._session.sparkContext.setLogLevel("ERROR")
+            self._session.sparkContext.setLogLevel("ERROR")            
 
             return self._session
 

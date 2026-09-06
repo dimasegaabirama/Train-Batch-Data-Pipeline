@@ -55,6 +55,8 @@ services:
       - 4041:4041
     volumes:
       - .env.global:/app/.env.global
+      - ./src:/app/src
+      - ./config:/app/config
     environment:
       CONFIG_PATH: /app/config/pipeline-config.yaml
       ENV_PATH: /app/.env.global

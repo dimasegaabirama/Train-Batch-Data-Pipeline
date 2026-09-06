@@ -741,59 +741,15 @@ wheels = [
 
 [[package]]
 name = "pydeequ"
-version = "1.3.0"
+version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version < '3.8' and platform_machine != 'aarch64' and platform_machine != 'arm64'",
-    "python_full_version < '3.8' and platform_machine == 'aarch64'",
-    "python_full_version < '3.8' and platform_machine == 'arm64'",
-]
 dependencies = [
-    { name = "numpy", marker = "python_full_version < '3.8'" },
-    { name = "pandas", marker = "python_full_version < '3.8'" },
+    { name = "numpy" },
+    { name = "pandas" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/71/253666c23117ec6e600a36670cb455b675e111703871592b4a0bc7fe9eac/pydeequ-1.3.0.tar.gz", hash = "sha256:b186b0b47b16172de0f7debddab959f4921e7012a3f048c1dc10a23bf22739f2", size = 36102, upload-time = "2024-04-26T20:35:24.237Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4e/80/904c35897312359b1f4119234de5979cd3772ed7e2a01bc9b5b059b68425/pydeequ-1.0.1.tar.gz", hash = "sha256:d06657a28c4646109fd03fcb7aba0c55a40d855aeba86a77424ac531946e6982", size = 35843, upload-time = "2021-07-29T18:22:43.884Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e5/3b/7ebaa95cf3a1510dc2262f775703afe33f787a78d0b57f01f8eb93441fcc/pydeequ-1.3.0-py3-none-any.whl", hash = "sha256:3021e9b276ce93b3bbcad48135323484ceea6f1be9b678484d853b501f0b2d63", size = 37611, upload-time = "2024-04-26T20:35:23.055Z" },
-]
-
-[[package]]
-name = "pydeequ"
-version = "1.5.0"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version == '3.8.*' and platform_machine != 'aarch64' and platform_machine != 'arm64'",
-    "python_full_version == '3.8.*' and platform_machine == 'aarch64'",
-    "python_full_version == '3.8.*' and platform_machine == 'arm64'",
-]
-dependencies = [
-    { name = "numpy", marker = "python_full_version == '3.8.*'" },
-    { name = "pandas", marker = "python_full_version == '3.8.*'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/03/4a/6388c746fd93dce87a473fe817190498801beb2556a55bce4f020a1e58be/pydeequ-1.5.0.tar.gz", hash = "sha256:81f943e93723bba3258cdfde4641de5cca28e228775c87ad84ee2f74fcdacce8", size = 35522, upload-time = "2025-04-01T20:25:22.469Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e5/66/ab5c84ec4ab22923addc5d1126231af1a05e767ac29bd13cb4c6a7eb2b1d/pydeequ-1.5.0-py3-none-any.whl", hash = "sha256:1735256c6506ca9ecac9406fce3a0a0ed6bce4daef2fca1abe901d96a4ae3edd", size = 37737, upload-time = "2025-04-01T20:25:21.388Z" },
-]
-
-[[package]]
-name = "pydeequ"
-version = "1.6.0"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12'",
-    "python_full_version == '3.11.*'",
-    "python_full_version == '3.10.*'",
-    "python_full_version == '3.9.*' and platform_machine != 'aarch64' and platform_machine != 'arm64'",
-    "python_full_version == '3.9.*' and platform_machine == 'aarch64'",
-    "python_full_version == '3.9.*' and platform_machine == 'arm64'",
-]
-dependencies = [
-    { name = "numpy", marker = "python_full_version >= '3.9'" },
-    { name = "pandas", marker = "python_full_version >= '3.9'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/16/d9/3f17fec33f05be0c8b82dc9d113dde02d9cfa3966426ece28e0f68bca341/pydeequ-1.6.0.tar.gz", hash = "sha256:059773f2e3b7329f0a23e58548b24fbb7ca2f6b5c73b1032abb0f21129f72148", size = 36037, upload-time = "2026-07-08T16:57:42.889Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/fd/ca/d1903266a6c218ddcfbfb81a8066628d46fdf89cd3c84400078cdb6a569e/pydeequ-1.6.0-py3-none-any.whl", hash = "sha256:45e2405357c321994d4163d96f05e2f81f15699efab3595139111970790ee273", size = 38022, upload-time = "2026-07-08T16:57:41.894Z" },
+    { url = "https://files.pythonhosted.org/packages/64/25/8fb417ac850ddf052297a52e33a90b5000f6b6925fb3a9bcfbd3e1c5ca0a/pydeequ-1.0.1-py3-none-any.whl", hash = "sha256:54ca02e89a33ce08f0e8165b64913fc736862c10e426cd06daf7a2afe6983116", size = 36484, upload-time = "2021-07-29T18:22:41.964Z" },
 ]
 
 [[package]]
@@ -1264,24 +1220,21 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+data-quality = [
+    { name = "pydeequ" },
+    { name = "pytest", version = "7.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.8'" },
+    { name = "pytest", version = "8.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.8.*'" },
+    { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
+    { name = "pytest", version = "9.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+]
+
+[package.dev-dependencies]
 dev = [
-    { name = "pydeequ", version = "1.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.8'" },
-    { name = "pydeequ", version = "1.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.8.*'" },
-    { name = "pydeequ", version = "1.6.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "pytest", version = "7.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.8'" },
     { name = "pytest", version = "8.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.8.*'" },
     { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
     { name = "pytest", version = "9.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "ruff" },
-]
-dq = [
-    { name = "pydeequ", version = "1.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.8'" },
-    { name = "pydeequ", version = "1.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.8.*'" },
-    { name = "pydeequ", version = "1.6.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
-    { name = "pytest", version = "7.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.8'" },
-    { name = "pytest", version = "8.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.8.*'" },
-    { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
-    { name = "pytest", version = "9.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
 
 [package.metadata]
@@ -1289,17 +1242,20 @@ requires-dist = [
     { name = "numpy", specifier = ">=1.21.6,<1.22" },
     { name = "pandas", specifier = ">=1.3.5,<1.4" },
     { name = "pydantic", specifier = ">=2.5.3" },
-    { name = "pydeequ", marker = "extra == 'dev'", specifier = ">=1.3.0" },
-    { name = "pydeequ", marker = "extra == 'dq'", specifier = ">=1.3.0" },
+    { name = "pydeequ", marker = "extra == 'data-quality'", specifier = "==1.0.1" },
     { name = "pyspark", specifier = "==3.2.1" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.4" },
-    { name = "pytest", marker = "extra == 'dq'", specifier = ">=7.4.4" },
+    { name = "pytest", marker = "extra == 'data-quality'", specifier = ">=7.4.4" },
     { name = "python-dotenv", specifier = ">=0.21.1" },
     { name = "pyyaml", specifier = ">=6.0.1" },
-    { name = "ruff", marker = "extra == 'dev'" },
     { name = "typing-extensions", specifier = ">=4.7.1" },
 ]
-provides-extras = ["dev", "dq"]
+provides-extras = ["data-quality"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=7.4.4" },
+    { name = "ruff" },
+]
 
 [[package]]
 name = "typing-extensions"
