@@ -92,12 +92,12 @@ class TestCancellationSummary(BaseTest):
         check = (
             Check(self.session, CheckLevel.Error, "CancellationSummary - Metric Consistency")
             .satisfies(
-                "total_tickets_cancelled = total_tickets_cancelled_before_payment + total_tickets_cancelled_after_payment",
+                "total_tickets_cancelled = (total_tickets_cancelled_before_payment + total_tickets_cancelled_after_payment)",
                 "cancelled_breakdown_matches_total",
                 lambda x: x == 1.0,
             )
             .satisfies(
-                "total_tickets_created >= total_tickets_paid + total_tickets_cancelled",
+                "total_tickets_created >= (total_tickets_paid + total_tickets_cancelled)",
                 "created_not_exceeded_by_paid_plus_cancelled",
                 lambda x: x == 1.0,
             )

@@ -1,3 +1,4 @@
+from pyspark.sql import Window
 import pyspark.sql.functions as F
 
 from src.etl.transform import BaseTransform
@@ -50,32 +51,34 @@ class RoutesTransform(BaseTransform):
             r = routes_dataframe.alias("r")
 
             s1 = (
-                stations_df.withColumnRenamed("sk_id", "sk_org_station_id")
-                .where(~F.col("is_deleted"))
+                stations_df.withColumnRenamed("sk_id", "org_station_sk_id")
                 .alias("s1")
             )
+
             s2 = (
-                stations_df.withColumnRenamed("sk_id", "sk_dest_station_id")
-                .where(~F.col("is_deleted"))
+                stations_df.withColumnRenamed("sk_id", "dest_station_sk_id")
                 .alias("s2")
             )
+
             tr = (
-                trains_df.withColumnRenamed("sk_id", "sk_train_id")
-                .where(F.col("is_active"))
+                trains_df.withColumnRenamed("sk_id", "train_sk_id")
+                .withColumn("rn", F.row_number().over(Window.partitionBy("id").orderBy(F.col("end_date").desc_nulls_first())))
+                .where((F.col("rn") == 1))
+                .drop("rn")
                 .alias("tr")
             )
 
             result_df = (
-                r.join(s1, F.col("s1.code") == F.col("r.origin"))
-                .join(s2, F.col("s2.code") == F.col("r.destination"))
-                .join(tr, F.col("tr.id") == F.col("r.train_id"))
+                r.join(s1, F.col("s1.code") == F.col("r.origin"), "left")
+                .join(s2, F.col("s2.code") == F.col("r.destination"), "left")
+                .join(tr, F.col("tr.id") == F.col("r.train_id"), "left")
                 .dropDuplicates(["sk_id"])
                 .select(
                     F.col("r.sk_id"),
                     F.col("r.id").cast("int"),
-                    F.col("s1.sk_org_station_id"),
-                    F.col("s2.sk_dest_station_id"),
-                    F.col("tr.sk_train_id"),
+                    F.col("s1.org_station_sk_id"),
+                    F.col("s2.dest_station_sk_id"),
+                    F.col("tr.train_sk_id"),
                     F.col("r.distance_km"),
                     F.col("r.duration_minutes"),
                     F.col("r.is_deleted")

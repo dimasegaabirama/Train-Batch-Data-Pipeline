@@ -186,6 +186,8 @@ class PipelineOrchestrator:
             stage, table_name, extract_result
         )
 
+        transform_result.cleaned_dataframe.show()
+
         if self.quality_check:
             dq_passed = self._dq_runner.run(stage, table_name, transform_result)
             if not dq_passed:

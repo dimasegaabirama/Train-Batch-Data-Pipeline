@@ -107,37 +107,30 @@ class TicketsTransform(BaseTransform):
                 .alias("td")
             )
 
-            routes_df = F.broadcast(self.dependencies["routes"]).alias("r")
-            trains_df = F.broadcast(self.dependencies["trains"]).alias("tr")
-            passengers_df = self.dependencies["passengers"].alias("p")
+            routes_df = F.broadcast(self.dependencies["routes"])
+            r = (routes_df.withColumnRenamed("sk_id", "route_sk_id").alias("r"))
+
+            trains_df = F.broadcast(self.dependencies["trains"])
+            tr = (
+                trains_df.withColumnRenamed("sk_id", "train_sk_id")
+                .alias("tr")
+            )
+
+            passengers_df = self.dependencies["passengers"]
+            p = (
+                passengers_df.withColumnRenamed("sk_id", "passenger_sk_id")
+                .alias("p")
+            )
+
             class_df = F.broadcast(self.dependencies["class"]).alias("cl")
             status_df = F.broadcast(self.dependencies["status"]).alias("st")
             payment_df = F.broadcast(self.dependencies["payment"]).alias("py")
 
             result_df = (
-                tickets_deduped.join(
-                    routes_df, (F.col("r.id") == F.col("td.route_id")), "left"
-                )
-                .join(
-                    trains_df,
-                    (F.col("tr.id") == F.col("td.train_id"))
-                    & (F.col("td.departure_date") >= F.col("tr.start_date"))
-                    & (
-                        F.col("tr.end_date").isNull()
-                        | (F.col("td.departure_date") < F.col("tr.end_date"))
-                    ),
-                    "left",
-                )
-                .join(
-                    passengers_df,
-                    (F.col("p.id") == F.col("td.passenger_id"))
-                    & (F.col("td.departure_date") >= F.col("p.start_date"))
-                    & (
-                        F.col("p.end_date").isNull()
-                        | (F.col("td.departure_date") < F.col("p.end_date"))
-                    ),
-                    "left",
-                )
+                tickets_deduped
+                .join(r, (F.col("r.id") == F.col("td.route_id")), "left")
+                .join(tr, (F.col("tr.id") == F.col("td.train_id")) & (F.col("td.departure_date") >= F.col("tr.start_date")) & (F.col("tr.end_date").isNull() | (F.col("td.departure_date") < F.col("tr.end_date"))), "left")
+                .join(p, (F.col("p.id") == F.col("td.passenger_id")) & (F.col("td.departure_date") >= F.col("p.start_date")) & (F.col("p.end_date").isNull() | (F.col("td.departure_date") < F.col("p.end_date"))), "left")
                 .join(class_df, F.col("cl.class_name") == F.col("td.class"), "left")
                 .join(
                     status_df, F.col("st.status") == F.col("td.active_status"), "left"
@@ -146,9 +139,9 @@ class TicketsTransform(BaseTransform):
 
                 .select(
                     F.col("td.ticket_id"),
-                    F.col("r.sk_id").alias("route_sk_id"),
-                    F.col("p.sk_id").alias("passenger_sk_id"),
-                    F.col("tr.sk_id").alias("train_sk_id"),
+                    F.col("r.sk_route_id"),
+                    F.col("p.sk_passenger_id"),
+                    F.col("tr.sk_train_id"),
                     F.col("cl.id").alias("class_id"),
                     F.col("py.id").alias("payment_id"),
                     F.col("st.id").alias("active_status_id"),
@@ -169,8 +162,6 @@ class TicketsTransform(BaseTransform):
 
                 )
             )
-
-            # self.session.
 
             return self._build_result(result_df)
 

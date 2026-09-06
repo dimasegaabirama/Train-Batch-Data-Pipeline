@@ -493,9 +493,9 @@ tables:
       silver: |
         sk_id BIGINT,
         id INT,
-        sk_org_station_id BIGINT,
-        sk_dest_station_id BIGINT,
-        sk_train_id BIGINT,
+        org_station_sk_id BIGINT,
+        dest_station_sk_id BIGINT,
+        train_sk_id BIGINT,
         distance_km INT,
         duration_minutes INT,
         is_deleted BOOLEAN
@@ -507,17 +507,17 @@ tables:
         ON t.id = s.id
 
         WHEN MATCHED AND (
-            t.sk_org_station_id <> s.sk_org_station_id OR 
-            t.sk_dest_station_id <> s.sk_dest_station_id OR 
-            t.sk_train_id <> s.sk_train_id OR 
+            t.org_station_sk_id <> s.org_station_sk_id OR 
+            t.dest_station_sk_id <> s.dest_station_sk_id OR 
+            t.train_sk_id <> s.train_sk_id OR 
             t.distance_km <> s.distance_km OR 
             t.duration_minutes <> s.duration_minutes OR
             t.is_deleted = true
         )
         THEN UPDATE SET 
-            sk_org_station_id = s.sk_org_station_id,
-            sk_dest_station_id = s.sk_dest_station_id,
-            sk_train_id = s.sk_train_id,
+            org_station_sk_id = s.org_station_sk_id,
+            dest_station_sk_id = s.dest_station_sk_id,
+            train_sk_id = s.train_sk_id,
             distance_km = s.distance_km,
             duration_minutes = s.duration_minutes,
             is_deleted = s.is_deleted
@@ -526,9 +526,9 @@ tables:
         INSERT (
           sk_id, 
           id, 
-          sk_org_station_id, 
-          sk_dest_station_id, 
-          sk_train_id, 
+          org_station_sk_id, 
+          dest_station_sk_id, 
+          train_sk_id, 
           distance_km, 
           duration_minutes, 
           is_deleted
@@ -537,9 +537,9 @@ tables:
         VALUES(
           s.sk_id, 
           s.id, 
-          s.sk_org_station_id, 
-          s.sk_dest_station_id, 
-          s.sk_train_id, 
+          s.org_station_sk_id, 
+          s.dest_station_sk_id, 
+          s.train_sk_id, 
           s.distance_km, 
           s.duration_minutes, 
           s.is_deleted
@@ -1182,16 +1182,10 @@ filters:
           field: updated_at
           strategy: incremental
 
-        - table: stations
-          field: is_deleted
-          strategy: boolean
-          value: false
-
         - table: trains
-          field: is_active
-          strategy: boolean
-          value: true
-
+          field: end_date
+          strategy: incremental
+          
       trains:
         - table: trains
           field: updated_at

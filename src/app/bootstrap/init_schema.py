@@ -71,7 +71,6 @@ def initialize_table(spark: SparkSession):
             'history.expire.max-snapshot-age-ms' = '604800000',
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
@@ -96,7 +95,6 @@ def initialize_table(spark: SparkSession):
             'history.expire.max-snapshot-age-ms' = '604800000',
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
@@ -121,7 +119,6 @@ def initialize_table(spark: SparkSession):
             'history.expire.max-snapshot-age-ms' = '604800000',
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
@@ -148,7 +145,6 @@ def initialize_table(spark: SparkSession):
             'history.expire.max-snapshot-age-ms' = '604800000',
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
@@ -191,7 +187,6 @@ def initialize_table(spark: SparkSession):
             'history.expire.max-snapshot-age-ms' = '604800000',
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
@@ -228,7 +223,6 @@ def initialize_table(spark: SparkSession):
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
 
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
@@ -263,7 +257,6 @@ def initialize_table(spark: SparkSession):
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
 
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
@@ -296,7 +289,6 @@ def initialize_table(spark: SparkSession):
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
 
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
@@ -310,9 +302,9 @@ def initialize_table(spark: SparkSession):
         CREATE TABLE IF NOT EXISTS nessie.silver.routes(
             sk_id BIGINT,
             id INT,
-            sk_org_station_id BIGINT,
-            sk_dest_station_id BIGINT,
-            sk_train_id BIGINT,
+            org_station_sk_id BIGINT,
+            dest_station_sk_id BIGINT,
+            train_sk_id BIGINT,
             distance_km INT,
             duration_minutes INT,
             is_deleted BOOLEAN
@@ -333,7 +325,6 @@ def initialize_table(spark: SparkSession):
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
 
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
@@ -427,8 +418,6 @@ def initialize_table(spark: SparkSession):
             'history.expire.max-snapshot-age-ms' = '604800000',
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
-
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
@@ -471,7 +460,6 @@ def initialize_table(spark: SparkSession):
             'history.expire.max-snapshot-age-ms' = '604800000',
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
@@ -508,7 +496,6 @@ def initialize_table(spark: SparkSession):
             'history.expire.max-snapshot-age-ms' = '604800000',
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
@@ -543,7 +530,6 @@ def initialize_table(spark: SparkSession):
             'history.expire.max-snapshot-age-ms' = '604800000',
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
@@ -582,7 +568,6 @@ def initialize_table(spark: SparkSession):
             'history.expire.max-snapshot-age-ms' = '604800000',
             'write.metadata.delete-after-commit.enabled' = 'true',
             'write.metadata.previous-versions-max' = '10',
-            'write.delete.mode'              = 'merge-on-read',
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """

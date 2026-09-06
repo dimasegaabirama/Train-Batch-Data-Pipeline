@@ -8,6 +8,8 @@ from src.models.data_config import StageType, TableDependency
 from src.models.etl_config import ExtractResult, BronzeSilverExtractResult, GoldTransformResult, BronzeSilverTransformResult, GoldTransformResult, TransformResult
 from src.utils.table_utils import create_table_view_name
 
+from src.core.config import DateManager
+
 
 class BaseTransform(ABC):
 
@@ -18,6 +20,11 @@ class BaseTransform(ABC):
     ):
         if extract_result is None:
             raise ValueError("extract_result must be provided.")
+
+        self.date_manager = DateManager()
+
+        self.start_date = self.date_manager.get_start_date(format_str="%Y-%m-%d")
+        self.end_date = self.date_manager.get_end_date(format_str="%Y-%m-%d")
 
         self.session: SparkSession = session
         self.extract_result: ExtractResult = extract_result
