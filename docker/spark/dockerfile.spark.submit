@@ -20,7 +20,7 @@ ENV JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
 
 WORKDIR /app
 COPY . .
-RUN uv sync --extra data_quality
+RUN uv sync --extra data_quality --no-group dev
 
 
 # MAIN
