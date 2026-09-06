@@ -41,27 +41,45 @@ class PipelineRunner:
             description="Pipeline runner for data transformation stages."
         )
 
-        parser.add_argument("-cfg", "--config", type=str, help="Path to pipeline config file")
-        parser.add_argument("-env", "--environment", type=str, help="Path to environment file")
         parser.add_argument(
-            "-stg", "--stage",
+            "-cfg", "--config", type=str, help="Path to pipeline config file"
+        )
+        parser.add_argument(
+            "-env", "--environment", type=str, help="Path to environment file"
+        )
+        parser.add_argument(
+            "-stg",
+            "--stage",
             choices=["bootstrap", "bronze", "silver", "gold"],
             help="Pipeline stage to run",
         )
         parser.add_argument(
-            "-tbl", "--tables", nargs="+", type=str,
+            "-tbl",
+            "--tables",
+            nargs="+",
+            type=str,
             help=(
                 "List of table names to process "
                 "(example: --tables users tickets routes). "
                 "If not provided, all tables will be processed."
             ),
         )
-        parser.add_argument("-start", "--start_date", type=str, help="Pipeline start date (YYYY-MM-DD)")
-        parser.add_argument("-end", "--end_date", type=str, help="Pipeline end date (YYYY-MM-DD)")
-        parser.add_argument("--run_bootstrap", action="store_true", help="Run Pipeline Bootstrap")
-        parser.add_argument("--data_quality", action="store_true", help="Run Data Quality Checks")
         parser.add_argument(
-            "-dqp", "--dq_path", type=str,
+            "-start", "--start_date", type=str, help="Pipeline start date (YYYY-MM-DD)"
+        )
+        parser.add_argument(
+            "-end", "--end_date", type=str, help="Pipeline end date (YYYY-MM-DD)"
+        )
+        parser.add_argument(
+            "--run_bootstrap", action="store_true", help="Run Pipeline Bootstrap"
+        )
+        parser.add_argument(
+            "--data_quality", action="store_true", help="Run Data Quality Checks"
+        )
+        parser.add_argument(
+            "-dqp",
+            "--dq_path",
+            type=str,
             help=(
                 "Path to a custom Data Quality test file/module. "
                 "Overrides the auto-resolved DQ test from the registry. "
@@ -82,7 +100,9 @@ class PipelineRunner:
         return getattr(self.args, arg) or os.getenv(env_var)
 
     @staticmethod
-    def get_arg_or_config(args, config_manager, arg, config_key, config_params=None, required=True):
+    def get_arg_or_config(
+        args, config_manager, arg, config_key, config_params=None, required=True
+    ):
         value = getattr(args, arg)
         if value is None:
             value = getattr(config_manager, config_key)(**(config_params or {}))
@@ -147,12 +167,14 @@ class PipelineRunner:
                 )
 
     def apply_env_vars(self):
-        self.set_env_vars([
-            ("CONFIG_PATH", self.config_path, self.required_config),
-            ("ENV_PATH", self.env_path, self.required_env),
-            ("START_DATE", self.start_date, self.required_date),
-            ("END_DATE", self.end_date, self.required_date),
-        ])
+        self.set_env_vars(
+            [
+                ("CONFIG_PATH", self.config_path, self.required_config),
+                ("ENV_PATH", self.env_path, self.required_env),
+                ("START_DATE", self.start_date, self.required_date),
+                ("END_DATE", self.end_date, self.required_date),
+            ]
+        )
 
     def resolve_tables(self):
         if not self.run_bootstrap:
@@ -183,7 +205,9 @@ class PipelineRunner:
         ) as logger:
             with Session(stage=self.stage, logger=logger) as session:
                 if self.run_bootstrap:
-                    return PipelineBootstrap(session=session, logger=logger).run_bootstrap()
+                    return PipelineBootstrap(
+                        session=session, logger=logger
+                    ).run_bootstrap()
 
                 return PipelineOrchestrator(
                     logger=logger,

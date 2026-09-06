@@ -1,12 +1,7 @@
-from typing_extensions import Optional, List, Dict
+from typing_extensions import List
 
 from src.core.config.config import Config
-from src.models.data_config import (
-    FiltersConfig,
-    FilterField,
-    StageFilters,
-    StageType
-)
+from src.models.data_config import FilterField, FiltersConfig, StageFilters, StageType
 
 
 class FilterManager:
@@ -30,8 +25,11 @@ class FilterManager:
         cfg = self.get_stage_config(stage)
         cfg_table = cfg.tables.get(table_name, None)
         if cfg_table is None:
-            raise ValueError(f"Filter config for table '{table_name}' in stage '{stage}' not found")
+            raise ValueError(
+                f"Filter config for table '{table_name}' in stage '{stage}' not found"
+            )
         return cfg_table
+
 
 if __name__ == "__main__":
     filter_manager = FilterManager()

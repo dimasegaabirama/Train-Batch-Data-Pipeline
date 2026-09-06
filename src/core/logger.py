@@ -2,11 +2,10 @@ import logging
 from contextlib import contextmanager
 from time import time
 
-from typing_extensions import Literal, Optional, Dict
+from typing_extensions import Dict, Literal, Optional
 
 
 class AppLogger:
-
     _instances: Dict[str, "AppLogger"] = {}
 
     def __new__(cls, name: str, *args, **kwargs) -> "AppLogger":
@@ -57,7 +56,9 @@ class AppLogger:
             logger.addHandler(stream_handler)
 
         if self.type in ("file", "both"):
-            file_handler = logging.FileHandler(self.log_file, mode="a", encoding="utf-8")
+            file_handler = logging.FileHandler(
+                self.log_file, mode="a", encoding="utf-8"
+            )
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
 
@@ -83,7 +84,7 @@ class AppLogger:
             logger.info(header)
             yield logger
             logger.info(f"{message}: Completed successfully")
-        except Exception as e:
+        except Exception:
             logger.error(f"{message}: Failed with error")
             raise
         finally:

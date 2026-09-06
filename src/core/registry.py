@@ -1,26 +1,22 @@
-import pytest
-from typing_extensions import Literal
+from typing_extensions import Literal, Optional
 
 from src.etl.extract import IcebergExtract, MongoExtract
 from src.etl.load import IcebergLoad
 from src.etl.transform import (
     # BRONZE STAGE
     BronzeTransform,
-
+    # GOLD STAGE
+    CancellationSummary,
     # SILVER STAGE
     PassengersTransform,
+    RefundLoss,
+    RevenueDaily,
     RoutesTransform,
     StationsTransform,
     TicketsTransform,
+    TrainPerformance,
     TrainsTransform,
-
-    # GOLD STAGE
-    CancellationSummary,
-    RefundLoss,
-    RevenueDaily,
-    TrainPerformance
 )
-
 from src.utils.filter_utils import (
     build_iceberg_boolean_filter,
     build_iceberg_incremental_filter,
@@ -32,11 +28,9 @@ Component = Literal["extract", "transform", "load", "filter"]
 _FILTER_REGISTRY = {
     "incremental": {
         "mongo": build_mongo_incremental_filter,
-        "iceberg": build_iceberg_incremental_filter
+        "iceberg": build_iceberg_incremental_filter,
     },
-    "boolean": {
-        "iceberg": build_iceberg_boolean_filter
-    }
+    "boolean": {"iceberg": build_iceberg_boolean_filter},
 }
 
 
@@ -47,21 +41,21 @@ _DATA_QUALITY_REGISTRY = {
         "trains": "test_trains.py",
         "stations": "test_stations.py",
         "routes": "test_routes.py",
-        "tickets": "test_tickets.py"
+        "tickets": "test_tickets.py",
     },
     "gold": {
         "train_performance": "test_train_performance.py",
         "refund_loss": "test_refund_loss.py",
         "revenue_daily": "test_revenue_daily.py",
-        "cancellation_summary": "test_cancellation_summary.py"
-    }
+        "cancellation_summary": "test_cancellation_summary.py",
+    },
 }
 
 
 _EXTRACT_REGISTRY = {
     "bronze": {"default": MongoExtract},
     "silver": {"default": IcebergExtract},
-    "gold": {"default": IcebergExtract}
+    "gold": {"default": IcebergExtract},
 }
 
 
@@ -72,14 +66,14 @@ _TRANSFORMER_REGISTRY = {
         "trains": TrainsTransform,
         "stations": StationsTransform,
         "routes": RoutesTransform,
-        "tickets": TicketsTransform
+        "tickets": TicketsTransform,
     },
     "gold": {
         "train_performance": TrainPerformance,
         "refund_loss": RefundLoss,
         "revenue_daily": RevenueDaily,
-        "cancellation_summary": CancellationSummary
-    }
+        "cancellation_summary": CancellationSummary,
+    },
 }
 
 
@@ -95,7 +89,7 @@ _REGISTRY_MAP = {
     "transform": _TRANSFORMER_REGISTRY,
     "load": _LOAD_REGISTRY,
     "filter": _FILTER_REGISTRY,
-    "data_quality": _DATA_QUALITY_REGISTRY
+    "data_quality": _DATA_QUALITY_REGISTRY,
 }
 
 
@@ -115,8 +109,6 @@ def resolve_registry_class(
     component_cls = sub_registry.get(key2, sub_registry.get("default"))
 
     if component_cls is None and required:
-        raise ValueError(
-            f"{component_name} for '{key2}' under '{key1}' does not exist"
-        )
+        raise ValueError(f"{component_name} for '{key2}' under '{key1}' does not exist")
 
     return component_cls

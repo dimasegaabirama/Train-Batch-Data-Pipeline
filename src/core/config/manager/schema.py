@@ -21,7 +21,7 @@ class SchemaManager:
 
     def get_stage_namespace(self, stage: StageType) -> str:
         return self.get_stage_config(stage).name
-    
+
     def get_stage_upstream(self, stage: StageType) -> StageType:
         return self.get_stage_config(stage).upstream
 

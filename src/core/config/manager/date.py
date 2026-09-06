@@ -1,9 +1,5 @@
-from datetime import datetime
-
 from src.core.config.config import Config
-from src.models.data_config import (
-    DateConfig
-)
+from src.models.data_config import DateConfig
 
 
 class DateManager:
@@ -18,6 +14,7 @@ class DateManager:
 
     def get_end_date(self, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
         return self.get_date().end_date.strftime(format_str)
+
 
 if __name__ == "__main__":
     date_manager = DateManager()

@@ -12,7 +12,8 @@ def initialize_namespace(spark: SparkSession):
 
 
 def initialize_seed(spark: SparkSession):
-    seeds = ["""
+    seeds = [
+        """
         INSERT INTO nessie.silver.status (id, status)
         VALUES 
             (1, 'paid'),
@@ -20,7 +21,7 @@ def initialize_seed(spark: SparkSession):
             (3, 'cancelled'),
             (4, 'refunded')
     """,
-    """
+        """
     INSERT INTO nessie.silver.class (id, class_name)
     VALUES 
         (1, 'vip'),
@@ -28,7 +29,7 @@ def initialize_seed(spark: SparkSession):
         (3, 'regular'),
         (4, 'promo')
     """,
-    """
+        """
     INSERT INTO nessie.silver.payment (id, method)
     VALUES 
         (1, 'credit_card'),
@@ -36,10 +37,10 @@ def initialize_seed(spark: SparkSession):
         (3, 'e_wallet'),
         (4, 'bank_transfer'),
         (5, 'cash')
-    """
+    """,
     ]
 
-    try: 
+    try:
         for seed in seeds:
             spark.sql(seed)
     except Exception as e:
@@ -190,9 +191,7 @@ def initialize_table(spark: SparkSession):
             'commit.manifest.target-size-bytes' = '8388608'
         )
         """,
-
         # ============ SILVER ============
-
         # SCD Type 2
         """
         CREATE TABLE IF NOT EXISTS nessie.silver.passengers(
@@ -296,7 +295,6 @@ def initialize_table(spark: SparkSession):
         ALTER TABLE nessie.silver.stations
         WRITE ORDERED BY id
         """,
-
         # SCD Type 1
         """
         CREATE TABLE IF NOT EXISTS nessie.silver.routes(
@@ -332,7 +330,6 @@ def initialize_table(spark: SparkSession):
         ALTER TABLE nessie.silver.routes
         WRITE ORDERED BY id
         """,
-
         # Lookup table - kecil, tidak perlu global sort order
         """
         CREATE TABLE IF NOT EXISTS nessie.silver.status(
@@ -345,7 +342,6 @@ def initialize_table(spark: SparkSession):
         ALTER TABLE nessie.silver.status
         WRITE UNORDERED
         """,
-
         # Lookup table - kecil, tidak perlu global sort order
         """
         CREATE TABLE IF NOT EXISTS nessie.silver.class(
@@ -358,7 +354,6 @@ def initialize_table(spark: SparkSession):
         ALTER TABLE nessie.silver.class
         WRITE UNORDERED
         """,
-
         # Lookup table - kecil, tidak perlu global sort order
         """
         CREATE TABLE IF NOT EXISTS nessie.silver.payment(
@@ -371,7 +366,6 @@ def initialize_table(spark: SparkSession):
         ALTER TABLE nessie.silver.payment
         WRITE UNORDERED
         """,
-
         # Fact table
         """
         CREATE TABLE IF NOT EXISTS nessie.silver.tickets(
@@ -537,7 +531,6 @@ def initialize_table(spark: SparkSession):
         ALTER TABLE nessie.gold.refund_loss
         WRITE ORDERED BY refund_date
         """,
-
         """
         CREATE TABLE IF NOT EXISTS nessie.gold.train_performance(
             departure_date DATE,
@@ -570,7 +563,7 @@ def initialize_table(spark: SparkSession):
             'write.metadata.previous-versions-max' = '10',
             'commit.manifest.target-size-bytes' = '8388608'
         )
-        """
+        """,
     ]
 
     try:

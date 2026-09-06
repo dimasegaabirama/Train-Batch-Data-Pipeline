@@ -1,18 +1,23 @@
 from typing import Optional
 
 from pyspark.sql import SparkSession
-from src.models.etl_config import TransformResult
-
 from pyspark.sql.dataframe import DataFrame
 
-class DataQualityContext:
+from src.models.etl_config import TransformResult
 
+
+class DataQualityContext:
     _transform_result: Optional[TransformResult] = None
     _session: Optional[SparkSession] = None
     _dataframe: Optional[DataFrame] = None
 
     @classmethod
-    def set(cls, session: SparkSession, transform_result: TransformResult, dataframe: DataFrame) -> None:
+    def set(
+        cls,
+        session: SparkSession,
+        transform_result: TransformResult,
+        dataframe: DataFrame,
+    ) -> None:
         cls._transform_result = transform_result
         cls._session = session
         cls._dataframe = dataframe

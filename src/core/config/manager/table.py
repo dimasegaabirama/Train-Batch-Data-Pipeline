@@ -1,6 +1,6 @@
 from typing import Optional
 
-from typing_extensions import Dict, List, Union
+from typing_extensions import Dict, List
 
 from src.core.config.config import Config
 from src.models.data_config import (
@@ -30,9 +30,7 @@ class TableManager:
     def get_tablenames(self, stage: StageType) -> List[str]:
         cfg = self._config.pipeline.tablenames.get(stage)
         if cfg is None:
-            raise ValueError(
-                f"Tablenames for stage '{stage}' not found"
-            )
+            raise ValueError(f"Tablenames for stage '{stage}' not found")
         return cfg
 
     def get_table_config(self, table_name: str) -> TableContext:
@@ -62,11 +60,15 @@ class TableManager:
         cfg = self.get_table_config(table_name).table_schema.get(stage)
         return cfg
 
-    def get_table_deps(self, table_name: str, stage: StageType) -> Optional[Dict[str, List[TableDependency]]]:
+    def get_table_deps(
+        self, table_name: str, stage: StageType
+    ) -> Optional[Dict[str, List[TableDependency]]]:
 
         dependencies: Dict[str, Optional[List[TableDependency]]] = {}
 
-        raw = getattr(self.get_table_config(table_name), 'depends_on', None) or {stage: None}
+        raw = getattr(self.get_table_config(table_name), "depends_on", None) or {
+            stage: None
+        }
         deps = raw.get(stage)
 
         if deps is None:
@@ -81,7 +83,6 @@ class TableManager:
                 for dep in deps
             ]
         return dependencies
-
 
     def get_table_fullname(self, table_name: str, stage: StageType) -> str:
         catalog = self._catalog_manager.get_catalog_name()
@@ -128,15 +129,19 @@ class TableManager:
             namespace=namespace,
         )
 
+
 if __name__ == "__main__":
-    from pprint import pprint
     from src.utils.text_utils import clean_multiple_line
-    table_manager = TableManager().get_table_metadata("passengers", "silver", {
-        "full_table_name": "silver.passengers",
-        "table_view": "passengers_view",
-        "start_date": "2023-01-01",
-        "end_date": "2023-12-31"
-        })
+
+    table_manager = TableManager().get_table_metadata(
+        "passengers",
+        "silver",
+        {
+            "full_table_name": "silver.passengers",
+            "table_view": "passengers_view",
+            "start_date": "2023-01-01",
+            "end_date": "2023-12-31",
+        },
+    )
     clean = [clean_multiple_line(x) for x in table_manager.queries]
     print(clean)
-

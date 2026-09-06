@@ -16,7 +16,6 @@ class Session:
         self._stage_config = self._spark_manager.get_stage_config(self.stage)
         self._session: Optional[SparkSession] = None
 
-
     def get_session(self) -> SparkSession:
 
         self.logger.info(f"Getting Spark session for stage {self.stage}")
@@ -24,7 +23,7 @@ class Session:
         if self._session is not None:
             self.logger.debug(f"Using existing Spark session for stage {self.stage}")
             return self._session
-        
+
         try:
             self.logger.debug(f"Creating new Spark session for stage {self.stage}")
             builder = SparkSession.builder.appName(self._stage_config.app_name).master(
@@ -40,8 +39,9 @@ class Session:
             return self._session
 
         except Exception:
-            raise ValueError(f"Error occurred while creating Spark session for stage {self.stage}")
-
+            raise ValueError(
+                f"Error occurred while creating Spark session for stage {self.stage}"
+            )
 
     def stop_session(self) -> None:
         """Stop the active Spark session, if any."""
@@ -56,7 +56,6 @@ class Session:
 
     def __enter__(self) -> SparkSession:
         return self.get_session()
-
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.stop_session()

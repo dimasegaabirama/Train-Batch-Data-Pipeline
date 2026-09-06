@@ -1,6 +1,13 @@
 from logging import Logger
-from src.app.bootstrap import *
+from src.app.bootstrap import (
+    initialize_branch,
+    initialize_namespace,
+    initialize_table,
+    initialize_seed,
+    initialize_tag,
+)
 from pyspark.sql.session import SparkSession
+
 
 class PipelineBootstrap:
     def __init__(self, session: SparkSession, logger: Logger):
@@ -29,4 +36,3 @@ class PipelineBootstrap:
 
 if __name__ == "__main__":
     pass
-
