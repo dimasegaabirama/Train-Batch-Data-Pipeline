@@ -119,12 +119,14 @@ compose_up spark ./docker/spark/docker-compose.yaml spark-worker-1 spark-worker-
 # ─────────────────────────────────────────
 # AIRFLOW (optional)
 # ─────────────────────────────────────────
-# log "Starting Airflow..."
-# docker compose -p airflow \
-#   --project-directory . \
-#   -f ./docker/airflow/docker-compose.yaml \
-#   -f ./docker/airflow/docker-compose.override.yaml \
-#   --env-file "$ENV_FILE" \
-#   up -d
+log "Starting Airflow..."
+docker compose -p airflow \
+  --project-directory . \
+  -f ./docker/airflow/docker-compose.yaml \
+  -f ./docker/airflow/docker-compose.override.yaml \
+  --env-file "$ENV_FILE" \
+  up -d
+
+docker exec -it airflow-airflow-dag-processor-1 airflow variables import //opt/airflow/variables/variables.json
 
 success "All services started! 🎉"

@@ -29,9 +29,10 @@ class TestCancellationSummary(BaseTest):
     def test_grain_uniqueness(self):
         check = (
             Check(self.session, CheckLevel.Error, "CancellationSummary - Grain Uniqueness")
-            .isUnique(
-                column=["booking_date", "route_sk_id", "class_id"], 
-                hint="Combination of BOOKING_DATE, ROUTE_SK_ID, and CLASS_ID must be unique"
+            .hasUniqueness(
+                ["booking_date", "route_sk_id", "class_id"],
+                lambda x: x == 1.0,
+                "Combination of booking_date, route_sk_id, class_id must be unique"
             )
         )
 
@@ -85,7 +86,7 @@ class TestCancellationSummary(BaseTest):
                 lambda x: x == 1.0,
             )
             .satisfies(
-                "total_tickets_cancelled <= total_tickets_created",
+                "total_tickets_cancelled <= total_tickets",
                 "cancelled_not_exceed_created",
                 lambda x: x == 1.0,
             )

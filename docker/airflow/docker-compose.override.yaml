@@ -11,7 +11,6 @@ services:
       PYTHONPATH: /opt/airflow
     volumes:
       - .env.global:/opt/airflow/.env.global
-      - ./src/core:/opt/airflow/src/core
       - ./config/pipeline-config.yaml:/opt/airflow/config/pipeline-config.yaml
 
   airflow-scheduler:

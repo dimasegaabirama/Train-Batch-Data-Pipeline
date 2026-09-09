@@ -4,7 +4,7 @@ from pyspark.sql.dataframe import DataFrame
 from src.models.etl_config import TransformResult
 from src.etl.transform import BaseTransform
 
-from pyspark.sql.types import DecimalType, IntegerType, TimestampType
+from pyspark.sql.types import DecimalType, IntegerType, LongType, TimestampType, DateType
 
 
 class RevenueDaily(BaseTransform):
@@ -48,8 +48,8 @@ class RevenueDaily(BaseTransform):
 
             return self._build_result(
                 result_df.select(
-                    F.col("revenue_date")               .cast(TimestampType()),
-                    F.col("route_sk_id")                .cast(IntegerType()),
+                    F.col("revenue_date")               .cast(DateType()),
+                    F.col("route_sk_id")                .cast(LongType()),
                     F.col("class_id")                   .cast(IntegerType()),
                     F.col("total_tickets")              .cast(IntegerType()),
                     F.col("gross_revenue")              .cast(DecimalType(18, 2)),

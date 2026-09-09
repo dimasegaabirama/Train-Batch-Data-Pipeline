@@ -26,8 +26,9 @@ class TestRefundLoss(BaseTest):
 
         check = (
             Check(self.session, CheckLevel.Error, "RefundLoss - Grain Uniqueness")
-            .isUnique(
-                ["refund_date", "route_sk_id", "class_id"],
+            .hasUniqueness(
+                ["refund_date", "route_sk_id", "class_id"], 
+                lambda x: x == 1.0,
                 "Combination of refund_date, route_sk_id, class_id must be unique"
             )
         )

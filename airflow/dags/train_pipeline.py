@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from airflow.sdk import task_group, chain, dag, task
 from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
@@ -6,6 +8,7 @@ from airflow.sdk.definitions.deadline import AsyncCallback, DeadlineAlert, Deadl
 from docker.types import Mount
 from pendulum import datetime, duration
 
+PATH_TO_ENV = r"C:\Users\dimas\Desktop\PORTOFOLIO\train-batch-pipeline\.env.global"
 
 DEFAULT_ARGS = {
     'owner': 'Dimas Ega Abirama | Data Engineering',
@@ -44,7 +47,7 @@ async def callback_function(**kwargs):
     catchup=False,
     
     max_active_runs=1,
-    max_active_tasks=5,
+    max_active_tasks=2,
 
     dagrun_timeout=duration(hours=3),
 
@@ -62,24 +65,26 @@ def train_pipeline():
             "secret_env_path": Variable.get("secret_env_path"),
             "secret_env_target": Variable.get("secret_env_target"),
             "config_path": Variable.get("config_path"),
-            "data_quality_enabled": Variable.get("data_quality_enabled")
+            "data_quality_enabled": Variable.get("data_quality_enabled"),
+            "spark_driver_host": Variable.get("SPARK_DRIVER_HOST", default_var="spark-submit"),
+            "spark_driver_port": Variable.get("SPARK_DRIVER_PORT", default_var="4040")
         }
         return var_value.get(var_name, default_value)
 
     def make_command(stage: str) -> list[str]:
         return [
-            "python3", "-m", "main",
+            "python3", "-m", "src.app.run_pipeline",
             "-stg", stage,
             "-cfg", resolve_variable("config_path"),
             "-env", resolve_variable("secret_env_target"),
-            "-start", "{{ data_interval_start | ds }}",
-            "-end",   "{{ data_interval_end   | ds }}",
+            "-start", "{{ ds }}",
+            "-end",   "{{ prev_ds }}",
             "--data_quality" if resolve_variable("data_quality_enabled") == "true" else ""
         ]
 
     def make_mount() -> Mount:
         return Mount(
-            source=resolve_variable("secret_env_path"),
+            source=str(PATH_TO_ENV),
             target=resolve_variable("secret_env_target"),
             type="bind"
         )
@@ -89,12 +94,18 @@ def train_pipeline():
             task_id=f"run_{stage}",
             image=resolve_variable("spark_submit_image_name"),
             command=make_command(stage),
-            container_name=f"spark_submit_{stage}",
-            docker_url="tcp://socat-docker:2375",
+            container_name="spark_submit_container",
+            hostname="spark-submit",
+            docker_url="tcp://docker-proxy:2375",
+            port_bindings={4041: 4041},
             network_mode="data_eng_net",
             mount_tmp_dir=False,
             mounts=[make_mount()],
-            auto_remove="force"
+            auto_remove="force",
+            environment={
+                "SPARK_DRIVER_PORT": resolve_variable("spark_driver_port"),
+                "SPARK_DRIVER_HOST": resolve_variable("spark_driver_host")
+            }
         )
 
     stages = ["bronze", "silver", "gold"]

@@ -250,8 +250,13 @@ DQ checks run as their **own Airflow task and image**, separate from the Spark l
 
 ```bash
 git clone <repo-url> && cd train_batch_pipeline
-uv sync                        # install dependencies
-source ./start-all.sh                 # up: mongo, hdfs, nessie, spark, airflow
+uv sync                         # install dependencies
+source ./start-all.sh           # up: mongo, hdfs, nessie, spark, airflow
+```
+
+```bash
+docker exec -it spark-submit python -m src.app.run_pipeline --run_bootstrap # initialize schema
+docker rm -f spark-submit
 ```
 
 ### CLI

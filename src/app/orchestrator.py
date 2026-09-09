@@ -18,6 +18,8 @@ from src.models.etl_config import ExtractResult, TransformResult
 from src.utils.nessie_utils import pipeline_branch
 from src.utils.table_utils import create_table_view_name
 
+import pyspark.sql.functions as F
+
 
 class PipelineOrchestrator:
     """Coordinates the extract -> transform -> [data quality] -> load flow for a table."""
@@ -171,27 +173,41 @@ class PipelineOrchestrator:
     @pipeline_branch
     def run_table(self, stage: StageType, table_name: str) -> None:
         """Run extract -> transform -> (optional) DQ checks -> load for one table."""
+
+        def _is_empty(df) -> bool:
+            get_data = getattr(df, "take", None)
+            return get_data is None or not get_data(1)
+
         extract_result = self.extract(stage, table_name)
 
-        get_data = getattr(extract_result.dataframe, "take", None)
-        if get_data is None or not get_data(1):
+        if _is_empty(extract_result.dataframe):
+
+            self.logger.warning(
+                "[EXTRACT] No data found for table: %s | Stage: %s. "
+                "checking dependencies for data before skipping transform, data quality, and load.",
+                table_name,
+                stage,
+            )
+
             if not extract_result.dependencies:
                 self.logger.warning(
-                    "[EXTRACT] No data found for table: %s | Stage: %s. "
+                    "[EXTRACT] No data found in dependencies for table: %s | Stage: %s. "
                     "Skipping transform, data quality, and load.",
                     table_name,
                     stage,
                 )
                 return
-            else:
-                self.logger.warning(
-                    "[EXTRACT] No data found for table: %s | Stage: %s. "
-                    "Dependencies were found, but no data was extracted.",
-                    table_name,
-                    stage,
-                )
 
         transform_result = self.transform(stage, table_name, extract_result)
+
+        if _is_empty(transform_result.cleaned_dataframe):
+            self.logger.warning(
+                "[TRANSFORM] No data produced for table: %s | Stage: %s. "
+                "Skipping data quality and load.",
+                table_name,
+                stage,
+            )
+            return
 
         if self.quality_check:
             dq_passed = self._dq_runner.run(stage, table_name, transform_result)

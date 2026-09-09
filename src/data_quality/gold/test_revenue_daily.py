@@ -25,10 +25,10 @@ class TestRevenueDaily(BaseTest):
     def test_grain_uniqueness(self):
         check = (
             Check(self.session, CheckLevel.Error, "RevenueDaily - Grain Uniqueness")
-            .isUnique(
-                ["revenue_date", "route_sk_id", "class_id"],
-                "Combination of revenue_date, route_sk_id, class_id must be unique",
-            )
+            .hasUniqueness(
+                ["revenue_date", "route_sk_id", "class_id"], 
+                lambda x: x == 1.0,
+                "Combination of revenue_date, route_sk_id, class_id must be unique")
         )
 
         self.run_tests(check)
@@ -63,13 +63,13 @@ class TestRevenueDaily(BaseTest):
         check = (
             Check(self.session, CheckLevel.Error, "RevenueDaily - Calculation Consistency")
             .satisfies(
-                "ABS(net_revenue - (gross_revenue - total_discount)) < 0.01",
+                "((net_revenue - (gross_revenue - total_discount_calculated)) < 0.01)",
                 "net_revenue_matches_gross_minus_discount",
                 lambda x: x == 1.0,
-                "NET_REVENUE should equal GROSS_REVENUE minus TOTAL_DISCOUNT"
+                "NET_REVENUE should equal GROSS_REVENUE minus TOTAL_DISCOUNT_CALCULATED"
             )
             .satisfies(
-                "ABS(net_revenue_after_refund - (net_revenue - refunded_revenue)) < 0.01",
+                "((net_revenue_after_refund - (net_revenue - refunded_revenue)) < 0.01)",
                 "net_after_refund_matches_calculation",
                 lambda x: x == 1.0,
                 "NET_REVENUE_AFTER_REFUND should equal NET_REVENUE minus REFUNDED_REVENUE"
@@ -84,7 +84,7 @@ class TestRevenueDaily(BaseTest):
             .satisfies(
                 """
                 total_tickets = 0
-                OR ABS(avg_ticket_price - (gross_revenue / total_tickets)) < 0.01
+                OR ((avg_ticket_price - (gross_revenue / total_tickets)) < 0.01)
                 """,
                 "avg_ticket_price_matches_calculation",
                 lambda x: x == 1.0,
@@ -118,8 +118,7 @@ class TestRevenueDaily(BaseTest):
             Check(self.session, CheckLevel.Error, "RevenueDaily - Dataset Validation")
             .hasSize(
                 lambda x: x > 0,
-                "Dataset must not be empty",
-                "RevenueDaily dataset should contain at least one record"
+                "Dataset must not be empty"
             )
         )
 

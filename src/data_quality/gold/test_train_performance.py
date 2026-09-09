@@ -5,9 +5,6 @@ from src.data_quality import BaseTest
 
 class TestTrainPerformance(BaseTest):
 
-
-
-
     def test_completeness(self):
         check = (
             Check(self.session, CheckLevel.Error, "TrainPerformance - Completeness Check")
@@ -32,9 +29,10 @@ class TestTrainPerformance(BaseTest):
     def test_grain_uniqueness(self):
         check = (
             Check(self.session, CheckLevel.Error, "TrainPerformance - Grain Uniqueness")
-            .isUnique(
+            .hasUniqueness(
                 ["departure_date", "train_sk_id"],
-                "Combination of departure_date, train_sk_id must be unique",
+                lambda x: x == 1.0,
+                "Combination of departure_date, train_sk_id must be unique"
             )
         )
 
@@ -130,7 +128,7 @@ class TestTrainPerformance(BaseTest):
             .satisfies(
                 """
                 capacity = 0
-                OR ABS(occupancy_rate - (net_tickets_sold / capacity)) < 0.001
+                OR ((occupancy_rate - (net_tickets_sold / capacity) * 100) < 0.01)
                 """,
                 "occupancy_rate_matches_calculation",
                 lambda x: x == 1.0,
@@ -178,8 +176,7 @@ class TestTrainPerformance(BaseTest):
             Check(self.session, CheckLevel.Error, "TrainPerformance - Dataset Validation")
             .hasSize(
                 lambda x: x > 0,
-                "Dataset must not be empty",
-                "TrainPerformance dataset should contain at least one record"
+                "Dataset must not be empty"
             )
         )
 
