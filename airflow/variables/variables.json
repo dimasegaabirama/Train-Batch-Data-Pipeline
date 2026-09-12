@@ -1,7 +1,5 @@
 {
   "config_path": "/app/config/pipeline-config.yaml",
   "spark_submit_image_name": "spark-submit:3.2.1-hadoop3.2",
-  "secret_env_path": "/opt/airflow/.env.global",
-  "secret_env_target": "/app/.env.global",
-  "data_quality_enabled": "true"
+  "secret_env_target": "/app/.env.global"
 }

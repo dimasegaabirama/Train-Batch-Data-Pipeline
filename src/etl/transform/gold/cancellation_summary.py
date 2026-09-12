@@ -24,7 +24,7 @@ class CancellationSummary(BaseTransform):
             ).agg(
                 F.count("ticket_id").alias("total_tickets"),
                 F.coalesce(
-                    F.count(F.when(F.col("paid_at").isNotNull(), F.col("ticket_id"))),
+                    F.count(F.when(F.col("paid_at").isNotNull() & F.col("cancelled_at").isNull(), F.col("ticket_id"))),
                     F.lit(0),
                 ).alias("total_tickets_paid"),
                 F.coalesce(
@@ -100,10 +100,13 @@ class CancellationSummary(BaseTransform):
                 )
                 .withColumn(
                     "cancelled_after_payment_rate",
-                    F.round(
-                        F.col("cancelled_after_payment") / F.col("total_tickets_paid"),
-                        4,
-                    ),
+                    F.when(
+                        F.col("total_tickets_paid") > 0,
+                        F.round(
+                            F.col("cancelled_after_payment") / F.col("total_tickets_paid"),
+                            4,
+                        ),
+                    ).otherwise(F.lit(0.0))
                 )
                 .withColumn("updated_at", F.current_timestamp())
             )

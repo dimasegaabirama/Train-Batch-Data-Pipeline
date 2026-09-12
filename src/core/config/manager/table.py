@@ -14,6 +14,7 @@ from src.models.data_config import (
 )
 from src.utils.table_utils import create_table_fullname
 
+from .pipeline import PipelineManager
 from .catalog import CatalogManager
 from .schema import SchemaManager
 
@@ -23,12 +24,13 @@ class TableManager:
         self._config = Config.get_config()
         self._catalog_manager = CatalogManager()
         self._schema_manager = SchemaManager()
+        self._pipeline_manager = PipelineManager()
 
     def get_config(self) -> TablesConfig:
         return self._config.tables
 
     def get_tablenames(self, stage: StageType) -> List[str]:
-        cfg = self._config.pipeline.tablenames.get(stage)
+        cfg = self._pipeline_manager.get_config().tablenames.get(stage)
         if cfg is None:
             raise ValueError(f"Tablenames for stage '{stage}' not found")
         return cfg

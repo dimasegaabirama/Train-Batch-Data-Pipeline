@@ -9,9 +9,14 @@ services:
     <<: *airflow-pipeline-config
     environment:
       PYTHONPATH: /opt/airflow
+      CONFIG_PATH: /opt/airflow/config/pipeline-config.yaml
+      ENV_PATH: /opt/airflow/.env.global
     volumes:
       - .env.global:/opt/airflow/.env.global
       - ./config/pipeline-config.yaml:/opt/airflow/config/pipeline-config.yaml
+      - ./src/core/config:/opt/airflow/src/core/config
+      - ./src/models:/opt/airflow/src/models
+      - ./src/utils:/opt/airflow/src/utils
 
   airflow-scheduler:
     <<: *airflow-pipeline-config

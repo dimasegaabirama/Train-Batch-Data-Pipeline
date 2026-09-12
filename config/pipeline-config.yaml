@@ -11,6 +11,10 @@ pipeline:
   name: train_batch_pipeline
   source_type: mongo
   catalog_type: nessie
+  start_date: "2024-01-01"
+  schedule: "0 0 * * *"
+  config_path: "{CONFIG_PATH}"
+  env_path: "{ENV_PATH}"
   stages:
     - bronze
     - silver
@@ -72,6 +76,7 @@ storages:
 # =====================================================
 spark:
   master: "${SPARK_MASTER}"
+  submit_image_name: "${SPARK_SUBMIT_IMAGE_NAME}"
 
   common_config: &spark_common
     spark.driver.bindAddress: "0.0.0.0"

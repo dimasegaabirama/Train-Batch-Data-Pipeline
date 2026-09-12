@@ -9,6 +9,7 @@ class SparkLayerContext(BaseModel):
 
 class SparkConfig(BaseModel):
     master: str
+    submit_image_name: str
     bootstrap: SparkLayerContext
     bronze: SparkLayerContext
     silver: SparkLayerContext
