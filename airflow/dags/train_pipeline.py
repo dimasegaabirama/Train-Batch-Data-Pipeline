@@ -122,43 +122,30 @@ def train_pipeline():
             network_mode="data_eng_net",
             mount_tmp_dir=False,
             mounts=[make_mount()],
-            auto_remove="force",
+            auto_remove="force"
         )
 
     def make_empty_task(task_id: str) -> EmptyOperator:
         return EmptyOperator(task_id=task_id)
 
     def build_task(
-        stage_task: Dict[str, deque],
-        task_map: Dict[str, str],
+        task_map: Dict[str, DockerOperator],
         stage: StageType,
         table_name: str,
         data_quality_enabled: bool = True,
-        primary_task: object = None,
     ):
         task = task_map.get(table_name)
+
         if not task:
-            task_map[table_name] = make_spark_job(
+            task = make_spark_job(
                 stage, table_name, data_quality_enabled
             )
-            stage_task[stage].append(task)
-            return None
+            task_map[table_name] = task
 
-        if (
-            primary_task
-            and task in stage_task[stage]
-            and primary_task in stage_task[stage]
-        ):
-            primary_index = stage_task[stage].index(primary_task)
-            dep_index = stage_task[stage].index(task)
+        return task
 
-            if dep_index > primary_index:
-                stage_task[stage].remove(task)
-                stage_task[stage].insert(
-                    primary_index - 1, task
-                )
 
-    def make_task_group(stage: StageType, stage_task: Dict[str, deque]) -> task_group:
+    def make_task_group(stage: StageType) -> task_group:
 
         @task_group(group_id=f"{stage}_tasks")
         def task_group_stage(stage: str):
@@ -166,36 +153,57 @@ def train_pipeline():
             task_map = {}
 
             for table_name in TABLE_CONFIG.get_tablenames(stage):
-                primary_task = build_task(
-                    stage_task=stage_task,
-                    task_map=task_map,
-                    stage=stage,
-                    table_name=table_name,
+                build_task(task_map, stage, table_name)
+
+            
+            for table_name in TABLE_CONFIG.get_tablenames(stage):
+
+                current_task = build_task(
+                    task_map,
+                    stage,
+                    table_name
                 )
 
-                dependency_tables = TABLE_CONFIG.get_table_deps(table_name, stage)
-                for dep_table in (
-                    dependency_tables[table_name] if dependency_tables else []
-                ):
-                    if dep_table.namespace != stage:
-                        continue
+                table_deps = TABLE_CONFIG.get_table_deps(
+                    table_name,
+                    stage
+                )
 
-                    dep_task = build_task(
-                        stage_task=stage_task,
-                        task_map=task_map,
-                        stage=stage,
-                        table_name=table_name,
-                        primary_task=primary_task,
+                if not table_deps:
+                    continue
+
+                for name, deps in table_deps.items():
+
+                    current_task = build_task(
+                        task_map,
+                        stage,
+                        name
                     )
 
-        return stage_task
+                    for dep in deps:
+
+                        if dep.namespace != stage:
+                            continue
+
+                        dep_task = build_task(
+                            task_map,
+                            stage,
+                            dep.name
+                        )
+
+                        chain(
+                            dep_task,
+                            current_task
+                        )
+                        
+
+        return task_group_stage(stage)
 
 
-    stages = PIPELINE_CONFIG.stages
-    stage_task = {"bronze": deque(), "silver": deque(), "gold": deque()}
+    bronze = make_task_group("bronze")
+    silver = make_task_group("silver")
+    gold = make_task_group("gold")
 
-    bronze_stage = make_task_group("bronze", stage_task)
-
-    chain(*stage_task["bronze"])
+    make_empty_task("bronze") >> bronze >> make_empty_task("silver") >> silver >> make_empty_task("gold") >> gold
 
 train_pipeline()
