@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 
 from airflow.operators.empty import EmptyOperator
@@ -108,8 +109,17 @@ def train_pipeline():
         stage: StageType, table_name: str, data_quality_enabled: bool = True
     ) -> DockerOperator:
 
+        def get_deterministic_port(stage: str, table_name: str, base_port: int = 20000, range_size: int = 1000) -> int:
+            seed = f"{stage}_{table_name}"
+            hash_digest = hashlib.md5(seed.encode()).hexdigest()
+            offset = int(hash_digest, 16) % range_size
+
+            return base_port + offset
+
         spark_submit_image_name = SPARK_CONFIG.get_config().submit_image_name
+
         spark_driver_host = f"spark_submit_{stage}_{table_name}"
+        spark_driver_port = get_deterministic_port(stage, table_name)
 
         return DockerOperator(
             task_id=f"run_{stage}_{table_name}",
@@ -117,6 +127,7 @@ def train_pipeline():
             command=make_command(stage, table_name, data_quality_enabled),
             container_name=f"spark_submit_{stage}_{table_name}",
             hostname=spark_driver_host,
+            port_bindings={spark_driver_port: spark_driver_port}, 
             docker_url="tcp://docker-proxy:2375",
             network_mode="data_eng_net",
             mount_tmp_dir=False,
@@ -124,6 +135,7 @@ def train_pipeline():
             auto_remove="force",
             environment={
                 "SPARK_DRIVER_HOST": spark_driver_host,
+                "SPARK_DRIVER_PORT": str(spark_driver_port),
                 "CONFIG_PATH": "/app/config/pipeline-config.yaml",
                 "ENV_PATH": "/app/.env.global"
             }
