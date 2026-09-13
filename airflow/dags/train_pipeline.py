@@ -1,4 +1,3 @@
-from collections import deque
 from pathlib import Path
 
 from airflow.operators.empty import EmptyOperator
@@ -20,9 +19,6 @@ PIPELINE_CONFIG = PipelineManager().get_config()
 SPARK_CONFIG = SparkManager()
 TABLE_CONFIG = TableManager()
 
-TIMEZONE = "Asia/Jakarta"
-
-PATH_TO_ENV = Path(__file__).parents[3] / ".env.global"
 DEFAULT_ARGS = {
     "owner": "Dimas Ega Abirama | Data Engineering",
     "depends_on_past": False,
@@ -42,7 +38,8 @@ async def callback_function(**kwargs):
     severity = kwargs.get("severity")
 
     print(
-        f"🚨 SEVERITY : {severity} | Dag {dag_run.dag_id} missed deadline | DagRun: {dag_run}, Alert Type: {alert_type} !!"
+        f"🚨 SEVERITY : {severity} | Dag {dag_run.dag_id} missed deadline | "
+        f"DagRun: {dag_run}, Alert Type: {alert_type} !!"
     )
 
 
@@ -57,7 +54,9 @@ async def callback_function(**kwargs):
         ),
     ),
     schedule=PIPELINE_CONFIG.schedule,
-    start_date=from_format(PIPELINE_CONFIG.start_date, "YYYY-MM-DD", tz=TIMEZONE),
+    start_date=from_format(
+        PIPELINE_CONFIG.start_date, "YYYY-MM-DD", tz=PIPELINE_CONFIG.timezone
+    ),
     max_consecutive_failed_dag_runs=3,
     fail_fast=True,
     catchup=False,
@@ -66,63 +65,68 @@ async def callback_function(**kwargs):
     dagrun_timeout=duration(hours=3),
     default_args=DEFAULT_ARGS,
     tags=["pipeline", "batch", "train"],
-    description="Pipeline utama untuk penarikan data train batch, transformasi, dan load ke data warehouse",
+    description="Orchestrates the end-to-end train batch data pipeline, from data extraction and transformation to loading into the data warehouse.",
 )
 def train_pipeline():
 
     def make_command(
         stage: StageType, table_name: str, data_quality_enabled: bool = True
     ) -> list[str]:
-        return [
+
+        command = [
             "python3",
             "-m",
             "src.app.run_pipeline",
-            "-stg",
-            stage,
-            "-tbl",
-            f"{table_name}_{stage}",
-            "-cfg",
-            PIPELINE_CONFIG.config_path,
-            "-env",
-            PIPELINE_CONFIG.env_path,
-            "-start",
-            "{{ data_interval_start }}",
-            "-end",
-            "{{ data_interval_end }}",
-            "--data_quality" if data_quality_enabled else "",
+            "-stg", stage,
+            "-tbl", f"{table_name}",
+            "-cfg", "/app/config/pipeline-config.yaml",
+            "-env", "/app/.env.global",
+            "-start", "{{ data_interval_end.subtract(days=1).start_of('day') | ds }}",
+            "-end", "{{ data_interval_end | ds }}",
         ]
 
-    def make_mount() -> Mount:
-        return Mount(
-            source=str(PATH_TO_ENV.absolute()),
-            target=PIPELINE_CONFIG.env_path,
-            type="bind",
-        )
+        if data_quality_enabled:
+            command.append("--data_quality")
+
+        return command
+
+    def make_mount() -> list[Mount]:
+        return [
+            Mount(
+                source=PIPELINE_CONFIG.config_host_path,
+                target="/app/config/pipeline-config.yaml",
+                type="bind"
+            ),
+            Mount(
+                source=PIPELINE_CONFIG.env_host_path,
+                target="/app/.env.global",
+                type="bind"
+            )
+        ]
 
     def make_spark_job(
         stage: StageType, table_name: str, data_quality_enabled: bool = True
     ) -> DockerOperator:
 
         spark_submit_image_name = SPARK_CONFIG.get_config().submit_image_name
-        driver_host = SPARK_CONFIG.get_stage_config(stage).config.get(
-            "spark.driver.host"
-        )
-        driver_port = SPARK_CONFIG.get_stage_config(stage).config.get(
-            "spark.driver.port"
-        )
+        spark_driver_host = f"spark_submit_{stage}_{table_name}"
 
         return DockerOperator(
             task_id=f"run_{stage}_{table_name}",
             image=spark_submit_image_name,
             command=make_command(stage, table_name, data_quality_enabled),
             container_name=f"spark_submit_{stage}_{table_name}",
-            hostname=driver_host,
+            hostname=spark_driver_host,
             docker_url="tcp://docker-proxy:2375",
-            port_bindings={driver_port: driver_port},
             network_mode="data_eng_net",
             mount_tmp_dir=False,
-            mounts=[make_mount()],
-            auto_remove="force"
+            mounts=make_mount(),
+            auto_remove="force",
+            environment={
+                "SPARK_DRIVER_HOST": spark_driver_host,
+                "CONFIG_PATH": "/app/config/pipeline-config.yaml",
+                "ENV_PATH": "/app/.env.global"
+            }
         )
 
     def make_empty_task(task_id: str) -> EmptyOperator:
@@ -137,73 +141,51 @@ def train_pipeline():
         task = task_map.get(table_name)
 
         if not task:
-            task = make_spark_job(
-                stage, table_name, data_quality_enabled
-            )
+            task = make_spark_job(stage, table_name, data_quality_enabled)
             task_map[table_name] = task
 
         return task
-
 
     def make_task_group(stage: StageType) -> task_group:
 
         @task_group(group_id=f"{stage}_tasks")
         def task_group_stage(stage: str):
 
-            task_map = {}
+            task_map: Dict[str, DockerOperator] = {}
 
             for table_name in TABLE_CONFIG.get_tablenames(stage):
-                build_task(task_map, stage, table_name)
+                current_task = build_task(task_map, stage, table_name)
 
-            
-            for table_name in TABLE_CONFIG.get_tablenames(stage):
-
-                current_task = build_task(
-                    task_map,
-                    stage,
-                    table_name
-                )
-
-                table_deps = TABLE_CONFIG.get_table_deps(
-                    table_name,
-                    stage
-                )
+                table_deps = TABLE_CONFIG.get_table_deps(table_name, stage)
 
                 if not table_deps:
                     continue
 
                 for name, deps in table_deps.items():
-
-                    current_task = build_task(
-                        task_map,
-                        stage,
-                        name
-                    )
+                    current_task = build_task(task_map, stage, name)
 
                     for dep in deps:
-
                         if dep.namespace != stage:
                             continue
 
-                        dep_task = build_task(
-                            task_map,
-                            stage,
-                            dep.name
-                        )
+                        dep_task = build_task(task_map, stage, dep.name)
 
-                        chain(
-                            dep_task,
-                            current_task
-                        )
-                        
+                        chain(dep_task, current_task)
 
         return task_group_stage(stage)
-
 
     bronze = make_task_group("bronze")
     silver = make_task_group("silver")
     gold = make_task_group("gold")
 
-    make_empty_task("bronze") >> bronze >> make_empty_task("silver") >> silver >> make_empty_task("gold") >> gold
+    (
+        make_empty_task("bronze")
+        >> bronze
+        >> make_empty_task("silver")
+        >> silver
+        >> make_empty_task("gold")
+        >> gold
+    )
+
 
 train_pipeline()

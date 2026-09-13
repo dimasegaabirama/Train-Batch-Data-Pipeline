@@ -6,11 +6,10 @@ x-worker-base: &worker-base
     SPARK_WORKER_CORES: 3
     SPARK_WORKER_MEMORY: 4G
   volumes:
-    - ./docker/spark/jars/:/opt/jars/
-    - ./docker/spark/spark-defaults.conf:/spark/conf/spark-defaults.conf
+    - ${PROJECT_DIR}/docker/spark/jars/:/opt/jars/
+    - ${PROJECT_DIR}/docker/spark/spark-defaults.conf:/spark/conf/spark-defaults.conf
   networks:
     - data_eng_net
-    - spark_net
   depends_on:
     spark-master:
       condition: service_healthy
@@ -21,7 +20,7 @@ services:
     container_name: spark-master
     hostname: spark-master
     volumes:
-      - ./docker/spark/spark-defaults.conf:/spark/conf/spark-defaults.conf
+      - ${PROJECT_DIR}/docker/spark/spark-defaults.conf:/spark/conf/spark-defaults.conf
     ports:
       - "8080:8080"
       - "7077:7077"
@@ -33,7 +32,6 @@ services:
       start_period: 30s
     networks:
       - data_eng_net
-      - spark_net
 
   spark-worker-1:
     <<: *worker-base
@@ -55,9 +53,9 @@ services:
     ports:
       - 4041:4041
     volumes:
-      - ./src:/app/src
-      - ./config:/app/config
-      - .env.global:/app/.env.global
+      - ${PROJECT_DIR}/src:/app/src
+      - ${PROJECT_DIR}/config:/app/config
+      - ${PROJECT_DIR}/.env.global:/app/.env.global
     environment:
       CONFIG_PATH: /app/config/pipeline-config.yaml
       ENV_PATH: /app/.env.global
@@ -66,7 +64,6 @@ services:
         condition: service_healthy
     networks:
       - data_eng_net
-      - spark_net
 
   spark-jupyter:
     build:
@@ -75,7 +72,7 @@ services:
     container_name: spark-jupyter
     hostname: spark-jupyter
     volumes:
-      - ./src/notebooks:/app
+      - ${PROJECT_DIR}/src/notebooks:/app
     ports:
       - 8888:8888
       - 4042:4042
@@ -84,10 +81,7 @@ services:
         condition: service_healthy
     networks:
       - data_eng_net
-      - spark_net
 
 networks:
   data_eng_net:
-    external: true
-  spark_net:
     external: true

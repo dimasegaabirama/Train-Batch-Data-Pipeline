@@ -15,7 +15,7 @@ fi
 # HADOOP
 # =========================
 echo "=== STOP HADOOP ==="
-docker compose -p hadoop -f ./docker/hadoop/docker-compose.yaml down -v
+docker compose -p hadoop --env-file ./.env.global -f ./docker/hadoop/docker-compose.yaml down -v
 
 rm -rf ./docker/hadoop/namenode/*
 rm -rf ./docker/hadoop/datanode/datanode_1/*
@@ -25,7 +25,7 @@ rm -rf ./docker/hadoop/datanode/datanode_2/*
 # NESSIE + MYSQL
 # =========================
 echo "=== STOP NESSIE ==="
-docker compose -p nessie -f ./docker/nessie/docker-compose.yaml down -v
+docker compose -p nessie --env-file ./.env.global -f ./docker/nessie/docker-compose.yaml down -v
 
 rm -rf ./docker/nessie/data/*
 rm -rf ./docker/nessie/rest_data/*
@@ -34,7 +34,7 @@ rm -rf ./docker/nessie/rest_data/*
 # MONGO
 # =========================
 echo "=== STOP MONGO ==="
-docker compose -p mongo -f ./docker/mongo/docker-compose.yaml down -v
+docker compose -p mongo --env-file ./.env.global -f ./docker/mongo/docker-compose.yaml down -v
 
 rm -rf ./docker/mongo/data/* ./docker/mongo/data/.[!.]*
 
@@ -42,13 +42,14 @@ rm -rf ./docker/mongo/data/* ./docker/mongo/data/.[!.]*
 # SPARK
 # =========================
 echo "=== STOP SPARK ==="
-docker compose -p spark -f ./docker/spark/docker-compose.yaml down -v
+docker compose -p spark --env-file ./.env.global -f ./docker/spark/docker-compose.yaml down -v
 
 # =========================
 # AIRFLOW
 # =========================
 echo "=== STOP AIRFLOW ==="
 docker compose -p airflow \
+  --env-file ./.env.global \
   -f ./docker/airflow/docker-compose.yaml \
   -f ./docker/airflow/docker-compose.override.yaml \
   down -v
@@ -63,7 +64,7 @@ rm -rf ./docker/airflow/data/*
 # =========================
 echo "=== CLEAN NETWORK ==="
 echo "Cleaning networks..."
-for net in hadoop_net spark_net airflow_net mongo_net nessie_net data_eng_net; do
+for net in db_net data_eng_net; do
   if docker network rm "$net" 2>/dev/null; then
     echo "Removed $net"
   else

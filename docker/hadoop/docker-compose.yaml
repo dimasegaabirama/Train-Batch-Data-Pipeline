@@ -1,5 +1,6 @@
 x-datanode-base: &datanode-base
   image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+  restart: always
   environment:
     CLUSTER_NAME: train_cluster
     CORE_CONF_fs_defaultFS: ${HADOOP_URL}
@@ -9,7 +10,6 @@ x-datanode-base: &datanode-base
     HDFS_CONF_dfs_datanode_name_dir: ${HADOOP_DATANODE_DIR}
     HDFS_CONF_dfs_datanode_du_reserved: 3221225472
   networks:
-    - hadoop_net
     - data_eng_net
   depends_on:
     namenode:
@@ -40,7 +40,6 @@ services:
       retries: 5
     networks:
       - data_eng_net
-      - hadoop_net
 
   datanode-1:
     <<: *datanode-base
@@ -64,6 +63,4 @@ services:
     
 networks:
   data_eng_net:
-    external: True
-  hadoop_net:
     external: True

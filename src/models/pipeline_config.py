@@ -17,9 +17,10 @@ class PipelineConfig(BaseModel):
     name: str
     source_type: str
     catalog_type: str
-    schedule: str
     start_date: str
-    config_path: str
-    env_path: str
+    schedule: str
+    timezone: str
+    config_host_path: str
+    env_host_path: str
     stages: List
     tablenames: Dict[StageType, List[str]]

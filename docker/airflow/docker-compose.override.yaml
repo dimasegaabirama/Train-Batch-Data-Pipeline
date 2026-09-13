@@ -1,22 +1,21 @@
 x-airflow-pipeline-config:
   &airflow-pipeline-config
-  networks:
-    - airflow_net
-    - data_eng_net
+  environment:
+    PYTHONPATH: /opt/airflow
+    CONFIG_PATH: /opt/airflow/config/pipeline-config.yaml
+    ENV_PATH: /opt/airflow/.env.global
+  volumes:
+    - ${CONFIG_HOST_PATH}:/opt/airflow/config/pipeline-config.yaml
+    - ${ENV_HOST_PATH}:/opt/airflow/.env.global
+    - ${PROJECT_DIR}/docker/airflow/airflow_stubs/__init__.py:/opt/airflow/src/__init__.py
+    - ${PROJECT_DIR}/docker/airflow/airflow_stubs/__init__.py:/opt/airflow/src/core/__init__.py
+    - ${PROJECT_DIR}/src/core/config:/opt/airflow/src/core/config
+    - ${PROJECT_DIR}/src/models:/opt/airflow/src/models
+    - ${PROJECT_DIR}/src/utils:/opt/airflow/src/utils
 
 services:
   airflow-dag-processor:
     <<: *airflow-pipeline-config
-    environment:
-      PYTHONPATH: /opt/airflow
-      CONFIG_PATH: /opt/airflow/config/pipeline-config.yaml
-      ENV_PATH: /opt/airflow/.env.global
-    volumes:
-      - .env.global:/opt/airflow/.env.global
-      - ./config/pipeline-config.yaml:/opt/airflow/config/pipeline-config.yaml
-      - ./src/core/config:/opt/airflow/src/core/config
-      - ./src/models:/opt/airflow/src/models
-      - ./src/utils:/opt/airflow/src/utils
 
   airflow-scheduler:
     <<: *airflow-pipeline-config
@@ -28,7 +27,6 @@ services:
     <<: *airflow-pipeline-config
 
   docker-proxy:
-    <<: *airflow-pipeline-config
     container_name: docker-proxy
     image: alpine/socat
     command: "TCP4-LISTEN:2375,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock"
@@ -36,9 +34,12 @@ services:
       - "2376:2375"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    
+    networks:
+      - db_net
+    restart: always
+
 networks:
-  airflow_net:
-    external: true
   data_eng_net:
+    external: true
+  db_net:
     external: true

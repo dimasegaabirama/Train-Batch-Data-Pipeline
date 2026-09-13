@@ -38,7 +38,7 @@ compose_up() {
 # NETWORKS
 # ─────────────────────────────────────────
 log "Creating networks (if not exist)..."
-for net in hadoop_net spark_net airflow_net mongo_net nessie_net data_eng_net; do
+for net in db_net data_eng_net; do
   docker network create "$net" 2>/dev/null || true
 done
 success "Networks ready"
@@ -113,20 +113,18 @@ log "Starting Spark Master..."
 compose_up spark ./docker/spark/docker-compose.yaml spark-master
 wait_for "Spark Master" 10
 
-log "Starting Spark Workers & Jupyter..."
-compose_up spark ./docker/spark/docker-compose.yaml spark-worker-1 spark-worker-2 spark-submit spark-jupyter
+log "Starting Spark Workers..."
+compose_up spark ./docker/spark/docker-compose.yaml spark-worker-1 spark-worker-2 spark-submit
 
 # ─────────────────────────────────────────
 # AIRFLOW (optional)
 # ─────────────────────────────────────────
 # log "Starting Airflow..."
-# docker compose -p airflow \
-#   --project-directory . \
-#   -f ./docker/airflow/docker-compose.yaml \
-#   -f ./docker/airflow/docker-compose.override.yaml \
-#   --env-file "$ENV_FILE" \
-#   up -d
-
-# docker exec -it airflow-airflow-dag-processor-1 airflow variables import //opt/airflow/variables/variables.json
+docker compose -p airflow \
+  --project-directory . \
+  -f ./docker/airflow/docker-compose.yaml \
+  -f ./docker/airflow/docker-compose.override.yaml \
+  --env-file "$ENV_FILE" \
+  up -d
 
 success "All services started! 🎉"

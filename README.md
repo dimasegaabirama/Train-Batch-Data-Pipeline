@@ -283,11 +283,3 @@ python -m src.app.run_pipeline -stg silver \
 1. Make sure the Airflow stack is up (`./start-all.sh`).
 2. Enable the `train_pipeline` DAG in the Airflow UI.
 3. The DAG (`airflow/dags/train_pipeline.py`) invokes `main.py` per table, per stage (Bronze → Silver → Gold), with `--data_quality` running as its own separate task/image from the load task.
-
-## Contributing
-
-Pull requests and issues are welcome. Please run schema tests/validation before submitting changes to `config/pipeline-config.yaml`.
-
-## License
-
-*(Add project license here, e.g. MIT License)*
