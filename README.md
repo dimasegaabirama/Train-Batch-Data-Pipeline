@@ -40,32 +40,52 @@ flowchart LR
 
 All services run as separate Docker Compose stacks, but are joined into one overarching network, **`DATA_ENG_NET`**, so they can communicate across stacks. Each stack also has its own internal network (`*_NET`) for communication between containers within that stack.
 
+| Stack       | Network                   | Container              | Role                                                                         |
+| ----------- | ------------------------- | ---------------------- | ---------------------------------------------------------------------------- |
+| **Airflow** | `DATA_ENG_NET` + `DB_NET` | Postgres               | Airflow metadata DB (DAG runs, task instances, variables, connections, XCom) |
+|             |                           | Redis                  | Message broker for CeleryExecutor (task queue for workers)                   |
+|             |                           | API Server             | Airflow Web UI (monitoring, triggering, logs)                                |
+|             |                           | DAG Processor          | Parses DAG files and processes DAG definitions                               |
+|             |                           | Scheduler              | Schedules DAG runs and determines which tasks are ready                      |
+|             |                           | Worker                 | Executes Airflow tasks through CeleryExecutor                                |
+|             |                           | Triggerer              | Runs deferred tasks and sensors asynchronously                               |
+|             |                           | Docker Proxy           | Provides Docker API access for Airflow to create and manage containers       |
+| **Spark**   | `DATA_ENG_NET`            | Master                 | Spark cluster coordinator                                                    |
+|             |                           | Worker 1, Worker 2     | Runs Spark executors                                                         |
+|             |                           | Submit                 | Client used to `spark-submit` Spark jobs from the pipeline/Airflow           |
+|             |                           | Jupyter                | Notebook environment for ad-hoc exploration and debugging (`src/notebooks`)  |
+| **Hadoop**  | `DATA_ENG_NET`            | Namenode               | HDFS metadata, directory structure, and block locations                      |
+|             |                           | Datanode 1, Datanode 2 | Physical HDFS data block storage                                             |
+| **Nessie**  | `DATA_ENG_NET` + `DB_NET` | REST Catalog           | Iceberg catalog for table management, branching, and versioning              |
+|             |                           | Postgres Backend       | Persistent backend storage for Nessie metadata                               |
+| **MongoDB** | `DATA_ENG_NET`            | MongoDB                | Operational data source for the pipeline                                     |
+|             |                           | Mongo Express          | Web UI for browsing and inspecting MongoDB data                              |
 
+### Network Architecture
 
-| Stack | Network | Container | Role |
-|---|---|---|---|
-| **Airflow** | `AIRFLOW_NET` | Postgres | Metadata DB (DAG runs, task instances, variables, connections, XCom) |
-| | | Redis | Message broker for CeleryExecutor (task queue for workers) |
-| | | Api Server | Airflow Web UI (monitoring, triggering, logs) |
-| | | Dag Processor | Parses DAG files, decoupled from the scheduler (Airflow 2.x+) |
-| | | Scheduler | Reads DAGs, determines which tasks are ready to run |
-| | | Worker | Executes tasks (Celery worker) |
-| | | Triggerer | Runs deferred tasks/sensors asynchronously |
-| **Spark** | `SPARK_NET` | Master | Spark cluster coordinator |
-| | | Worker_1, Worker_2 | Runs Spark executors |
-| | | Submit | Client used to `spark-submit` jobs from the pipeline/Airflow |
-| | | Jupyter | Notebook for ad-hoc exploration/debugging (`src/notebooks`) |
-| **Hadoop** | `HADOOP_NET` | Namenode | HDFS metadata (directory structure, block locations) |
-| | | Datanode_1, Datanode_2 | Physical HDFS data block storage |
-| **Nessie** | `NESSIE_NET` | Rest Catalog | Iceberg catalog (branching, table versioning) |
-| | | Postgres | Backing store for Nessie metadata |
-| **Mongo** | `MONGO_NET` | Mongo DB | Operational data source (source system) |
-| | | Mongo Express | Web UI to browse/inspect Mongo data |
+The project uses two Docker networks:
 
-**Why split per-network and then join under `DATA_ENG_NET`?**
-- Isolation: each stack (`docker/airflow`, `docker/spark`, etc.) can be brought up/down independently without affecting the others.
-- Still able to reach each other: since every stack is joined to `DATA_ENG_NET`, Airflow can reach the Spark master, Spark can reach Nessie & HDFS, etc. — matching the logical pipeline flow above.
-- Easier debugging: if one stack has issues, its network can be inspected/isolated on its own.
+* **`DATA_ENG_NET`**
+  The primary application network used for communication between the data engineering services. Airflow, Spark, Hadoop, Nessie REST Catalog, and MongoDB are connected through this network so that the pipeline components can communicate with each other.
+
+* **`DB_NET`**
+  A dedicated backend network for database-related services. It is used by:
+
+  * Airflow Postgres
+  * Airflow Redis
+  * Airflow Docker Proxy
+  * Nessie Postgres Backend
+
+### Why use two networks?
+
+* **Service communication:** `DATA_ENG_NET` provides a shared network for the main data engineering components and allows Airflow to communicate with Spark, Hadoop, Nessie, and MongoDB.
+
+* **Backend isolation:** `DB_NET` separates internal backend services such as Postgres, Redis, and Docker Proxy from the main data processing network.
+
+* **Controlled connectivity:** Services that require both application-level communication and backend access can join both networks, while services that only need one type of communication remain on a single network.
+
+* **Simpler architecture:** Using two networks avoids unnecessary network fragmentation while still providing logical separation between the data engineering layer and backend infrastructure.
+
 
 ## Table Schema Flow
 
