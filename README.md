@@ -266,18 +266,69 @@ DQ checks run as their **own Airflow task and image**, separate from the Spark l
 
 ## Installation & Running
 
-**Prerequisites:** Docker + Docker Compose, Python 3.x, [`uv`](https://docs.astral.sh/uv/) (fallback: `pip install -r requirements.txt`).
+**Prerequisites:** Docker + Docker Compose, Python 3.x, and [`uv`](https://docs.astral.sh/uv/) (fallback: `pip install -r requirements.txt`).
+
+### 1. Clone Repository
 
 ```bash
-git clone <repo-url> && cd train_batch_pipeline
-uv sync                         # install dependencies
-source ./start-all.sh           # up: mongo, hdfs, nessie, spark, airflow
+git clone <repo-url>
+cd train-batch-pipeline
 ```
 
+### 2. Configure Environment
+
 ```bash
-docker exec -it spark-submit python -m src.app.run_pipeline --run_bootstrap # initialize schema
+cp .env.example .env.global
+export PROJECT_DIR="$(pwd)"
+```
+
+`PROJECT_DIR` is required — the Docker Compose stacks use it to resolve bind mounts (`src/`, `config/`, `.env.global`) and to build the host paths Airflow passes into each Spark task container. Adjust credentials, ports, and `START_DATE` / `END_DATE` in `.env.global` as needed.
+
+### 3. Install Dependencies
+
+```bash
+uv sync
+```
+
+### 4. Start Services
+
+```bash
+source ./start-all.sh
+```
+
+The script creates the `db_net` and `data_eng_net` networks, then brings the stacks up in order: Nessie Postgres backend → Nessie REST Catalog → Hadoop → MongoDB → Spark → Airflow. It also provisions the HDFS warehouse directories (`/warehouse`, `/warehouse_dev`) and runs a safe-mode health check, leaving safe mode only when there are zero missing and zero corrupt blocks.
+
+### 5. Initialize Pipeline
+
+```bash
+docker exec -it spark-submit \
+    python -m src.app.run_pipeline --run_bootstrap
+
 docker rm -f spark-submit
 ```
+
+Bootstrap creates the Nessie `main` branch and `baseline_version` tag, the `bronze` / `silver` / `gold` namespaces, all base tables, and the seed rows for the static lookup dimensions (`class`, `status`, `payment`). The `spark-submit` container is removed afterwards because Airflow launches its own per-task containers under the same image.
+
+### Service UIs
+
+| Service | URL |
+|---|---|
+| Airflow | http://localhost:8083 |
+| Spark Master | http://localhost:8080 |
+| Hadoop Namenode | http://localhost:9870 |
+| Nessie REST Catalog | http://localhost:19120 |
+| Mongo Express | http://localhost:8088 |
+| Jupyter | http://localhost:8888 |
+| Flower (Celery) | http://localhost:5555 |
+
+
+### Tearing Down
+
+```bash
+./stop-all.sh
+```
+
+> ⚠️ This stops every stack with `-v` and deletes the HDFS, Nessie, and MongoDB data directories. It prompts for confirmation first.
 
 ### CLI
 
@@ -291,10 +342,15 @@ docker rm -f spark-submit
 | `--run_bootstrap` | — | No | Sets up Nessie branches/namespaces + base schemas |
 | `--data_quality` | — | No | Runs PyDeequ DQ checks for the processed tables |
 
-**Example — run the Silver stage for specific tables with DQ checks in spark-submit container:**
+### Running the Pipeline
+
+**Via Airflow (recommended):** enable the `Train_Batch_Pipeline` DAG in the Airflow UI. The DAG is built dynamically from `config/pipeline-config.yaml` — one task group per stage (Bronze → Silver → Gold), one `DockerOperator` task per table, wired together from each table's declared dependencies. It runs daily (`0 0 * * *`, Asia/Jakarta) with retries, exponential backoff, and a deadline alert.
+
+**Manually in spark-submit container:**
+
 ```bash
 python -m src.app.run_pipeline -stg silver \
   -cfg config/pipeline-config.yaml -env .env.global \
-  -start 2026-01-01 -end 2026-01-02 \
+  -start 2024-03-22 -end 2024-03-23 \
   -tbl stations trains --data_quality
 ```
