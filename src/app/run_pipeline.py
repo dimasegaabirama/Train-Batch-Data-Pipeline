@@ -5,7 +5,7 @@ from typing_extensions import List, Tuple, Dict, Optional
 from src.app.orchestrator import PipelineOrchestrator
 from src.app.run_bootstrap import PipelineBootstrap
 from src.core import AppLogger, Session, TableManager
-from src.models.data_config import DateConfig
+from src.models.data_config import DateConfig, PipelineStage
 
 
 class PipelineRunner:
@@ -17,7 +17,7 @@ class PipelineRunner:
     def __init__(self):
         self.args = None
 
-        self.stage: Optional[str] = None
+        self.stage: Optional[PipelineStage] = None
         self.config_path: Optional[str] = None
         self.env_path: Optional[str] = None
         self.start_date: Optional[str] = None
@@ -50,7 +50,7 @@ class PipelineRunner:
         parser.add_argument(
             "-stg",
             "--stage",
-            choices=["bootstrap", "bronze", "silver", "gold"],
+            choices=["bronze", "silver", "gold"],
             help="Pipeline stage to run",
         )
         parser.add_argument(

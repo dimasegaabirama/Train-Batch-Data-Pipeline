@@ -7,7 +7,34 @@ from typing_extensions import Annotated, Dict, List, Literal, Optional, Union
 # Stage Type
 # =========================
 
-StageType = Literal["bootstrap", "source", "bronze", "silver", "gold"]
+PipelineStage = Literal[
+    "bronze",
+    "silver",
+    "gold",
+]
+
+SchemaLayer = Literal[
+    "source",
+    "bronze",
+    "silver",
+    "gold",
+]
+
+TableGroup = Literal[
+    "seed",
+    "bronze",
+    "silver",
+    "gold",
+]
+
+SparkStage = Literal[
+    "bootstrap",
+    "bronze",
+    "silver",
+    "gold"
+]
+
+AllStages = Union[PipelineStage, SparkStage, SchemaLayer, TableGroup] 
 
 # =========================
 # Write Type
@@ -93,8 +120,8 @@ class SchemaContext(BaseModel):
     name: str
     description: str
     owner: str
-    upstream: StageType
-    downstream: StageType
+    upstream: SchemaLayer
+    downstream: SchemaLayer
     retention_days: PositiveInt
 
 
@@ -159,10 +186,10 @@ class TableDependency(BaseModel):
 class TableContext(BaseModel):
     type: str
     partitioned_by: str
-    write_mode: Dict[StageType, WriteType]
-    table_schema: Dict[StageType, str]
+    write_mode: Dict[PipelineStage, WriteType]
+    table_schema: Dict[SchemaLayer, str]
     query: List[str]
-    depends_on: Optional[Dict[StageType, List[TableDependency]]] = None
+    depends_on: Optional[Dict[PipelineStage, List[TableDependency]]] = None
 
 
 class TablesConfig(BaseModel):

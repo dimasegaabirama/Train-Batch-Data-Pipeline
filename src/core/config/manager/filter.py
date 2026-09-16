@@ -1,7 +1,7 @@
-from typing_extensions import List
+from typing_extensions import List, Literal
 
 from src.core.config.config import Config
-from src.models.data_config import FilterField, FiltersConfig, StageFilters, StageType
+from src.models.data_config import FilterField, FiltersConfig, PipelineStage, StageFilters
 
 
 class FilterManager:
@@ -11,17 +11,17 @@ class FilterManager:
     def get_config(self) -> FiltersConfig:
         return self._config.filters
 
-    def get_stage_config(self, stage: StageType) -> StageFilters:
+    def get_stage_config(self, stage: PipelineStage) -> StageFilters:
         cfg = getattr(self.get_config(), stage, None)
         if cfg is None:
             raise ValueError(f"Filter config for stage '{stage}' not found")
         return cfg
 
-    def get_stage_type(self, stage: StageType) -> "str | None":
+    def get_stage_type(self, stage: Literal["iceberg", "mongo"]) -> "str | None":
         cfg = self.get_stage_config(stage)
         return cfg.type
 
-    def get_table_filters(self, stage: StageType, table_name: str) -> List[FilterField]:
+    def get_table_filters(self, stage: PipelineStage, table_name: str) -> List[FilterField]:
         cfg = self.get_stage_config(stage)
         cfg_table = cfg.tables.get(table_name, None)
         if cfg_table is None:

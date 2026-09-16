@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, model_validator
 from pyspark.sql import DataFrame
 from typing_extensions import Dict, List, Optional, Union, Annotated, Literal
 
-from src.models.data_config import StageType, WriteType
+from src.models.data_config import WriteType
 
 
 class BasePipelineResult(BaseModel):

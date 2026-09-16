@@ -10,7 +10,7 @@ from src.etl.load import BaseLoad
 from src.etl.transform import BaseTransform
 from src.models.data_config import (
     FilterField,
-    StageType,
+    PipelineStage,
     TableDependency,
     TableMetadata,
 )
@@ -45,7 +45,7 @@ class PipelineOrchestrator:
     # HELPER METHODS
 
     def _resolve_table_metadata(
-        self, stage: StageType, table_name: str
+        self, stage: PipelineStage, table_name: str
     ) -> TableMetadata:
         query_params = {
             "full_table_name": self._table_manager.get_table_fullname(
@@ -58,12 +58,12 @@ class PipelineOrchestrator:
         return self._table_manager.get_table_metadata(table_name, stage, query_params)
 
     def _resolve_table_dependencies(
-        self, stage: StageType, table_name: str
+        self, stage: PipelineStage, table_name: str
     ) -> Optional[Dict[str, List[TableDependency]]]:
         return self._table_manager.get_table_deps(table_name, stage)
 
     def _resolve_extractor_class(
-        self, stage: StageType, table_name: str
+        self, stage: PipelineStage, table_name: str
     ) -> Type[BaseExtract]:
         extractor_cls: Type[BaseExtract] = resolve_registry_class(
             stage, table_name, "extract", False
@@ -75,7 +75,7 @@ class PipelineOrchestrator:
         return extractor_cls
 
     def _resolve_conditions(
-        self, stage: StageType, table_name: str
+        self, stage: PipelineStage, table_name: str
     ) -> Dict[str, object]:
 
         table_filters: List[FilterField] = self._filter_manager.get_table_filters(
@@ -112,7 +112,7 @@ class PipelineOrchestrator:
 
         return conditions
 
-    def _prepared_inputs(self, stage: StageType, table_name: str) -> BaseExtract:
+    def _prepared_inputs(self, stage: PipelineStage, table_name: str) -> BaseExtract:
         table_metadata = self._resolve_table_metadata(stage, table_name)
         table_deps = self._resolve_table_dependencies(stage, table_name)
 
@@ -133,7 +133,7 @@ class PipelineOrchestrator:
 
     # EXTRACT
 
-    def extract(self, stage: StageType, table_name: str) -> ExtractResult:
+    def extract(self, stage: PipelineStage, table_name: str) -> ExtractResult:
         self.logger.info(
             "[EXTRACT] Extracting data for table: %s | Stage: %s", table_name, stage
         )
@@ -143,7 +143,7 @@ class PipelineOrchestrator:
     # TRANSFORM
 
     def transform(
-        self, stage: StageType, table_name: str, inputs: ExtractResult
+        self, stage: PipelineStage, table_name: str, inputs: ExtractResult
     ) -> TransformResult:
         self.logger.info(
             "[TRANSFORM] Transforming data for table: %s | Stage: %s", table_name, stage
@@ -159,7 +159,7 @@ class PipelineOrchestrator:
 
     # LOAD
 
-    def load(self, stage: StageType, table_name: str, inputs: TransformResult):
+    def load(self, stage: PipelineStage, table_name: str, inputs: TransformResult):
         self.logger.info(
             "[LOAD] Loading data for table: %s | Stage: %s", table_name, stage
         )
@@ -171,7 +171,7 @@ class PipelineOrchestrator:
     # SINGLE TABLE PIPELINE
 
     @pipeline_branch
-    def run_table(self, stage: StageType, table_name: str) -> None:
+    def run_table(self, stage: PipelineStage, table_name: str) -> None:
         """Run extract -> transform -> (optional) DQ checks -> load for one table."""
 
         def _is_empty(df) -> bool:
@@ -221,7 +221,7 @@ class PipelineOrchestrator:
 
     # MULTI TABLE PIPELINE
 
-    def run_all_tables(self, stage: StageType, table_names: List[str]) -> None:
+    def run_all_tables(self, stage: PipelineStage, table_names: List[str]) -> None:
         """Run the single-table pipeline sequentially for each table in the list."""
         for table_name in table_names:
             self.run_table(stage=stage, table_name=table_name)

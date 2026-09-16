@@ -4,11 +4,11 @@ from typing import Optional
 from pyspark.sql import SparkSession
 
 from src.core import SparkManager
-from src.models.data_config import StageType
+from src.models.data_config import SparkStage
 
 
 class Session:
-    def __init__(self, stage: StageType, logger: Optional[Logger] = None):
+    def __init__(self, stage: SparkStage, logger: Optional[Logger] = None):
         self.stage = stage
         self.logger = logger
         self._spark_manager = SparkManager()

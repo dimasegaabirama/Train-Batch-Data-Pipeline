@@ -4,7 +4,7 @@ from typing_extensions import Optional, Dict
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
-from src.models.data_config import StageType, TableDependency
+from src.models.data_config import TableDependency
 from src.models.etl_config import ExtractResult, BronzeSilverExtractResult, GoldTransformResult, BronzeSilverTransformResult, GoldTransformResult, TransformResult
 from src.utils.table_utils import create_table_view_name
 

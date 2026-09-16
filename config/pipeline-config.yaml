@@ -21,6 +21,10 @@ pipeline:
     - silver
     - gold
   tablenames:
+    seed:
+      - class
+      - status
+      - payment
     bronze:
       - passengers
       - trains
@@ -82,12 +86,12 @@ spark:
   common_config: &spark_common
     spark.driver.bindAddress: "0.0.0.0"
     spark.driver.host: "${SPARK_DRIVER_HOST}"
-    # spark.driver.port: "${SPARK_DRIVER_PORT}"
+    spark.driver.port: "${SPARK_DRIVER_PORT}"
     spark.driver.memory: "512m"
     
-    spark.executor.memory: "512m"
+    spark.executor.memory: "1g"
     spark.executor.cores: 2
-    spark.executor.instances: 4
+    spark.executor.instances: 3
     
     spark.cleaner.referenceTracking.cleanCheckpoints: true
     

@@ -127,4 +127,6 @@ docker compose -p airflow \
   --env-file "$ENV_FILE" \
   up -d
 
+docker exec airflow-airflow-dag-processor-1 airflow pools set spark_job_limit_pool 2 "Limits concurrent API calls"
+
 success "All services started! 🎉"

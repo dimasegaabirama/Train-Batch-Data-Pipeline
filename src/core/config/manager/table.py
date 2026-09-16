@@ -6,9 +6,11 @@ from src.core.config.config import Config
 from src.models.data_config import (
     BronzeSilverTableMetadata,
     GoldTableMetadata,
-    StageType,
+    PipelineStage,
+    SchemaLayer,
     TableContext,
     TableDependency,
+    TableGroup,
     TableMetadata,
     TablesConfig,
 )
@@ -29,7 +31,7 @@ class TableManager:
     def get_config(self) -> TablesConfig:
         return self._config.tables
 
-    def get_tablenames(self, stage: StageType) -> List[str]:
+    def get_tablenames(self, stage: TableGroup) -> List[str]:
         cfg = self._pipeline_manager.get_config().tablenames.get(stage)
         if cfg is None:
             raise ValueError(f"Tablenames for stage '{stage}' not found")
@@ -44,7 +46,7 @@ class TableManager:
     def get_table_partitioned_by(self, table_name: str) -> str:
         return self.get_table_config(table_name).partitioned_by
 
-    def get_table_write_mode(self, table_name: str, stage: StageType) -> str:
+    def get_table_write_mode(self, table_name: str, stage: PipelineStage) -> str:
         cfg = self.get_table_config(table_name).write_mode.get(stage)
         if cfg is None:
             raise ValueError(
@@ -58,12 +60,22 @@ class TableManager:
     def get_formated_query(self, table_name: str, **kwargs):
         return [query.format(**kwargs) for query in self.get_table_query(table_name)]
 
-    def get_table_schema(self, table_name: str, stage: StageType) -> Optional[str]:
+    def get_table_schema(self, table_name: str, stage: SchemaLayer) -> Optional[str]:
         cfg = self.get_table_config(table_name).table_schema.get(stage)
         return cfg
 
+    def get_seed_table(self) -> List[str]:
+        cfg = self.get_tablenames("seed")
+        if cfg is None:
+            raise ValueError(f"Seed table configuration not found")
+        return cfg
+
+    def is_seed_table(self, table_name: str) -> bool:
+        table_name = table_name.lower().strip()
+        return table_name in self.get_seed_table()
+
     def get_table_deps(
-        self, table_name: str, stage: StageType
+        self, table_name: str, stage: PipelineStage
     ) -> Optional[Dict[str, List[TableDependency]]]:
 
         dependencies: Dict[str, Optional[List[TableDependency]]] = {}
@@ -86,7 +98,7 @@ class TableManager:
             ]
         return dependencies
 
-    def get_table_fullname(self, table_name: str, stage: StageType) -> str:
+    def get_table_fullname(self, table_name: str, stage: PipelineStage) -> str:
         catalog = self._catalog_manager.get_catalog_name()
         namespace = self._schema_manager.get_stage_namespace(stage)
         return create_table_fullname(catalog, namespace, table_name)
@@ -94,7 +106,7 @@ class TableManager:
     def get_table_metadata(
         self,
         table_ref: str,
-        stage: StageType,
+        stage: PipelineStage,
         query_params: Optional[Dict[str, str]] = None,
     ) -> TableMetadata:
         if stage is None:
@@ -133,17 +145,5 @@ class TableManager:
 
 
 if __name__ == "__main__":
-    from src.utils.text_utils import clean_multiple_line
-
-    table_manager = TableManager().get_table_metadata(
-        "passengers",
-        "silver",
-        {
-            "full_table_name": "silver.passengers",
-            "table_view": "passengers_view",
-            "start_date": "2023-01-01",
-            "end_date": "2023-12-31",
-        },
-    )
-    clean = [clean_multiple_line(x) for x in table_manager.queries]
-    print(clean)
+    table_manager = TableManager()
+    print(table_manager.get_tablenames("seed"))

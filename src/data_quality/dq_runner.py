@@ -7,7 +7,7 @@ from typing_extensions import Optional
 
 from src.core.dq_context import DataQualityContext
 from src.core.registry import resolve_registry_class
-from src.models.data_config import StageType
+from src.models.data_config import PipelineStage
 from src.models.etl_config import TransformResult
 
 
@@ -21,7 +21,7 @@ class DataQualityRunner:
         self.session = session
         self.custom_dq_path = custom_dq_path
 
-    def _resolve_dq_path(self, stage: StageType, table_name: str) -> Optional[Path]:
+    def _resolve_dq_path(self, stage: PipelineStage, table_name: str) -> Optional[Path]:
         """Resolve which DQ test file to run: custom override takes priority over registry."""
         if self.custom_dq_path:
             self.logger.info(
@@ -56,7 +56,7 @@ class DataQualityRunner:
 
     def _execute_dq_tests(
         self,
-        stage: StageType,
+        stage: PipelineStage,
         table_name: str,
         dq_path: Path,
         inputs: Optional[TransformResult],
@@ -91,7 +91,7 @@ class DataQualityRunner:
 
     def run(
         self,
-        stage: StageType,
+        stage: PipelineStage,
         table_name: str,
         inputs: Optional[TransformResult] = None,
     ) -> bool:

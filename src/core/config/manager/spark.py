@@ -1,5 +1,5 @@
 from src.core.config.config import Config
-from src.models.data_config import StageType
+from src.models.data_config import SparkStage
 from src.models.spark_config import SparkConfig, SparkLayerContext
 
 
@@ -10,7 +10,7 @@ class SparkManager:
     def get_config(self) -> SparkConfig:
         return self._config.spark
 
-    def get_stage_config(self, stage: StageType) -> SparkLayerContext:
+    def get_stage_config(self, stage: SparkStage) -> SparkLayerContext:
         cfg = getattr(self.get_config(), stage)
         if cfg is None:
             raise ValueError(f"Spark config for stage '{stage}' not found")
