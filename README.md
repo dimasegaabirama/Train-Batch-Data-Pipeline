@@ -291,15 +291,10 @@ docker rm -f spark-submit
 | `--run_bootstrap` | — | No | Sets up Nessie branches/namespaces + base schemas |
 | `--data_quality` | — | No | Runs PyDeequ DQ checks for the processed tables |
 
-**Example — run the Silver stage for specific tables with DQ checks:**
+**Example — run the Silver stage for specific tables with DQ checks in spark-submit container:**
 ```bash
 python -m src.app.run_pipeline -stg silver \
   -cfg config/pipeline-config.yaml -env .env.global \
-  -start 2026-01-01 -end 2026-01-01 \
+  -start 2026-01-01 -end 2026-01-02 \
   -tbl stations trains --data_quality
 ```
-
-**Via Airflow (recommended for scheduled/production use):**
-1. Make sure the Airflow stack is up (`./start-all.sh`).
-2. Enable the `train_pipeline` DAG in the Airflow UI.
-3. The DAG (`airflow/dags/train_pipeline.py`) invokes `main.py` per table, per stage (Bronze → Silver → Gold), with `--data_quality` running as its own separate task/image from the load task.
