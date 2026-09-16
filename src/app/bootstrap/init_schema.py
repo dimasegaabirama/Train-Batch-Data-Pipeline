@@ -13,13 +13,22 @@ def initialize_namespace(spark: SparkSession):
 
 def initialize_seed(spark: SparkSession):
     seeds = [
-        """
-        INSERT INTO nessie.silver.status (id, status)
-        VALUES 
-            (1, 'paid'),
-            (2, 'unpaid'),
-            (3, 'cancelled'),
-            (4, 'refunded')
+    """
+    TRUNCATE TABLE nessie.silver.status
+    """,
+    """
+    TRUNCATE TABLE nessie.silver.class
+    """,
+    """
+    TRUNCATE TABLE nessie.silver.payment
+    """,
+    """
+    INSERT INTO nessie.silver.status (id, status)
+    VALUES 
+        (1, 'paid'),
+        (2, 'unpaid'),
+        (3, 'cancelled'),
+        (4, 'refunded')
     """,
         """
     INSERT INTO nessie.silver.class (id, class_name)

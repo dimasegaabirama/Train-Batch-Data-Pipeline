@@ -122,9 +122,9 @@ class TicketsTransform(BaseTransform):
                 .alias("p")
             )
 
-            class_df = F.broadcast(self.dependencies["class"]).alias("cl")
-            status_df = F.broadcast(self.dependencies["status"]).alias("st")
-            payment_df = F.broadcast(self.dependencies["payment"]).alias("py")
+            class_df = F.broadcast(self.dependencies["class"].drop_duplicates("id")).alias("cl")
+            status_df = F.broadcast(self.dependencies["status"].drop_duplicates("id")).alias("st")
+            payment_df = F.broadcast(self.dependencies["payment"].drop_duplicates("id")).alias("py")
 
             result_df = (
                 tickets_deduped
