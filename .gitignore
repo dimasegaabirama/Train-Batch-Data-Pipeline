@@ -19,8 +19,7 @@ env/
 
 # ── Airflow ───────────────────────────────────────────────────────
 airflow/logs/
-airflow/config/airflow.cfg
-airflow/config/webserver_config.py
+airflow/config/
  
 # ── Docker Data Volumes ───────────────────────────────────────────
 docker/airflow/data/
